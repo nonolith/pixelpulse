@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
+<script src='protovis.min.js'></script>
+<script src="/socket.io/socket.io.js"></script> 
+
+</head>
+<body>
+
+<div id='container'></div>
+
+<script>
+var xmin=0, xmax=0, ymin=0, ymax=1, w=600, h=300;
+
+var x = pv.Scale.linear(-10, 0).nice().range(0, w)
+var y = pv.Scale.linear(ymin, ymax).nice().range(0, h)
+
+var data = [];
+
+var vis = new pv.Panel()
+			.width(w + 5)
+			.height(h + 20 + 10)
+			.bottom(20)
+			.left(20)
+			.right(10)
+			.top(5)
+
+vis.add(pv.Line)
+			.data(function(){return data})
+			.left(function(d){return x(d.x)})
+			.bottom(function(d){return y(d.y)})
+			.lineWidth(3);
+
+var acc = 0;
+
+var socket = new io.Socket(); 
+socket.connect();
+
+socket.on('connect', function(){
+	console.log("connected")
+})
+
+ socket.on('message', function(m){
+  	xmax = m.x
+  	xmin = xmax - 10;
+  	x.domain(xmin, xmax);
+  	data.push(m)
+  	if (data.length > 200) data.shift()
+	vis.render()
+ }) 
+</script>
+
+</body>
+</html>
