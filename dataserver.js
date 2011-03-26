@@ -13,9 +13,6 @@ server.listen(8099);
   
 var socket = io.listen(server); 
 
-var time = 0, acc=0;
-
-
 var inputserver = net.createServer(function (c) {
   c.setEncoding('utf8')
   c.write('hello\n');
@@ -25,7 +22,7 @@ var inputserver = net.createServer(function (c) {
   		if (!lines[i]) continue;
   		p = lines[i].split(' ')
   		console.log(p)
-  		socket.broadcast({x:parseFloat(p[0]), y:parseFloat(p[1])})
+  		socket.broadcast({x:parseFloat(p[0]), y:parseFloat(p[1]), y2:parseFloat(p[2])})
   	}
   })
 });
