@@ -9,7 +9,11 @@
 </head>
 <body>
 
+<div id='loading'>Connecting...</div>
+
 <div id='container'></div>
+
+<button id='reconnect' style='display:hidden'>Reconnect</button>
 
 <script>
 var w=600, h=300;
@@ -27,32 +31,38 @@ var vis = new pv.Panel()
 			.left(20)
 			.right(20)
 			.top(5)
+vis.canvas = 'container';
 						
 yt = vis.add(pv.Rule)
     .data(y.ticks(5))
     .bottom(y)
     .strokeStyle(function(d){return d ? "#eee" : "#000"})
 	.anchor("left").add(pv.Label)
-    	.text(y.tickFormat);
+    	.text(y.tickFormat)
+    	.textStyle('blue')
     
 yt2 = vis.add(pv.Rule)
     .data(y2.ticks(5))
     .bottom(y2)
     .strokeStyle('rgba(0,0,0,0)')
 	.anchor("right").add(pv.Label)
-  		.text(y2.tickFormat);
+  		.text(y2.tickFormat)
+  		.textStyle('red')
   	
 
 
 
-vis.add(pv.Line)
+panel = vis.add(pv.Panel)
+    .overflow("hidden")
+    
+panel.add(pv.Line)
 			.data(function(){return data})
 			.left(function(d){return x(d.x)})
 			.bottom(function(d){return y(d.y)})
 			.lineWidth(3)
 			.strokeStyle('blue')
 			
-vis.add(pv.Line)
+panel.add(pv.Line)
 			.data(function(){return data})
 			.left(function(d){return x(d.x)})
 			.bottom(function(d){return y2(d.y2)})
@@ -65,18 +75,42 @@ var socket = new io.Socket();
 socket.connect();
 
 socket.on('connect', function(){
-	console.log("connected")
+	$('#loading').text("Waiting for data...")
+	$(document.body).css('background', 'transparent')
+	$('#reconnect').hide()
 })
 
- socket.on('message', function(m){
+socket.on('disconnect', function(){
+	$(document.body).css('background', '#ccc')
+	$('#reconnect').show()
+})
+
+$('#reconnect').click(function(){socket.connect()})
+
+var xspan = 1000;
+
+socket.on('message', function(m){
+ 	$('#loading').hide()
+ 	//console.log(m)
+ 	if (m.log){
+ 		$(document.body).append($('<div>').text(m.log));
+ 		return
+ 	}
+ 	
+ 	$('#data').text("Current: " + m.y2 + "A, Voltage: "+m.y+"V")
+ 	
   	xmax = m.x
-  	xmin = xmax - 10;
+  	xmin = xmax - xspan;
   	x.domain(xmin, xmax).range(0, w);
   	data.push(m)
-  	if (data.length > 200) data.shift()
+  	
+  	while(data[0].x<xmin) data.shift()
+  	
 	vis.render()
  }) 
 </script>
+
+<div id='data'></div>
 
 </body>
 </html>

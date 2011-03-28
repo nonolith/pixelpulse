@@ -20,9 +20,12 @@ var inputserver = net.createServer(function (c) {
   	lines = d.replace('\r', '').split('\n')
   	for (var i=0; i<lines.length; i++){
   		if (!lines[i]) continue;
-  		p = lines[i].split(' ')
-  		console.log(p)
-  		socket.broadcast({x:parseFloat(p[0]), y:parseFloat(p[1]), y2:parseFloat(p[2])})
+  		if (lines[i][0] == '#'){
+  			socket.broadcast({log:lines[i].slice(1)})
+  		}else{
+  			p = lines[i].split(' ')
+  			socket.broadcast({x:parseFloat(p[0]), y:parseFloat(p[1]), y2:parseFloat(p[2])})
+  		}
   	}
   })
 });
