@@ -12,10 +12,16 @@ server = http.createServer(function(req, res){
 server.listen(8099);
   
 var socket = io.listen(server); 
+socket.on('clientMessage', function(msg, client){
+	if (msg.action == 'set')
+		inputsocket.write(msg.property + ' ' + msg.value+'\n', 'utf8')
+})
+
+var inputsocket = false;
 
 var inputserver = net.createServer(function (c) {
+  inputsocket = c;
   c.setEncoding('utf8')
-  c.write('hello\n');
   c.on('data', function(d){
   	lines = d.replace('\r', '').split('\n')
   	for (var i=0; i<lines.length; i++){

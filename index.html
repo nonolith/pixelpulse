@@ -147,13 +147,13 @@ body{
 <div id='meters'>
 <div id='voltage-meter'>
 <h2>Voltage</h2>
-<span class='reading'><input value=0.00></input></span> <span class='unit'>V</span>
+<span class='reading'><input value=0.00 name=v></input></span> <span class='unit'>V</span>
 <small>Measure</small>
 </div>
 
 <div id='current-meter'>
 <h2>Current</h2>
-<span class='reading'><input value=0.00></input></span> <span class='unit'>mA</span>
+<span class='reading'><input value=0.00 name=i></input></span> <span class='unit'>mA</span>
 <small>Source</small>
 </div>
 
@@ -251,12 +251,9 @@ socket.on('disconnect', function(){
 	setInterval(tryReconnect, 1000);
 })
 
-$('#meters .reading').click(function(e){
-	if (e.target!=this) return;
-	var t = $(this).text()
-	$(this).empty();
-	var i = $('<input>').val(t).appendTo(this).focus();
-})
+$('#meters .reading input').change(function(e){
+	socket.send({'action':'set', 'property':this.name, 'value':$(this).val()})
+})	
 
 var reconnectTimer = false;
 function tryReconnect(){
