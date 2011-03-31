@@ -114,6 +114,22 @@ body{
 	width: 100%;
 }
 
+.reading input{
+	background: transparent;
+	width: 2.5em;
+	font-size: inherit;
+	font-weight: inherit;
+	color: inherit;
+	border: 0;
+	padding: 0;
+	margin: 0;
+}
+
+.reading input.negative{
+	width: 2.86em;
+	margin-left: -0.36em;
+}
+
 </style>
 
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
@@ -131,19 +147,19 @@ body{
 <div id='meters'>
 <div id='voltage-meter'>
 <h2>Voltage</h2>
-<span class='reading'>0.00</span> <span class='unit'>V</span>
+<span class='reading'><input value=0.00></input></span> <span class='unit'>V</span>
 <small>Measure</small>
 </div>
 
 <div id='current-meter'>
 <h2>Current</h2>
-<span class='reading'>0.00</span> <span class='unit'>mA</span>
+<span class='reading'><input value=0.00></input></span> <span class='unit'>mA</span>
 <small>Source</small>
 </div>
 
 <div id='power-meter'>
 <h2>Power</h2>
-<span class='reading'>0.00</span> <span class='unit'>W</span>
+<span class='reading'><input value=0.00></input></span> <span class='unit'>W</span>
 <small>Computed</small>
 </div>
 
@@ -235,6 +251,13 @@ socket.on('disconnect', function(){
 	setInterval(tryReconnect, 1000);
 })
 
+$('#meters .reading').click(function(e){
+	if (e.target!=this) return;
+	var t = $(this).text()
+	$(this).empty();
+	var i = $('<input>').val(t).appendTo(this).focus();
+})
+
 var reconnectTimer = false;
 function tryReconnect(){
 	socket.connect()
@@ -243,15 +266,29 @@ function tryReconnect(){
 var xspan = 30;
 var setup = false;
 
+function setInput(input, number){
+	if (!input.is(':focus')){
+		input.val(number.toFixed(3))
+		if (number < 0){
+			input.addClass('negative');
+		}else{
+			input.removeClass('negative');
+		}
+	}
+
+}
+
 socket.on('message', function(m){ 	
 	if (!setup){
  		$('#loading').hide()
  		resize();
  		setup = true
  	}
- 	$('#voltage-meter .reading').text(m.v.toFixed(3))
- 	$('#current-meter .reading').text(m.i.toFixed(3))
- 	$('#power-meter .reading').text(Math.abs(m.v*m.i).toFixed(3))
+ 	
+ 	setInput($('#voltage-meter .reading input'), m.v)
+ 	setInput($('#current-meter .reading input'), m.i)
+ 	setInput($('#power-meter .reading input'), Math.abs(m.v*m.i))
+
  	
   	xmax = m.x
   	xmin = xmax - xspan;
