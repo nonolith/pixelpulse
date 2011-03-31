@@ -66,8 +66,9 @@ body{
 	height: 85px;
 	left: 0;
 	right: 0;
-	background: #ddd;
+	background: #444;
 	padding: 10px 10px 15px 20px;
+	color: white;
 }
 
 #meters > div{
@@ -93,7 +94,7 @@ body{
 }
 
 #meters > div .unit{
-	color: #888;
+	color: #ccc;
 	font-size: 30px;
 }
 
@@ -125,7 +126,7 @@ body{
 
 <div id='graph'></div>
 
-<div id='loading'>Waiting for data...</div>
+<div id='loading'>Connecting...</div>
 
 <div id='meters'>
 <div id='voltage-meter'>
@@ -222,14 +223,22 @@ socket.on('connect', function(){
 	$('#loading').text("Waiting for data...")
 	$(document.body).css('background', 'transparent')
 	$('#reconnect').hide()
+	setup = false;
+	if (reconnectTimer){
+		reconnectTimer = false;
+		clearInterval(reconnectTimer);
+	}
 })
 
 socket.on('disconnect', function(){
-	$(document.body).css('background', '#ccc')
-	$('#reconnect').show()
+	$('#loading').text('Disconnected').show()
+	setInterval(tryReconnect, 1000);
 })
 
-$('#reconnect').click(function(){socket.connect()})
+var reconnectTimer = false;
+function tryReconnect(){
+	socket.connect()
+}
 
 var xspan = 30;
 var setup = false;
