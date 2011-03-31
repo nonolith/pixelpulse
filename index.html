@@ -1,6 +1,119 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
+<style>
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+/* end reset*/
+
+body{
+	font-family: Droid Sans; sans-serif;
+}
+
+
+#graph{
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	right: 10px;
+	bottom: 105px;
+}
+
+#meters{
+	position: absolute;
+	bottom: 0;
+	height: 85px;
+	left: 0;
+	right: 0;
+	background: #ddd;
+	padding: 10px 10px 15px 20px;
+}
+
+#meters > div{
+	display: inline-block;
+	height: 80px;
+	width: 200px;
+}
+
+#meters > div h2{
+	font-variant: small-caps;
+	text-transform: uppercase;
+	font-weight: bold;
+	font-size: 15px;
+	margin: 5px 0;
+}
+
+#meters > div span{
+	font-size: 40px;
+}
+
+#meters > div .reading{
+	font-weight: bold;
+}
+
+#meters > div .unit{
+	color: #888;
+	font-size: 30px;
+}
+
+#meters > div small{
+	display: block;
+	text-transform: uppercase;
+	font-weight: bold;
+	font-size: 13px;
+	margin-top: 5px;
+}
+
+#loading{
+	position: absolute;
+	top: 200px;
+	text-align:center;
+	font-size: 30px;
+	width: 100%;
+}
+
+</style>
 
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
 <script src='protovis.min.js'></script>
@@ -8,35 +121,66 @@
 
 </head>
 <body>
+<div id='wrap'>
 
-<div id='loading'>Connecting...</div>
+<div id='graph'></div>
 
-<div id='container'></div>
+<div id='loading'>Waiting for data...</div>
 
-<button id='reconnect' style='display:hidden'>Reconnect</button>
+<div id='meters'>
+<div id='voltage-meter'>
+<h2>Voltage</h2>
+<span class='reading'>0.00</span> <span class='unit'>V</span>
+<small>Measure</small>
+</div>
+
+<div id='current-meter'>
+<h2>Current</h2>
+<span class='reading'>0.00</span> <span class='unit'>mA</span>
+<small>Source</small>
+</div>
+
+<div id='power-meter'>
+<h2>Power</h2>
+<span class='reading'>0.00</span> <span class='unit'>W</span>
+<small>Computed</small>
+</div>
+
+</div>
+</div>
 
 <script>
 var w=600, h=300;
 
-var x = pv.Scale.linear(-10, 10).range(0, w)
-var y = pv.Scale.linear(-10, 10).nice().range(0, h)
-var y2 = pv.Scale.linear(-0.2, 0.2).nice().range(0, h)
+var x = pv.Scale.linear(-10, 10).nice()
+var y = pv.Scale.linear(-10, 10).nice()
+var y2 = pv.Scale.linear(-0.2, 0.2).nice()
 
 var data = [];
 
 var vis = new pv.Panel()
-			.width(w + 5)
-			.height(h + 20 + 10)
 			.bottom(20)
 			.left(30)
 			.right(30)
 			.top(5)
-vis.canvas = 'container';
+			.canvas('graph')
+
+function resize(){
+	w = $("#graph").width() - 50;
+	h = $("#graph").height() - 25;
+	vis.width(w).height(h);
+	x = x.range(0,w);
+	y = y.range(0,h);
+	y2 = y2.range(0,h); 
+	console.log('resized');
+}
+
+$(window).resize(resize);
 						
 yt = vis.add(pv.Rule)
     .data(y.ticks(5))
     .bottom(y)
-    .strokeStyle(function(d){return d ? "#eee" : "#000"})
+    .strokeStyle(function(d){return d ? "#ccc" : "#000"})
 	.anchor("left").add(pv.Label)
     	.text(y.tickFormat)
     	.textStyle('blue')
@@ -58,14 +202,14 @@ panel = vis.add(pv.Panel)
 panel.add(pv.Line)
 			.data(function(){return data})
 			.left(function(d){return x(d.x)})
-			.bottom(function(d){return y(d.y)})
+			.bottom(function(d){return y(d.v)})
 			.lineWidth(3)
 			.strokeStyle('blue')
 			
 panel.add(pv.Line)
 			.data(function(){return data})
 			.left(function(d){return x(d.x)})
-			.bottom(function(d){return y2(d.y2)})
+			.bottom(function(d){return y2(d.i)})
 			.lineWidth(3)
 			.strokeStyle('red')
 
@@ -87,17 +231,18 @@ socket.on('disconnect', function(){
 
 $('#reconnect').click(function(){socket.connect()})
 
-var xspan = 1000;
+var xspan = 30;
+var setup = false;
 
-socket.on('message', function(m){
- 	$('#loading').hide()
- 	//console.log(m)
- 	if (m.log){
- 		$(document.body).append($('<div>').text(m.log));
- 		return
+socket.on('message', function(m){ 	
+	if (!setup){
+ 		$('#loading').hide()
+ 		resize();
+ 		setup = true
  	}
- 	
- 	$('#data').text("Current: " + m.y2 + "A, Voltage: "+m.y+"V")
+ 	$('#voltage-meter .reading').text(m.v.toFixed(3))
+ 	$('#current-meter .reading').text(m.i.toFixed(3))
+ 	$('#power-meter .reading').text(Math.abs(m.v*m.i).toFixed(3))
  	
   	xmax = m.x
   	xmin = xmax - xspan;
@@ -109,8 +254,6 @@ socket.on('message', function(m){
 	vis.render()
  }) 
 </script>
-
-<div id='data'></div>
 
 </body>
 </html>
