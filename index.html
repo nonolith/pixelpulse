@@ -171,7 +171,7 @@ var w=600, h=300;
 
 var x = pv.Scale.linear(-10, 10).nice()
 var y = pv.Scale.linear(-10, 10).nice()
-var y2 = pv.Scale.linear(-0.2, 0.2).nice()
+var y2 = pv.Scale.linear(-200, 200).nice()
 
 var data = [];
 
@@ -284,12 +284,12 @@ socket.on('message', function(m){
  	
  	setInput($('#voltage-meter .reading input'), m.v)
  	setInput($('#current-meter .reading input'), m.i)
- 	setInput($('#power-meter .reading input'), Math.abs(m.v*m.i))
+ 	setInput($('#power-meter .reading input'), Math.abs(m.v*m.i/1000))
  	
  	if (m.driving == 'i'){
  		$('#voltage-meter small').text("Measure")
  		$('#current-meter small').text("Source")
- 	}else if (m.driving == 'c'){
+ 	}else if (m.driving == 'v'){
  		$('#voltage-meter small').text("Source")
  		$('#current-meter small').text("Measure")
  	}

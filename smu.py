@@ -12,20 +12,26 @@ tick = 0.1
 
 sock.settimeout(tick)
 
-def log()
+def log():
 	t = time.time()
 	data = smu.update()
-	upData = "%.4f %.4f %.4f %s" % (data[0], data[1][0], -data[1][1], smu.driving)
+	upData = "%.4f %.4f %.4f %s" % (t, data[0], -data[1]*1000, smu.driving)
 	sock.send(upData)
 
 while 1:
-	s = sock.recv(1024)
-	for i in s.split('\n')
-		prop, val = i.split()
+	try:
+		s = sock.recv(1024)
+		for i in s.split('\n'):
+			i = i.strip()
+			if not i: continue
+			prop, val = i.split()
+			print prop, val
 			if prop == 'v':
-				smu.set(voltage=float(val))
-			elif prop == 'v':
-				smu.set(current=float(val))
+				smu.set(volts=float(val))
+			elif prop == 'i':
+				smu.set(amps=float(val)/1000.0)
+	except socket.timeout: pass
+
 	log()
 	
 
