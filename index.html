@@ -285,6 +285,14 @@ socket.on('message', function(m){
  	setInput($('#voltage-meter .reading input'), m.v)
  	setInput($('#current-meter .reading input'), m.i)
  	setInput($('#power-meter .reading input'), Math.abs(m.v*m.i))
+ 	
+ 	if (m.driving == 'i'){
+ 		$('#voltage-meter small').text("Measure")
+ 		$('#current-meter small').text("Source")
+ 	}else if (m.driving == 'c'){
+ 		$('#voltage-meter small').text("Source")
+ 		$('#current-meter small').text("Measure")
+ 	}
 
  	
   	xmax = m.x

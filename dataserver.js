@@ -30,7 +30,7 @@ var inputserver = net.createServer(function (c) {
   			socket.broadcast({log:lines[i].slice(1)})
   		}else{
   			p = lines[i].split(' ')
-  			socket.broadcast({x:parseFloat(p[0]), v:parseFloat(p[1]), i:parseFloat(p[2])})
+  			socket.broadcast({x:parseFloat(p[0]), v:parseFloat(p[1]), i:parseFloat(p[2]), driving:p[3]})
   		}
   	}
   })
