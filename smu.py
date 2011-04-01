@@ -31,13 +31,14 @@ while 1:
 				print "bad key/value pair:", prop, val
 				prop = 'NONE'
 				val = 0
+				continue
 			if prop == 'v':
 				try:
 					val = float(val)
 				except Exception as inst:
 					print "exception:", inst
 					print "bad value:", val
-					val = 0
+					continue
 				smu.set(volts=val)
 			elif prop == 'i':
 				try:
@@ -45,7 +46,7 @@ while 1:
 				except Exception as inst:
 					print "exception:", inst
 					print "bad value:", val
-					val = 0
+					continue
 				smu.set(amps=val)
 			else:
 				print "bad key"
