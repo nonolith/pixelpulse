@@ -37,6 +37,7 @@ while 1:
 				except Exception as inst:
 					print "exception:", inst
 					print "bad value:", val
+					val = 0
 				smu.set(volts=val)
 			elif prop == 'i':
 				try:
@@ -44,6 +45,7 @@ while 1:
 				except Exception as inst:
 					print "exception:", inst
 					print "bad value:", val
+					val = 0
 				smu.set(amps=val)
 			else:
 				print "bad key"
