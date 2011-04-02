@@ -9,7 +9,7 @@ WEBROOT = path.dirname(__filename);
 server = http.createServer(function(req, res){ 
 	paperboy.deliver(WEBROOT, req, res)
 });
-server.listen(8099);
+server.listen(80);
   
 var socket = io.listen(server); 
 socket.on('clientMessage', function(msg, client){
