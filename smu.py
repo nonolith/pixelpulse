@@ -15,14 +15,14 @@ sock.settimeout(tick)
 def sendJSON(action, msg):
 	msg = msg.copy()
 	msg['_action'] = action
-	sock.send(JSON.dumps(msg)+'\n')
+	sock.send(json.dumps(msg)+'\n')
 
 sensors = {
 	'time': {
 		'displayname': 'Time',
 		'units': 's',
 		'type': 'linspace',
-	}
+	},
 	'voltage': {
 		'displayname': 'Voltage',
 		'units': 'V',
@@ -32,8 +32,8 @@ sensors = {
 		'displayname': 'Current',
 		'units': 'mA',
 		'type': 'device'
-	}
-	'power',
+	},
+	'power' : {
 		'displayname': 'Power',
 		'units': 'W',
 		'type': 'computed',
@@ -47,7 +47,7 @@ def log():
 	t = time.time()
 	data = smu.update()
 	
-	sendJSON('update' {
+	sendJSON('update', {
 		'time': t,
 		'voltage': data[0],
 		'current': data[1]*1000,
