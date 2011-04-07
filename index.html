@@ -176,7 +176,10 @@ function configChannels(s){
 	$('#meters').empty()
 	
 	for (i in meters){
-		if (i[0] == '_') continue;
+		if (i[0] == '_'){
+			delete meters[i];
+			continue;
+		}
 		addMeter(i, meters[i]);
 	}
 }
