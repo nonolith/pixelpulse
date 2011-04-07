@@ -145,28 +145,48 @@ body{
 <div id='loading'>Connecting...</div>
 
 <div id='meters'>
-<div id='voltage-meter'>
-<h2>Voltage</h2>
-<span class='reading'><input value=0.00 name=v></input></span> <span class='unit'>V</span>
-<small>Measure</small>
-</div>
-
-<div id='current-meter'>
-<h2>Current</h2>
-<span class='reading'><input value=0.00 name=i></input></span> <span class='unit'>mA</span>
-<small>Source</small>
-</div>
-
-<div id='power-meter'>
-<h2>Power</h2>
-<span class='reading'><input value=0.00></input></span> <span class='unit'>W</span>
-<small>Computed</small>
-</div>
 
 </div>
 </div>
 
 <script>
+
+var meters={};
+
+void addMeter(key, m){	
+	m.div = $("<div>")
+		.append($("<h2>").text(m.displayname))
+		.append($("<span class='reading'>")
+			.append(m.input = $("<input>")))
+		.append(m.unit = $("<span class='unit'>").text(m.unit))
+		.append($("<small>").text("Unknown"))
+	
+	m.input.change(function(e){
+		m = {'_action':'set'}
+		m[key] = $(m.input).val() 
+		socket.send(m)
+	})
+}
+
+void configSensors(s){
+	meters = s;
+	$('#meters').empty()
+	
+	for (i of meters){
+		if (i[0] == '_') continue;
+		addMeter(i, meters[i]);
+	}
+}
+
+void update(data){
+	for (key in meters){
+		var m = meters[key];
+		if (data[key]){
+			setInput(m.input, data[key])
+		}
+	}
+}
+
 var w=600, h=300;
 
 var x = pv.Scale.linear(-10, 10).nice()
@@ -209,24 +229,21 @@ yt2 = vis.add(pv.Rule)
 	.anchor("right").add(pv.Label)
   		.text(y2.tickFormat)
   		.textStyle('red')
-  	
-
-
 
 panel = vis.add(pv.Panel)
     .overflow("hidden")
     
 panel.add(pv.Line)
 			.data(function(){return data})
-			.left(function(d){return x(d.x)})
-			.bottom(function(d){return y(d.v)})
+			.left(function(d){return x(d.time)})
+			.bottom(function(d){return y(d.voltage)})
 			.lineWidth(3)
 			.strokeStyle('blue')
 			
 panel.add(pv.Line)
 			.data(function(){return data})
-			.left(function(d){return x(d.x)})
-			.bottom(function(d){return y2(d.i)})
+			.left(function(d){return x(d.time)})
+			.bottom(function(d){return y2(d.current)})
 			.lineWidth(3)
 			.strokeStyle('red')
 
@@ -250,10 +267,7 @@ socket.on('disconnect', function(){
 	$('#loading').text('Disconnected').show()
 	setInterval(tryReconnect, 1000);
 })
-
-$('#meters .reading input').change(function(e){
-	socket.send({'action':'set', 'property':this.name, 'value':$(this).val()})
-})	
+	
 
 var reconnectTimer = false;
 function tryReconnect(){
@@ -272,7 +286,6 @@ function setInput(input, number){
 			input.removeClass('negative');
 		}
 	}
-
 }
 
 socket.on('message', function(m){ 	
@@ -282,27 +295,20 @@ socket.on('message', function(m){
  		setup = true
  	}
  	
- 	setInput($('#voltage-meter .reading input'), m.v)
- 	setInput($('#current-meter .reading input'), m.i)
- 	setInput($('#power-meter .reading input'), Math.abs(m.v*m.i/1000))
- 	
- 	if (m.driving == 'i'){
- 		$('#voltage-meter small').text("Measure")
- 		$('#current-meter small').text("Source")
- 	}else if (m.driving == 'v'){
- 		$('#voltage-meter small').text("Source")
- 		$('#current-meter small').text("Measure")
- 	}
-
- 	
-  	xmax = m.x
-  	xmin = xmax - xspan;
-  	x.domain(xmin, xmax).range(0, w);
-  	data.push(m)
-  	
-  	while(data[0].x<xmin) data.shift()
-  	
-	vis.render()
+ 	if (m._action == 'update'){
+		update(m)
+	
+	  	xmax = m.time
+	  	xmin = xmax - xspan;
+	  	x.domain(xmin, xmax).range(0, w);
+	  	data.push(m)
+	  	
+	  	while(data[0].time<xmin) data.shift()
+	  	
+		vis.render(
+	}else if(m._action == 'configSensors'){
+		configSensors(m)
+	}
  }) 
 </script>
 
