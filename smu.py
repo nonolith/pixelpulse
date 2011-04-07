@@ -1,6 +1,6 @@
 import modconsmu
 import time
-
+import json
 import socket
 host = "localhost"
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -12,11 +12,47 @@ tick = 0.1
 
 sock.settimeout(tick)
 
+def sendJSON(action, msg):
+	msg = msg.copy()
+	msg['_action'] = action
+	sock.send(JSON.dumps(msg)+'\n')
+
+sensors = {
+	'time': {
+		'displayname': 'Time',
+		'units': 's',
+		'type': 'linspace',
+	}
+	'voltage': {
+		'displayname': 'Voltage',
+		'units': 'V',
+		'type': 'device',
+	},
+	'current': {
+		'displayname': 'Current',
+		'units': 'mA',
+		'type': 'device'
+	}
+	'power',
+		'displayname': 'Power',
+		'units': 'W',
+		'type': 'computed',
+	}
+}
+
+sendJSON('configChannels', sensors)
+
+
 def log():
 	t = time.time()
 	data = smu.update()
-	upData = "%.4f %.4f %.4f %s" % (t, data[0], data[1]*1000, smu.driving)
-	sock.send(upData)
+	
+	sendJSON('update' {
+		'time': t,
+		'voltage': data[0],
+		'current': data[1]*1000,
+		'_driving': 'current' if smu.driving=='i' else 'voltage'
+	})
 
 while 1:
 	try:
@@ -24,31 +60,16 @@ while 1:
 		for i in s.split('\n'):
 			i = i.strip()
 			if not i: continue
-			try:
-				prop, val = i.split()
-			except Exception as inst:
-				print "exception:", inst
-				print "bad key/value pair:", prop, val
-				prop = 'NONE'
-				val = 0
-			if prop == 'v':
-				try:
-					val = float(val)
-				except Exception as inst:
-					print "exception:", inst
-					print "bad value:", val
-					val = 0
-				smu.set(volts=val)
-			elif prop == 'i':
-				try:
-					val = float(val)/1000.0
-				except Exception as inst:
-					print "exception:", inst
-					print "bad value:", val
-					val = 0
-				smu.set(amps=val)
-			else:
-				print "bad key"
+			
+			msg = json.loads(i)
+			if msg['_action'] == 'set':
+				for prop, val in msg.iteritems():
+					if prop == 'voltage':
+						smu.set(volts=val)
+					elif prop == 'current':
+						smu.set(amps=val/1000.0)
+					else:
+						print "set: bad key"
 	except socket.timeout: pass
 	log()
 	

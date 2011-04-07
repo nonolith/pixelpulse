@@ -14,7 +14,7 @@ server.listen(8099);
 var socket = io.listen(server); 
 socket.on('clientMessage', function(msg, client){
 	if (msg.action == 'set')
-		inputsocket.write(msg.property + ' ' + msg.value+'\n', 'utf8')
+		inputsocket.write(JSON.stringify(msg)+'\n', 'utf8')
 })
 
 var inputsocket = false;
@@ -26,12 +26,8 @@ var inputserver = net.createServer(function (c) {
   	lines = d.replace('\r', '').split('\n')
   	for (var i=0; i<lines.length; i++){
   		if (!lines[i]) continue;
-  		if (lines[i][0] == '#'){
-  			socket.broadcast({log:lines[i].slice(1)})
-  		}else{
-  			p = lines[i].split(' ')
-  			socket.broadcast({x:parseFloat(p[0]), v:parseFloat(p[1]), i:parseFloat(p[2]), driving:p[3]})
-  		}
+		var obj = JSON.parse(lines[i]);
+		socket.broadcast(obj)
   	}
   })
 });
