@@ -153,32 +153,35 @@ body{
 
 var meters={};
 
-void addMeter(key, m){	
+function addMeter(key, m){	
 	m.div = $("<div>")
 		.append($("<h2>").text(m.displayname))
 		.append($("<span class='reading'>")
 			.append(m.input = $("<input>")))
-		.append(m.unit = $("<span class='unit'>").text(m.unit))
+		.append(m.unit = $("<span class='unit'>").text(m.units))
 		.append($("<small>").text("Unknown"))
+		.appendTo('#meters');
 	
 	m.input.change(function(e){
 		m = {'_action':'set'}
 		m[key] = $(m.input).val() 
 		socket.send(m)
-	})
+		m.input.blur()
+	});
+
 }
 
-void configSensors(s){
+function configChannels(s){
 	meters = s;
 	$('#meters').empty()
 	
-	for (i of meters){
+	for (i in meters){
 		if (i[0] == '_') continue;
 		addMeter(i, meters[i]);
 	}
 }
 
-void update(data){
+function update(data){
 	for (key in meters){
 		var m = meters[key];
 		if (data[key]){
@@ -305,9 +308,9 @@ socket.on('message', function(m){
 	  	
 	  	while(data[0].time<xmin) data.shift()
 	  	
-		vis.render(
-	}else if(m._action == 'configSensors'){
-		configSensors(m)
+		vis.render()
+	}else if(m._action == 'configChannels'){
+		configChannels(m)
 	}
  }) 
 </script>
