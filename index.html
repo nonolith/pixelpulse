@@ -163,10 +163,11 @@ function addMeter(m){
 		.appendTo('#meters');
 	
 	m.input.change(function(e){
-		m = {'_action':'set'}
-		m[m.name] = $(m.input).val() 
-		socket.send(m)
+		msg = {'_action':'set'}
+		msg[m.name] = $(m.input).val() 
+		socket.send(msg)
 		$(m.input).blur()
+		console.log('sent', m.name)
 	});
 
 }
