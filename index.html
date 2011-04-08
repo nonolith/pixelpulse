@@ -164,7 +164,7 @@ function addMeter(m){
 	
 	m.input.change(function(e){
 		msg = {'_action':'set'}
-		msg[m.name] = $(m.input).val() 
+		msg[m.name] = parseFloat($(m.input).val(), 10)
 		socket.send(msg)
 		$(m.input).blur()
 		console.log('sent', m.name)
