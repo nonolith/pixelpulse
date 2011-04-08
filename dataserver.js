@@ -20,8 +20,7 @@ socket.on('connection', function(client){
 })
 
 socket.on('clientMessage', function(msg, client){
-	if (msg.action == 'set')
-		inputsocket.write(JSON.stringify(msg)+'\n', 'utf8')
+	inputsocket.write(JSON.stringify(msg)+'\n', 'utf8')
 })
 
 var inputsocket = false;

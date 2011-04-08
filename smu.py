@@ -71,6 +71,7 @@ while 1:
 			if not i: continue
 			
 			msg = json.loads(i)
+			print msg
 			if msg['_action'] == 'set':
 				for prop, val in msg.iteritems():
 					if prop == 'voltage':
