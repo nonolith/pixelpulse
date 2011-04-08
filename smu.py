@@ -9,6 +9,7 @@ sock.connect((host, 8098))
 smu = modconsmu.smu()
 
 tick = 0.1
+tstart = time.time()
 
 sock.settimeout(tick)
 
@@ -17,30 +18,37 @@ def sendJSON(action, msg):
 	msg['_action'] = action
 	sock.send(json.dumps(msg)+'\n')
 
-sensors = {
-	'time': {
-		'displayname': 'Time',
-		'units': 's',
-		'type': 'linspace',
-	},
-	'voltage': {
-		'displayname': 'Voltage',
-		'units': 'V',
-		'type': 'device',
-	},
-	'current': {
-		'displayname': 'Current',
-		'units': 'mA',
-		'type': 'device'
-	},
-	'power' : {
-		'displayname': 'Power',
-		'units': 'W',
-		'type': 'computed',
-	}
+
+settings = {
+	'channels': [
+		{
+			'name': 'time',
+			'displayname': 'Time',
+			'units': 's',
+			'type': 'linspace',
+		},
+		{
+			'name': 'voltage',
+			'displayname': 'Voltage',
+			'units': 'V',
+			'type': 'device',
+		},
+		{
+			'name': 'current',
+			'displayname': 'Current',
+			'units': 'mA',
+			'type': 'device'
+		},
+		{
+			'name': 'power',
+			'displayname': 'Power',
+			'units': 'W',
+			'type': 'computed',
+		}
+	]
 }
 
-sendJSON('configChannels', sensors)
+sendJSON('config', settings)
 
 
 def log():
@@ -48,9 +56,10 @@ def log():
 	data = smu.update()
 	
 	sendJSON('update', {
-		'time': t,
+		'time': t-tstart,
 		'voltage': data[0],
 		'current': data[1]*1000,
+		'power': data[0] * data[1],
 		'_driving': 'current' if smu.driving=='i' else 'voltage'
 	})
 

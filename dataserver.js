@@ -16,7 +16,6 @@ var socket = io.listen(server);
 var config = false;
 
 socket.on('connection', function(client){
-	console.log('sending config')
 	if (config) client.send(config);
 })
 
@@ -36,9 +35,8 @@ var inputserver = net.createServer(function (c) {
   	for (var i=0; i<lines.length; i++){
   		if (!lines[i]) continue;
 		var obj = JSON.parse(lines[i]);
-		if (obj._action == 'configChannels'){
+		if (obj._action == 'config'){
 			config = obj;
-			console.log("cached new config");
 		}
 		socket.broadcast(obj)
   	}

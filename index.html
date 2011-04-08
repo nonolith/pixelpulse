@@ -153,7 +153,7 @@ body{
 
 var meters={};
 
-function addMeter(key, m){	
+function addMeter(m){	
 	m.div = $("<div>")
 		.append($("<h2>").text(m.displayname))
 		.append($("<span class='reading'>")
@@ -164,9 +164,9 @@ function addMeter(key, m){
 	
 	m.input.change(function(e){
 		m = {'_action':'set'}
-		m[key] = $(m.input).val() 
+		m[m.name] = $(m.input).val() 
 		socket.send(m)
-		m.input.blur()
+		$(m.input).blur()
 	});
 
 }
@@ -175,20 +175,16 @@ function configChannels(s){
 	meters = s;
 	$('#meters').empty()
 	
-	for (i in meters){
-		if (i[0] == '_'){
-			delete meters[i];
-			continue;
-		}
-		addMeter(i, meters[i]);
+	for (var i=0; i<meters.length; i++){
+		addMeter(meters[i]);
 	}
 }
 
 function update(data){
-	for (key in meters){
-		var m = meters[key];
-		if (data[key]){
-			setInput(m.input, data[key])
+	for (var i=0; i<meters.length; i++){
+		var m = meters[i]
+		if (data[m.name] !== undefined){
+			setInput(m.input, data[m.name])
 		}
 	}
 }
@@ -294,14 +290,13 @@ function setInput(input, number){
 	}
 }
 
-socket.on('message', function(m){ 	
-	if (!setup){
- 		$('#loading').hide()
- 		resize();
- 		setup = true
- 	}
- 	
+socket.on('message', function(m){ 	 	
  	if (m._action == 'update'){
+ 		if (!setup){
+	 		$('#loading').hide()
+	 		resize();
+	 		setup = true
+ 		}
 		update(m)
 	
 	  	xmax = m.time
@@ -312,8 +307,8 @@ socket.on('message', function(m){
 	  	while(data[0].time<xmin) data.shift()
 	  	
 		vis.render()
-	}else if(m._action == 'configChannels'){
-		configChannels(m)
+	}else if(m._action == 'config'){
+		configChannels(m.channels)
 	}
  }) 
 </script>
