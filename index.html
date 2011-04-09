@@ -55,8 +55,8 @@ body{
 #graph{
 	position: absolute;
 	top: 10px;
-	left: 10px;
-	right: 10px;
+	left: 0;
+	right: 0;
 	bottom: 105px;
 }
 
@@ -130,6 +130,34 @@ body{
 	margin-left: -0.36em;
 }
 
+#xlabel{
+	position: absolute;
+	bottom: 10px;
+	width: 100%;
+	text-align: center;
+}
+
+#ylabel1, #ylabel2{
+	-webkit-transform: rotate(-90deg);
+	-moz-transform: rotate(-90deg);
+	position: absolute;
+	top: 300px;
+	background: #ccc;
+	width: 250px;
+	text-align: center;
+}
+
+#ylabel1{
+	-webkit-transform-origin: 0% 0%;
+	left: 0px;
+}
+
+#ylabel2{
+	top: 50px;
+	-webkit-transform-origin: 100% 0%;
+	right: 20px;
+}
+
 </style>
 
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
@@ -140,7 +168,12 @@ body{
 <body>
 <div id='wrap'>
 
-<div id='graph'></div>
+<div id='graph'>
+<div id='xlabel'>Time</div>
+<div id='ylabel1'>Voltage</div>
+<div id='ylabel2'>Current</div>
+<div id='graphcanvas'></div>
+</div>
 
 <div id='loading'>Connecting...</div>
 
@@ -152,10 +185,12 @@ body{
 <script>
 
 var meters={};
+var metersByName = {};
 
-function addMeter(m){	
+function addMeter(m){
+	metersByName[m.name] = m;	
 	m.div = $("<div>")
-		.append($("<h2>").text(m.displayname))
+		.append(m.h2 = $("<h2>").text(m.displayname))
 		.append($("<span class='reading'>")
 			.append(m.input = $("<input>")))
 		.append(m.unit = $("<span class='unit'>").text(m.units))
@@ -169,7 +204,25 @@ function addMeter(m){
 		$(m.input).blur()
 		console.log('sent', m.name)
 	});
+	
+	m.h2.get(0).draggable = true;
+	m.h2.get(0).ondragstart = function(e){
+		e.dataTransfer.setData('text/plain', m.name)
+	}
 
+}
+
+var yl1 = document.getElementById('ylabel1');
+var ychannel1 = 'voltage'
+yl1.ondragover = function(e){
+ 	e.preventDefault()
+}
+yl1.ondrop = function(e){
+	var channel = e.dataTransfer.getData('text/plain')
+	yl1.innerHTML = metersByName[channel].displayname;
+	ychannel1 = channel;
+	e.preventDefault()
+	return false
 }
 
 function configChannels(s){
@@ -200,14 +253,14 @@ var data = [];
 
 var vis = new pv.Panel()
 			.bottom(20)
-			.left(30)
-			.right(30)
+			.left(40)
+			.right(40)
 			.top(5)
-			.canvas('graph')
+			.canvas('graphcanvas')
 
 function resize(){
-	w = $("#graph").width() - 50;
-	h = $("#graph").height() - 25;
+	w = $("#graph").width() - 90;
+	h = $("#graph").height() - 40;
 	vis.width(w).height(h);
 	x = x.range(0,w);
 	y = y.range(0,h);
@@ -239,7 +292,7 @@ panel = vis.add(pv.Panel)
 panel.add(pv.Line)
 			.data(function(){return data})
 			.left(function(d){return x(d.time)})
-			.bottom(function(d){return y(d.voltage)})
+			.bottom(function(d){return y(d[ychannel1])})
 			.lineWidth(3)
 			.strokeStyle('blue')
 			
@@ -312,6 +365,7 @@ socket.on('message', function(m){
 		configChannels(m.channels)
 	}
  }) 
+ 
 </script>
 
 </body>
