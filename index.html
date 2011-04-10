@@ -130,6 +130,12 @@ body{
 	margin-left: -0.36em;
 }
 
+.reading h2:-webkit-drag{
+	background: white;
+	color: black;
+	font-size: 200%;
+}
+
 #xlabel{
 	position: absolute;
 	bottom: 10px;
@@ -138,24 +144,36 @@ body{
 }
 
 #ylabel1, #ylabel2{
-	-webkit-transform: rotate(-90deg);
-	-moz-transform: rotate(-90deg);
 	position: absolute;
-	top: 300px;
-	background: #ccc;
-	width: 250px;
+	top: 0px;
+	bottom: 0px;
+	width: 20px;
 	text-align: center;
+	padding-left: 5px;
+}
+
+#ylabel1:-webkit-drop-target, #ylabel2:-webkit-drop-target{
+	background: #ccc;
 }
 
 #ylabel1{
-	-webkit-transform-origin: 0% 0%;
 	left: 0px;
 }
 
 #ylabel2{
-	top: 50px;
-	-webkit-transform-origin: 100% 0%;
-	right: 20px;
+	right: 0px;
+}
+
+#ylabel1 span, #ylabel2 span{
+	position: absolute;
+	top: 50%;
+	width: 100px;
+	text-align: center;
+	display: inline-block;
+	-webkit-transform: rotate(-90deg);
+	-moz-transform: rotate(-90deg);
+	-webkit-transform-origin: 0% 0%;
+	
 }
 
 </style>
@@ -170,8 +188,8 @@ body{
 
 <div id='graph'>
 <div id='xlabel'>Time</div>
-<div id='ylabel1'>Voltage</div>
-<div id='ylabel2'>Current</div>
+<div id='ylabel1'><span>Voltage</span></div>
+<div id='ylabel2'><span>Current</span></div>
 <div id='graphcanvas'></div>
 </div>
 
@@ -212,6 +230,8 @@ function addMeter(m){
 
 }
 
+
+
 var yl1 = document.getElementById('ylabel1');
 var ychannel1 = 'voltage'
 yl1.ondragover = function(e){
@@ -219,8 +239,21 @@ yl1.ondragover = function(e){
 }
 yl1.ondrop = function(e){
 	var channel = e.dataTransfer.getData('text/plain')
-	yl1.innerHTML = metersByName[channel].displayname;
+	yl1.firstChild.innerHTML = metersByName[channel].displayname + ' ('+metersByName[channel].units+')';
 	ychannel1 = channel;
+	e.preventDefault()
+	return false
+}
+
+var yl2 = document.getElementById('ylabel2');
+var ychannel2 = 'voltage'
+yl2.ondragover = function(e){
+ 	e.preventDefault()
+}
+yl2.ondrop = function(e){
+	var channel = e.dataTransfer.getData('text/plain')
+	yl2.firstChild.innerHTML = metersByName[channel].displayname + ' ('+metersByName[channel].units+')';
+	ychannel2 = channel;
 	e.preventDefault()
 	return false
 }
