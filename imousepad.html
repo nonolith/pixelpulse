@@ -1,0 +1,120 @@
+
+<!DOCTYPE html> 
+ 
+<html> 
+<head> 
+<title>HTML5 Mousepad (Disconnected)</title> 
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" /> 
+<style> 
+body, html { padding: 0; margin: 0; background: black; overflow: hidden }
+ 
+#pad { position: absolute; top: 50%; left: 0; width: 100%; overflow: hidden; background: white }
+body.disconnected #pad { background: grey }
+body.connected #pad { background: white }
+ 
+#cursor { width: 30px; height: 30px; border-radius: 15px; position: absolute; background: #444 }
+body.connected #cursor { background: blue; }
+ 
+#panel { position: absolute; bottom: 0; width: 100%; left: 0; background: #aaa; border-top: 2px solid #333; }
+#panel div { padding: 20px; }
+#panel button { font-size: 1.5em; }
+#reconnect { position: absolute; right: 20px; }
+</style> 
+</head> 
+ 
+<body class="disconnected"> 
+  <div id="pad"><div id="cursor"></div></div> 
+  <div id="panel"><div>Mouse:
+    <button ontouchstart="sendClick(1)">Left</button> 
+    <button ontouchstart="sendClick(2)">Middle</button> 
+    <button ontouchstart="sendClick(3)">Right</button> 
+    <button ontouchstart="if (!this.disabled) connect()" id="reconnect">Reconnect</button> 
+  </div></div> 
+ 
+<script> 
+ 
+if (!("WebSocket" in window)) {
+	alert("WebSockets are not supported by your browser!")
+	throw "Stop"
+}
+ 
+var pad = document.getElementById('pad')
+var cursor = document.getElementById('cursor')
+var reconnect = document.getElementById('reconnect')
+ 
+/* websocket */
+ 
+var hostname = "itd-latitude"
+var ws
+ 
+function connect() {
+	ws = new WebSocket("ws://" + hostname + ":9876/");
+	 
+	ws.onopen = function()
+	{
+		// websocket is connected, send data using send()
+		document.title = "HTML5 Mousepad (Connected)"
+		document.body.className = "connected"
+		reconnect.disabled = true
+	};
+	ws.onmessage = function (evt) 
+	{ 
+		// resize pad
+		screenSize = JSON.parse(evt.data)
+		resizePad()
+	};
+	ws.onclose = function()
+	{ 
+		document.title = "HTML5 Mousepad (Disconnected)"
+		document.body.className = "disconnected"
+		reconnect.disabled = false
+	};
+}
+connect()
+ 
+/* pad proportions */
+ 
+var screenSize = [640, 480]
+ 
+function resizePad() {
+	pad.style.height = (document.documentElement.clientWidth * (screenSize[1]/screenSize[0])) + "px"
+	pad.style.marginTop = -(document.documentElement.clientWidth * (screenSize[1]/screenSize[0]))/2 + "px"
+}
+resizePad()
+window.onresize = resizePad
+ 
+/* touch input */
+ 
+var touchHandler = function(e) {
+	if (e.changedTouches.length) {
+		// fix coordinates
+		var padGeom = pad.getBoundingClientRect()
+		var x = e.changedTouches[0].pageX - padGeom.left
+		var y = e.changedTouches[0].pageY - padGeom.top
+ 
+		if (x >= 0 && x < padGeom.width && y >= 0 && y < padGeom.height) {
+			cursor.style.top = (y - 15) + "px"
+			cursor.style.left = (x - 15) + "px"
+ 
+			ws.send(JSON.stringify(['move',
+				Math.floor((x/padGeom.width)*screenSize[0]),
+				Math.floor((y/padGeom.height)*screenSize[1])]));
+		}
+	}
+	e.preventDefault()
+}
+ 
+pad.ontouchstart = pad.ontouchmove = pad.ontouchend = touchHandler
+ 
+document.ontouchmove = document.ontouchstart = document.ontouchend = function (e) { e.preventDefault(); }
+ 
+/* click input */
+ 
+function sendClick(btn) {
+	ws.send(JSON.stringify(['click', btn]))
+}
+ 
+</script> 
+</body> 
+</html> 
+ 
