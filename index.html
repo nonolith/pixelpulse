@@ -157,10 +157,12 @@ body{
 }
 
 #ylabel1{
+	color: blue;
 	left: 0px;
 }
 
 #ylabel2{
+	color:red;
 	right: 0px;
 }
 
@@ -187,7 +189,7 @@ body{
 <div id='wrap'>
 
 <div id='graph'>
-<div id='xlabel'>Time</div>
+<div id='xlabel'><span>Time</span></div>
 <div id='ylabel1'><span>Voltage</span></div>
 <div id='ylabel2'><span>Current</span></div>
 <div id='graphcanvas'></div>
@@ -333,14 +335,14 @@ panel = vis.add(pv.Panel)
     
 panel.add(pv.Line)
 			.data(function(){return data})
-			.left(function(d){return x(d.time)})
+			.left(function(d){return x(d[axisconfig_x.name])})
 			.bottom(function(d){return y(d[axisconfig_y1.name])})
 			.lineWidth(3)
 			.strokeStyle('blue')
 			
 panel.add(pv.Line)
 			.data(function(){return data})
-			.left(function(d){return x(d.time)})
+			.left(function(d){return x(d[axisconfig_x.name])})
 			.bottom(function(d){return y2(d[axisconfig_y2.name])})
 			.lineWidth(3)
 			.strokeStyle('red')
