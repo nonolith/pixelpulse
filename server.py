@@ -218,4 +218,9 @@ def start_server():
 
 clients = []
 
+#lock = threading.Lock()
+#settings['channels'][3]['axisMax'] = 100
+#sendJSON(clients[0], lock, 'config', settings)
+
+
 threading.Thread(target = start_server).start()
