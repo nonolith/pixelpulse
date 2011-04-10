@@ -33,7 +33,11 @@ var inputserver = net.createServer(function (c) {
   	lines = d.replace('\r', '').split('\n')
   	for (var i=0; i<lines.length; i++){
   		if (!lines[i]) continue;
-		var obj = JSON.parse(lines[i]);
+  		try{
+			var obj = JSON.parse(lines[i]);
+		}catch (e){
+			continue;
+		}
 		if (obj._action == 'config'){
 			config = obj;
 		}
