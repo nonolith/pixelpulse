@@ -1,3 +1,4 @@
+#coding: UTF-8
 import modconsmu
 import time
 import json
@@ -46,12 +47,28 @@ settings = {
 			'axisMax': 200,
 		},
 		{
+			'name': 'resistance',
+			'displayname': 'Resistance',
+			'units': u'Ω',
+			'type': 'computed',
+			'axisMin': 0,
+			'axisMax': 1000,
+		},
+		{
 			'name': 'power',
 			'displayname': 'Power',
 			'units': 'W',
 			'type': 'computed',
 			'axisMin': 0,
 			'axisMax': 2,
+		},
+		{
+			'name': 'voltage(AI0)',
+			'displayname': 'Voltage(AI0)',
+			'units': 'V',
+			'type': 'computed',
+			'axisMin': 0,
+			'axisMax': 4.096,
 		}
 	]
 }
@@ -68,6 +85,8 @@ def log():
 		'voltage': data[0],
 		'current': data[1]*1000,
 		'power': abs(data[0] * data[1]),
+		'resistance': abs(data[0]/data[1]),
+		'voltage(AI0)': data[2],
 		'_driving': 'current' if smu.driving=='i' else 'voltage'
 	})
 
