@@ -231,31 +231,43 @@ function addMeter(m){
 }
 
 
+var axisconfig_x = {};
+var axisconfig_y1 = {};
+var axisconfig_y2 = {}
 
-var yl1 = document.getElementById('ylabel1');
-var ychannel1 = 'voltage'
-yl1.ondragover = function(e){
- 	e.preventDefault()
-}
-yl1.ondrop = function(e){
-	var channel = e.dataTransfer.getData('text/plain')
-	yl1.firstChild.innerHTML = metersByName[channel].displayname + ' ('+metersByName[channel].units+')';
-	ychannel1 = channel;
-	e.preventDefault()
-	return false
+function setup_dnd_target(element, axisconfig){
+	var elem = document.getElementById(element);
+	axisconfig.labelElement = elem.firstChild;
+	elem.ondragover = function(e){
+	 	e.preventDefault()
+	}
+	elem.ondrop = function(e){
+		var channel = e.dataTransfer.getData('text/plain')
+		bindAxis(axisconfig, channel);
+		e.preventDefault()
+		return false
+	}
 }
 
-var yl2 = document.getElementById('ylabel2');
-var ychannel2 = 'voltage'
-yl2.ondragover = function(e){
- 	e.preventDefault()
+setup_dnd_target('xlabel', axisconfig_x);
+setup_dnd_target('ylabel1', axisconfig_y1);
+setup_dnd_target('ylabel2', axisconfig_y2);
+
+
+function bindAxis(axis, channel){
+	var meter=metersByName[channel];
+	axis.name = meter.name
+	axis.labelElement.innerText = meter.displayname + ' ('+meter.units+')';
+	axis.min = meter.axisMin;
+	axis.max = meter.axisMax;
 }
-yl2.ondrop = function(e){
-	var channel = e.dataTransfer.getData('text/plain')
-	yl2.firstChild.innerHTML = metersByName[channel].displayname + ' ('+metersByName[channel].units+')';
-	ychannel2 = channel;
-	e.preventDefault()
-	return false
+
+function updateAxis(axisconfig, defaultchan){
+	if (!axisconfig.name || !meters[axisconfig.name]){
+		bindAxis(axisconfig, defaultchan);
+	}else{
+		bindAxis(axisconfig, axisconfig.name);
+	}
 }
 
 function configChannels(s){
@@ -265,6 +277,10 @@ function configChannels(s){
 	for (var i=0; i<meters.length; i++){
 		addMeter(meters[i]);
 	}
+	
+	updateAxis(axisconfig_x, 'time');
+	updateAxis(axisconfig_y1, 'voltage');
+	updateAxis(axisconfig_y2, 'current');
 }
 
 function update(data){
@@ -325,14 +341,14 @@ panel = vis.add(pv.Panel)
 panel.add(pv.Line)
 			.data(function(){return data})
 			.left(function(d){return x(d.time)})
-			.bottom(function(d){return y(d[ychannel1])})
+			.bottom(function(d){return y(d[axisconfig_y1.name])})
 			.lineWidth(3)
 			.strokeStyle('blue')
 			
 panel.add(pv.Line)
 			.data(function(){return data})
 			.left(function(d){return x(d.time)})
-			.bottom(function(d){return y2(d.current)})
+			.bottom(function(d){return y2(d[axisconfig_y2.name])})
 			.lineWidth(3)
 			.strokeStyle('red')
 
