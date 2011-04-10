@@ -26,24 +26,32 @@ settings = {
 			'displayname': 'Time',
 			'units': 's',
 			'type': 'linspace',
+			'axisMin': -30,
+			'axisMax': 'auto',
 		},
 		{
 			'name': 'voltage',
 			'displayname': 'Voltage',
 			'units': 'V',
 			'type': 'device',
+			'axisMin': -10,
+			'axisMax': 10,
 		},
 		{
 			'name': 'current',
 			'displayname': 'Current',
 			'units': 'mA',
-			'type': 'device'
+			'type': 'device',
+			'axisMin': -200,
+			'axisMax': 200,
 		},
 		{
 			'name': 'power',
 			'displayname': 'Power',
 			'units': 'W',
 			'type': 'computed',
+			'axisMin': 0,
+			'axisMax': 2,
 		}
 	]
 }
@@ -59,7 +67,7 @@ def log():
 		'time': t-tstart,
 		'voltage': data[0],
 		'current': data[1]*1000,
-		'power': data[0] * data[1],
+		'power': abs(data[0] * data[1]),
 		'_driving': 'current' if smu.driving=='i' else 'voltage'
 	})
 
