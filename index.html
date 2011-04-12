@@ -353,9 +353,22 @@ setup_dnd_target('xlabel', axisconfig_x);
 setup_dnd_target('ylabel1', axisconfig_y1);
 setup_dnd_target('ylabel2', axisconfig_y2);
 
+/* URL params */
+
+var key, pair, params, _i, _len, _ref, _ref2;
+
+params = {};
+
+_ref = document.location.search.slice(1).split('&');
+
+for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+ pair = _ref[_i];
+ _ref2 = pair.split('='), key = _ref2[0], params[key] = _ref2[1];
+}
+
 /* websocket */
  
-var hostname = "localhost" 
+var hostname = params.server || 'localhost'
 var ws
  
 function connect() {
@@ -366,7 +379,6 @@ function connect() {
         // websocket is connected, send data using send()                                                                                                                          
         document.title = "Nonolith Client(Connected)"
         document.body.className = "connected"
-        reconnect.disabled = true
     };
     ws.onmessage = function (evt) 
     {
@@ -398,7 +410,6 @@ function connect() {
     { 
         document.title = "Nonolith Client(Disconnected)"
         document.body.className = "disconnected"
-        reconnect.disabled = false
     };
 }
 connect()
