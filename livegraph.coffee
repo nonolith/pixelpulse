@@ -9,6 +9,7 @@ window.arange = (lo, hi, step) ->
 
 class LiveGraph
 	constructor: (@div) ->
+		@div.setAttribute('class', 'livegraph')
 		@axisCanvas = document.createElement('canvas')
 		@graphCanvas = document.createElement('canvas')
 		
@@ -47,9 +48,9 @@ class LiveGraph
 	
 	transformPoint: (axis, point) -> 
 		if axis.direction == 'y'
-			@height - OFFSET - point * (@height - OFFSET*2)/(axis.max - axis.min)
+			@height - OFFSET - (point-(axis.currentMin ? axis.min)) * (@height - OFFSET*2)/(axis.span)
 		else
-			OFFSET + point * (@width - OFFSET*2)/(axis.max - axis.min)
+			OFFSET + (point-(axis.currentMin ? axis.min)) * (@width - OFFSET*2)/(axis.span)
 		
 	redrawAxis: () ->
 		@axisCanvas.width = 1
@@ -77,7 +78,6 @@ class LiveGraph
 					textoffset = 5
 				@ctxa.textBaseline = 'middle'
 				
-				console.log('x', x, axis.xpos)
 				@ctxa.beginPath()
 				@ctxa.moveTo(x, OFFSET)
 				@ctxa.lineTo(x, @height-OFFSET)
@@ -100,6 +100,10 @@ class LiveGraph
 				@ctxa.textAlign = 'center'
 				@ctxa.textBaseline = 'top'
 				
+				if axis.max == 'auto'
+					axis.currentMax = 0
+					axis.currentMin = axis.min
+				
 				for x in arange(axis.min, axis.max, grid)
 					@ctxa.beginPath()
 					@ctxa.moveTo(@transformPoint(axis,x),y-4)
@@ -109,6 +113,7 @@ class LiveGraph
 				
 			
 	redrawGraph: ()->
+		if !@data.length then return
 		@graphCanvas.width = 1
 		@graphCanvas.width = @width
 		@graphCanvas.height = @height
@@ -117,10 +122,21 @@ class LiveGraph
 		@ctxg.lineWidth = 2
 		
 		xaxis = @axes.xbottom
-		for yaxis in [@axes.yleft, @axes.yright]		
+		xmin = xaxis.min
+		xmax = xaxis.max
+		
+		if xmax == 'auto'
+			xmax = xaxis.currentMax = @data[@data.length-1][xaxis.property]
+			xmin = xaxis.currentMin = xmax + xmin
+			
+		for yaxis in [@axes.yleft, @axes.yright]
+			@ctxg.strokeStyle = yaxis.color	
 			@ctxg.beginPath()
 			for i in @data
-				@ctxg.lineTo(@transformPoint(xaxis,i[xaxis.property]), @transformPoint(yaxis,i[yaxis.property]))
+				pt = i[xaxis.property]
+				if pt<xmin or pt>xmax
+					continue
+				@ctxg.lineTo(@transformPoint(xaxis,pt), @transformPoint(yaxis,i[yaxis.property]))
 			@ctxg.stroke()
 		
 	
@@ -131,12 +147,18 @@ class LiveGraph
 	setData: (@data) ->
 		@redrawGraph()
 	
-	setAxis: (axis, label, property, min, max) ->
+	setAxis: (axis, label, property, min, max, color) ->
 		axis.property = property
 		axis.min = min
 		axis.max = max
+		axis.color = color
+		axis.labelSpan.style.color = color
 		axis.labelSpan.innerText = label
+		axis.currentMin = null
+		axis.currentMax = null
+		axis.span = (if max is 'auto' then 0 else max) - min
 		@redrawAxis()
+		@redrawGraph()
 		
 window.LiveGraph = LiveGraph
 	
