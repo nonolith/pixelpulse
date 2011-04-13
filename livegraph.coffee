@@ -2,6 +2,7 @@
 OFFSET = 20
 
 window.arange = (lo, hi, step) ->
+	lo -= step
 	while lo < hi
 		lo += step
 
@@ -42,14 +43,23 @@ class LiveGraph
 		
 		ctx.scale(xscale, -yscale)
 		return [xscale, yscale]
-		
-		
+	
+	transformPoint: (axis, point) -> 
+		if axis.direction == 'y'
+			@height - OFFSET*2 - point * (@height - OFFSET*2)/(axis.max - axis.min)
+		else
+			point * (@width - OFFSET*2)/(axis.max - axis.min)
 		
 	redrawAxis: () ->
 		@axisCanvas.width = 1
 		@axisCanvas.width = @width
 		@axisCanvas.height = @height
 		@ctxa = @axisCanvas.getContext('2d')
+		@ctxa.translate(OFFSET, OFFSET)
+		
+		@ctxa.lineWidth = 2
+		
+		@ctxa.textBaseline
 		
 		for name, axis of @axes
 			grid=Math.pow(10, Math.round(Math.log(axis.max-axis.min)/Math.LN10)-1)
@@ -57,39 +67,45 @@ class LiveGraph
 				grid *= 2
 			
 			if axis.direction=='y'
-				[xscale, yscale] = @transformForAxis(@ctxa, false, axis)
+				if axis.xpos==0
+					x = 0
+					@ctxa.textAlign = 'right'
+					textoffset = -5
+				else 
+					x = @width-2*OFFSET
+					@ctxa.textAlign = 'left'
+					textoffset = 5
+				@ctxa.textBaseline = 'middle'
 				
-				x = if axis.xpos==0 then 0 else @width-2*OFFSET
 				console.log('x', x, axis.xpos)
-				@ctxa.lineWidth = 3
 				@ctxa.beginPath()
-				@ctxa.moveTo(x, axis.min)
-				@ctxa.lineTo(x, axis.max)
+				@ctxa.moveTo(x, 0)
+				@ctxa.lineTo(x, @height-OFFSET*2)
 				@ctxa.stroke()
 				
 				for y in arange(axis.min, axis.max, grid)
-					console.log(axis.xpos, x, y)
-					@ctxa.lineWidth = 2/yscale
 					@ctxa.beginPath()
-					@ctxa.moveTo(x-4, y)
-					@ctxa.lineTo(x+4, y)
+					@ctxa.moveTo(x-4, @transformPoint(axis,y))
+					@ctxa.lineTo(x+4, @transformPoint(axis,y))
 					@ctxa.stroke()
+					@ctxa.fillText(y, x+textoffset, @transformPoint(axis,y))
 			else
-				[xscale, yscale] = @transformForAxis(@ctxa, axis, false)
-				
-				y = 0
-				@ctxa.lineWidth = 3
+				y = @height-OFFSET*2
 				@ctxa.beginPath()
-				@ctxa.moveTo(axis.min, y)
-				@ctxa.lineTo(axis.max, y)
+				@ctxa.moveTo(0, y)
+				@ctxa.lineTo(@width-OFFSET*2, y)
 				@ctxa.stroke()
 				
+				textoffset = 5
+				@ctxa.textAlign = 'center'
+				@ctxa.textBaseline = 'top'
+				
 				for x in arange(axis.min, axis.max, grid)
-					@ctxa.lineWidth = 2/xscale
 					@ctxa.beginPath()
-					@ctxa.moveTo(x,y-4)
-					@ctxa.lineTo(x,y+4)
+					@ctxa.moveTo(@transformPoint(axis,x),y-4)
+					@ctxa.lineTo(@transformPoint(axis,x),y+4)
 					@ctxa.stroke()
+					@ctxa.fillText(x, @transformPoint(axis,x),y+textoffset)
 				
 			
 	redrawGraph: ()->
