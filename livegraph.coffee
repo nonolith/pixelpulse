@@ -88,7 +88,7 @@ class LiveGraph
 					@ctxa.moveTo(x-4, @transformPoint(axis,y))
 					@ctxa.lineTo(x+4, @transformPoint(axis,y))
 					@ctxa.stroke()
-					@ctxa.fillText(y, x+textoffset, @transformPoint(axis,y))
+					@ctxa.fillText(Math.round(y*10)/10, x+textoffset, @transformPoint(axis,y))
 			else
 				y = @height-OFFSET
 				@ctxa.beginPath()
@@ -109,7 +109,7 @@ class LiveGraph
 					@ctxa.moveTo(@transformPoint(axis,x),y-4)
 					@ctxa.lineTo(@transformPoint(axis,x),y+4)
 					@ctxa.stroke()
-					@ctxa.fillText(x, @transformPoint(axis,x),y+textoffset)
+					@ctxa.fillText(Math.round(x*10)/10, @transformPoint(axis,x),y+textoffset)
 				
 			
 	redrawGraph: ()->
