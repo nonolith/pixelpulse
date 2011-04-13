@@ -1,0 +1,15 @@
+<!doctype html>
+
+<script src='livegraph.js'></script>
+
+<div id='test'></div>
+
+<script>
+window.onload = function(){
+	a = new LiveGraph(document.getElementById('test'));
+	a.setAxis(a.axes.xbottom, "X Axis", 'x', 0, 20)
+	a.setAxis(a.axes.yleft, "Y Axis", 'y', 0, 10)
+	a.setAxis(a.axes.yright, "Y2", 'y2', 0, 40)
+	a.redrawAxis()
+}
+</script>
