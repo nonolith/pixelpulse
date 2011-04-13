@@ -181,7 +181,7 @@ body{
 </style>
 
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
-<script src='protovis.min.js'></script>
+<script src='js/protovis.min.js'></script>
 
 </head>
 <body>
@@ -202,6 +202,8 @@ body{
 </div>
 
 <script>
+
+var port = 8888;
 
 var meters={};
 var metersByName = {};
@@ -372,7 +374,7 @@ var hostname = params.server || 'localhost'
 var ws
  
 function connect() {
-    ws = new WebSocket("ws://" + hostname + ":9876/");
+    ws = new WebSocket("ws://" + hostname + ":" + port + "/dataws");
      
     ws.onopen = function()
     {
