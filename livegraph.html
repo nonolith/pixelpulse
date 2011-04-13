@@ -1,8 +1,61 @@
 <!doctype html>
 
+<style>
+.livegraph{
+	position: relative;
+}
+
+
+.livegraph canvas{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+.livegraph .livegraph-label-xbottom{
+	position: absolute;
+	bottom: 0px;
+	width: 100%;
+	text-align: center;
+}
+
+.livegraph-label-yleft, .livegraph-label-yright{
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+	width: 15px;
+	text-align: center;
+	padding-left: 5px;
+}
+
+.livegraph-label-yleft{
+	color: blue;
+	left: 0px;
+}
+
+.livegraph-label-yright{
+	color:red;
+	right: 0px;
+}
+
+.livegraph-label-yleft span, .livegraph-label-yright span{
+	position: absolute;
+	margin-top: 75px;
+	top: 50%;
+	width: 150px;
+	text-align: center;
+	display: inline-block;
+	-webkit-transform: rotate(-90deg);
+	-moz-transform: rotate(-90deg);
+	-webkit-transform-origin: 0% 0%;
+	
+}
+
+</style>
+
 <script src='livegraph.js'></script>
 
-<div id='test'></div>
+<div class='livegraph' id='test' style='position: absolute; top: 0; left:0; right:20px; bottom:0'></div>
 
 <script>
 window.onload = function(){
@@ -11,5 +64,15 @@ window.onload = function(){
 	a.setAxis(a.axes.yleft, "Y Axis", 'y', 0, 10)
 	a.setAxis(a.axes.yright, "Y2", 'y2', 0, 40)
 	a.redrawAxis()
+	
+	a.setData([
+		{x: 0, y:1, y2:10},
+		{x: 2, y:2, y2:3},
+		{x: 4, y:3, y2:5},
+		{x: 6, y:4, y2:12},
+		{x: 8, y:5, y2:1}, 
+	])
 }
+
+window.onresize = function(){a.resized()}
 </script>

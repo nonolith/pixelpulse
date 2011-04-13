@@ -1,5 +1,5 @@
 
-OFFSET = 20
+OFFSET = 35
 
 window.arange = (lo, hi, step) ->
 	lo -= step
@@ -15,9 +15,6 @@ class LiveGraph
 		@div.appendChild(@axisCanvas)
 		@div.appendChild(@graphCanvas)
 		
-		@width = 500
-		@height = 400
-		
 		@axes =
 			yleft: {direction:'y', xpos:0}
 			yright: {direction:'y', xpos:1}
@@ -29,8 +26,12 @@ class LiveGraph
 			axis.labelDiv.setAttribute('class', "livegraph-label livegraph-label-#{name}")
 			@div.appendChild(axis.labelDiv)
 			axis.labelDiv.appendChild(axis.labelSpan)
+		@data = []
+		@resized()
 				
 	resized: () ->
+		@width = @div.offsetWidth
+		@height = @div.offsetHeight
 		@redrawAxis()
 		@redrawGraph()
 		
@@ -108,10 +109,27 @@ class LiveGraph
 				
 			
 	redrawGraph: ()->
+		@graphCanvas.width = 1
+		@graphCanvas.width = @width
+		@graphCanvas.height = @height
+		
+		@ctxg = @graphCanvas.getContext('2d')
+		@ctxg.lineWidth = 2
+		
+		xaxis = @axes.xbottom
+		for yaxis in [@axes.yleft, @axes.yright]		
+			@ctxg.beginPath()
+			for i in @data
+				@ctxg.lineTo(@transformPoint(xaxis,i[xaxis.property]), @transformPoint(yaxis,i[yaxis.property]))
+			@ctxg.stroke()
+		
 	
-	pushData: () ->
+	pushData: (pt) ->
+		@data.push(pt)
+		@redrawGraph()
 	
-	setData: () ->
+	setData: (@data) ->
+		@redrawGraph()
 	
 	setAxis: (axis, label, property, min, max) ->
 		axis.property = property
