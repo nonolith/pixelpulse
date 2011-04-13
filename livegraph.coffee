@@ -46,16 +46,15 @@ class LiveGraph
 	
 	transformPoint: (axis, point) -> 
 		if axis.direction == 'y'
-			@height - OFFSET*2 - point * (@height - OFFSET*2)/(axis.max - axis.min)
+			@height - OFFSET - point * (@height - OFFSET*2)/(axis.max - axis.min)
 		else
-			point * (@width - OFFSET*2)/(axis.max - axis.min)
+			OFFSET + point * (@width - OFFSET*2)/(axis.max - axis.min)
 		
 	redrawAxis: () ->
 		@axisCanvas.width = 1
 		@axisCanvas.width = @width
 		@axisCanvas.height = @height
 		@ctxa = @axisCanvas.getContext('2d')
-		@ctxa.translate(OFFSET, OFFSET)
 		
 		@ctxa.lineWidth = 2
 		
@@ -68,19 +67,19 @@ class LiveGraph
 			
 			if axis.direction=='y'
 				if axis.xpos==0
-					x = 0
+					x = OFFSET
 					@ctxa.textAlign = 'right'
 					textoffset = -5
 				else 
-					x = @width-2*OFFSET
+					x = @width-OFFSET
 					@ctxa.textAlign = 'left'
 					textoffset = 5
 				@ctxa.textBaseline = 'middle'
 				
 				console.log('x', x, axis.xpos)
 				@ctxa.beginPath()
-				@ctxa.moveTo(x, 0)
-				@ctxa.lineTo(x, @height-OFFSET*2)
+				@ctxa.moveTo(x, OFFSET)
+				@ctxa.lineTo(x, @height-OFFSET)
 				@ctxa.stroke()
 				
 				for y in arange(axis.min, axis.max, grid)
@@ -90,10 +89,10 @@ class LiveGraph
 					@ctxa.stroke()
 					@ctxa.fillText(y, x+textoffset, @transformPoint(axis,y))
 			else
-				y = @height-OFFSET*2
+				y = @height-OFFSET
 				@ctxa.beginPath()
-				@ctxa.moveTo(0, y)
-				@ctxa.lineTo(@width-OFFSET*2, y)
+				@ctxa.moveTo(OFFSET, y)
+				@ctxa.lineTo(@width-OFFSET, y)
 				@ctxa.stroke()
 				
 				textoffset = 5
