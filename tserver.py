@@ -1,20 +1,19 @@
 #coding: utf-8
 
 from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
+from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.web import Application, RequestHandler, StaticFileHandler
 from tornado.websocket import WebSocketHandler
 
 import os
 import modconsmu
-import threading
 import time
 import json
 
 clients = []
 smu = modconsmu.smu()
 
-tick = .1
+tick = .05
 
 settings = {
 	'channels': [
@@ -91,10 +90,9 @@ def formMessage(smu):
 		'_driving': 'current' if smu.driving=='i' else 'voltage'}
 
 def log():
-	while True:
-		if len(clients) != 0:
-			sendToAll(clients, formJSON('update', formMessage(smu)))
-		time.sleep(tick)
+	if len(clients) != 0:
+		sendToAll(clients, formJSON('update', formMessage(smu)))
+	time.sleep(tick)
 
 class MainHandler(RequestHandler):
 	def get(self):
@@ -102,6 +100,7 @@ class MainHandler(RequestHandler):
 
 class DataSocketHandler(WebSocketHandler):
 	def	open(self):
+		print "WS Connected"
 		clients.append(self)
 		self.write_message(formJSON('config', settings))
 	def on_message(self, message):
@@ -132,8 +131,8 @@ http_server = HTTPServer(application)
 http_server.listen(8888)
 mainLoop = IOLoop.instance()
 
-threading.Thread(target=mainLoop.start).start()
-
 startT = time.time()
-threading.Thread(target=log).start()
+logger = PeriodicCallback(log, tick*1000)
+logger.start()
 
+mainLoop.start()
