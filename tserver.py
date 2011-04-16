@@ -100,7 +100,6 @@ class MainHandler(RequestHandler):
 
 class DataSocketHandler(WebSocketHandler):
 	def	open(self):
-		print "WS Connected"
 		clients.append(self)
 		self.write_message(formJSON('config', settings))
 	def on_message(self, message):
