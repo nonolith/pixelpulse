@@ -62,7 +62,7 @@ class LiveGraph
 		if axis.direction == 'y'
 			(@height - OFFSET - (point-(axis.currentMin ? axis.min)) * (@height - OFFSET*2)/(axis.span))|0
 		else
-			(OFFSET + (point-(axis.currentMin ? axis.min)) * (@width - OFFSET*2)/(axis.span)))|0
+			(OFFSET + (point-(axis.currentMin ? axis.min)) * (@width - OFFSET*2)/(axis.span))|0
 		
 	redrawAxis: () ->
 		@axisCanvas.width = 1
@@ -168,7 +168,7 @@ class LiveGraph
 			xmin = xaxis.currentMin = xmax + xaxis.min
 			
 			prevX = @transformPoint(xaxis, prevPt[xaxis.property])
-			move = Math.ceil(@width - OFFSET - prevX)
+			move = (@width - OFFSET - prevX) | 0
 			
 			@tmpCanvas.width=0
 			@tmpCanvas.width=@width
