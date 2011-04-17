@@ -12,6 +12,7 @@ class LiveGraph
 		@div.setAttribute('class', 'livegraph')
 		@axisCanvas = document.createElement('canvas')
 		@graphCanvas = document.createElement('canvas')
+		@tmpCanvas = document.createElement('canvas')
 		
 		@div.appendChild(@axisCanvas)
 		@div.appendChild(@graphCanvas)
@@ -33,6 +34,17 @@ class LiveGraph
 	resized: () ->
 		@width = @div.offsetWidth
 		@height = @div.offsetHeight
+		@axisCanvas.width = @width
+		@axisCanvas.height = @height
+		@graphCanvas.width = @width
+		@graphCanvas.height = @height
+		@tmpCanvas.width = @width
+		@tmpCanvas.height = @height
+		
+		@ctxg = @graphCanvas.getContext('2d')
+		@ctxt = @tmpCanvas.getContext('2d')
+		@ctxg.lineWidth = 2
+		
 		@redrawAxis()
 		@redrawGraph()
 		
@@ -46,16 +58,16 @@ class LiveGraph
 		ctx.scale(xscale, -yscale)
 		return [xscale, yscale]
 	
-	transformPoint: (axis, point) -> 
+	transformPoint: (axis, point) ->
 		if axis.direction == 'y'
-			@height - OFFSET - (point-(axis.currentMin ? axis.min)) * (@height - OFFSET*2)/(axis.span)
+			(@height - OFFSET - (point-(axis.currentMin ? axis.min)) * (@height - OFFSET*2)/(axis.span))|0
 		else
-			OFFSET + (point-(axis.currentMin ? axis.min)) * (@width - OFFSET*2)/(axis.span)
+			(OFFSET + (point-(axis.currentMin ? axis.min)) * (@width - OFFSET*2)/(axis.span)))|0
 		
 	redrawAxis: () ->
 		@axisCanvas.width = 1
 		@axisCanvas.width = @width
-		@axisCanvas.height = @height
+		
 		@ctxa = @axisCanvas.getContext('2d')
 		
 		@ctxa.lineWidth = 2
@@ -116,9 +128,6 @@ class LiveGraph
 		if !@data.length then return
 		@graphCanvas.width = 1
 		@graphCanvas.width = @width
-		@graphCanvas.height = @height
-		
-		@ctxg = @graphCanvas.getContext('2d')
 		@ctxg.lineWidth = 2
 		
 		xaxis = @axes.xbottom
@@ -141,8 +150,53 @@ class LiveGraph
 		
 	
 	pushData: (pt) ->
+		prevPt = @data[@data.length-1]
 		@data.push(pt)
-		@redrawGraph()
+		
+		if @data.length < 2
+			return
+		
+		if @axes.xbottom.max == 'auto' and @axes.xbottom.currentMax
+			xaxis = @axes.xbottom
+			
+			drawWidth = @width - OFFSET*2
+			drawHeight = @height - OFFSET*2
+			drawLeft = OFFSET
+			drawTop = OFFSET
+			
+			xmax = xaxis.currentMax = pt[xaxis.property]
+			xmin = xaxis.currentMin = xmax + xaxis.min
+			
+			prevX = @transformPoint(xaxis, prevPt[xaxis.property])
+			move = Math.ceil(@width - OFFSET - prevX)
+			
+			@tmpCanvas.width=0
+			@tmpCanvas.width=@width
+			
+			@ctxt.drawImage(@graphCanvas,
+				drawLeft+move, drawTop, drawWidth, drawHeight,
+				drawLeft,      drawTop, drawWidth, drawHeight)
+				
+			@graphCanvas.width=0
+			@graphCanvas.width=@width
+				
+			@ctxg.drawImage(@tmpCanvas,
+				drawLeft, drawTop, drawWidth, drawHeight,
+				drawLeft, drawTop, drawWidth, drawHeight)
+				
+			@ctxg.lineWidth = 2
+			for yaxis in [@axes.yleft, @axes.yright]
+				@ctxg.strokeStyle = yaxis.color	
+				@ctxg.beginPath()
+				
+				prevY = @transformPoint(yaxis,prevPt[yaxis.property])
+				newY = @transformPoint(yaxis, pt[yaxis.property])
+				@ctxg.moveTo(@width-OFFSET-move, prevY)
+				@ctxg.lineTo(@width-OFFSET, newY)
+				@ctxg.stroke()
+		else
+			@redrawGraph()
+		
 	
 	setData: (@data) ->
 		@redrawGraph()
@@ -154,8 +208,8 @@ class LiveGraph
 		axis.color = color
 		axis.labelSpan.style.color = color
 		axis.labelSpan.innerText = label
-		axis.currentMin = null
-		axis.currentMax = null
+		axis.currentMin = min
+		axis.currentMax = (if max is 'auto' then 0 else max)
 		axis.span = (if max is 'auto' then 0 else max) - min
 		@redrawAxis()
 		@redrawGraph()
