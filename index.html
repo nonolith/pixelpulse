@@ -202,9 +202,6 @@ body{
 </div>
 
 <script>
-
-var port = 8888;
-
 var meters={};
 var metersByName = {};
 
@@ -370,11 +367,11 @@ for (_i = 0, _len = _ref.length; _i < _len; _i++) {
 
 /* websocket */
  
-var hostname = params.server || 'localhost'
+var hostname = params.server || document.location.host
 var ws
  
 function connect() {
-    ws = new WebSocket("ws://" + hostname + ":" + port + "/dataws");
+    ws = new WebSocket("ws://" + hostname + "/dataws");
      
     ws.onopen = function()
     {
