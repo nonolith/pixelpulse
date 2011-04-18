@@ -229,6 +229,9 @@ function configChannels(s){
 	updateAxis(graph.axes.yright, 'current');
 }
 
+var renderTime = 0;
+var renders = 0;
+
 function update(data){
 	for (var i=0; i<meters.length; i++){
 		var m = meters[i]
@@ -236,8 +239,17 @@ function update(data){
 			setInput(m.input, data[m.name])
 		}
 	}
+	
+	var t1 =new Date()
 	graph.pushData(data)
+	var t2 = new Date()
+	
+	renderTime += t2 - t1
+	renders++; 
 }
+
+
+setInterval(function(){console.log('avg:', renderTime/renders); renderTime=renders=0}, 5000);
 
 var reconnectTimer = false;
 function tryReconnect(){

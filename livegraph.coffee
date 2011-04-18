@@ -60,9 +60,9 @@ class LiveGraph
 	
 	transformPoint: (axis, point) ->
 		if axis.direction == 'y'
-			(@height - OFFSET - (point-(axis.currentMin ? axis.min)) * (@height - OFFSET*2)/(axis.span))|0
+			(@height - OFFSET - (point-axis.min) * (@height - OFFSET*2)/(axis.span))
 		else
-			(OFFSET + (point-(axis.currentMin ? axis.min)) * (@width - OFFSET*2)/(axis.span))|0
+			(OFFSET + (point-axis.min) * (@width - OFFSET*2)/(axis.span))
 		
 	redrawAxis: () ->
 		@axisCanvas.width = 1
@@ -112,10 +112,6 @@ class LiveGraph
 				@ctxa.textAlign = 'center'
 				@ctxa.textBaseline = 'top'
 				
-				if axis.max == 'auto'
-					axis.currentMax = 0
-					axis.currentMin = axis.min
-				
 				for x in arange(axis.min, axis.max, grid)
 					@ctxa.beginPath()
 					@ctxa.moveTo(@transformPoint(axis,x),y-4)
@@ -130,13 +126,11 @@ class LiveGraph
 		@graphCanvas.width = @width
 		@ctxg.lineWidth = 2
 		
+		@autoscroll()
+		
 		xaxis = @axes.xbottom
 		xmin = xaxis.min
 		xmax = xaxis.max
-		
-		if xmax == 'auto'
-			xmax = xaxis.currentMax = @data[@data.length-1][xaxis.property]
-			xmin = xaxis.currentMin = xmax + xmin
 			
 		for yaxis in [@axes.yleft, @axes.yright]
 			@ctxg.strokeStyle = yaxis.color	
@@ -156,7 +150,9 @@ class LiveGraph
 		if @data.length < 2
 			return
 		
-		if @axes.xbottom.max == 'auto' and @axes.xbottom.currentMax
+		return @redrawGraph()
+		
+		if @axes.xbottom.autoScroll
 			xaxis = @axes.xbottom
 			
 			drawWidth = @width - OFFSET*2
@@ -164,11 +160,13 @@ class LiveGraph
 			drawLeft = OFFSET
 			drawTop = OFFSET
 			
-			xmax = xaxis.currentMax = pt[xaxis.property]
-			xmin = xaxis.currentMin = xmax + xaxis.min
+			@autoscroll()
+			
+			xmax = xaxis.max
+			xmin = xaxis.min
 			
 			prevX = @transformPoint(xaxis, prevPt[xaxis.property])
-			move = (@width - OFFSET - prevX) | 0
+			move = Math.ceil(@width - OFFSET - prevX)
 			
 			@tmpCanvas.width=0
 			@tmpCanvas.width=@width
@@ -203,16 +201,29 @@ class LiveGraph
 	
 	setAxis: (axis, label, property, min, max, color) ->
 		axis.property = property
-		axis.min = min
-		axis.max = max
+		
+		if max == 'auto'
+			axis.autoScroll = min
+			axis.min = min
+			axis.max = 0
+		else
+			axis.min = min
+			axis.max = max
+			axis.autoScroll = false
+			
 		axis.color = color
 		axis.labelSpan.style.color = color
 		axis.labelSpan.innerText = label
-		axis.currentMin = min
-		axis.currentMax = (if max is 'auto' then 0 else max)
-		axis.span = (if max is 'auto' then 0 else max) - min
+		axis.span = axis.max - axis.min
 		@redrawAxis()
 		@redrawGraph()
 		
+	autoscroll: ->
+		if @axes.xbottom.autoScroll
+			@axes.xbottom.max = @data[@data.length-1][@axes.xbottom.property]
+			@axes.xbottom.min = @axes.xbottom.max + @axes.xbottom.autoScroll
+			
+		
 window.LiveGraph = LiveGraph
+
 	
