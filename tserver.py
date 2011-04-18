@@ -111,8 +111,10 @@ class DataSocketHandler(WebSocketHandler):
 						smu.set(volts=val)
 					elif prop == 'current':
 						smu.set(amps=val/1000.0)
+					elif prop == '_action' and val == 'set':
+						pass
 					else:
-						print "set: bad key"
+						print prop, val + "is invalid"
 		except Exception as e:
 			print e
 	def on_close(self):
@@ -122,7 +124,6 @@ class DataSocketHandler(WebSocketHandler):
 application = Application([
 	(r"/", MainHandler),
 	(r"/dataws", DataSocketHandler),
-	(r"/favicon.ico", StaticFileHandler, {"path": "./static/favicon.ico"}),
 	(r"/js/(.*)", StaticFileHandler, {"path": "./static/js"})
 ])
 
