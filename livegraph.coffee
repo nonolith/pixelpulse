@@ -9,14 +9,6 @@ window.arange = (lo, hi, step) ->
 
 class LiveGraph
 	constructor: (@div) ->
-		@div.setAttribute('class', 'livegraph')
-		@axisCanvas = document.createElement('canvas')
-		@graphCanvas = document.createElement('canvas')
-		@tmpCanvas = document.createElement('canvas')
-		
-		@div.appendChild(@axisCanvas)
-		@div.appendChild(@graphCanvas)
-		
 		@axes =
 			yleft: {direction:'y', xpos:0}
 			yright: {direction:'y', xpos:1}
@@ -29,8 +21,58 @@ class LiveGraph
 			@div.appendChild(axis.labelDiv)
 			axis.labelDiv.appendChild(axis.labelSpan)
 		@data = []
+		
+		@div.setAttribute('class', 'livegraph')
+		
+		
+	transformPoint: (axis, point) ->
+		if axis.direction == 'y'
+			(@height - OFFSET - (point-axis.min) * (@height - OFFSET*2)/(axis.span))|0
+		else
+			(OFFSET + (point-axis.min) * (@width - OFFSET*2)/(axis.span))|0
+			
+	setData: (@data) ->
+		@redrawGraph()
+	
+	setAxis: (axis, label, property, min, max, color) ->
+		axis.property = property
+		
+		if max == 'auto'
+			axis.autoScroll = min
+			axis.min = min
+			axis.max = 0
+		else
+			axis.min = min
+			axis.max = max
+			axis.autoScroll = false
+			
+		axis.color = color
+		axis.labelSpan.style.color = color
+		axis.labelSpan.innerText = label
+		axis.span = axis.max - axis.min
+		@redrawAxis()
+		@redrawGraph()
+		
+	autoscroll: ->
+		if @axes.xbottom.autoScroll
+			@axes.xbottom.max = @data[@data.length-1][@axes.xbottom.property]
+			@axes.xbottom.min = @axes.xbottom.max + @axes.xbottom.autoScroll
+			
+		
+window.LiveGraph = LiveGraph
+
+class LiveGraph_canvas extends LiveGraph
+	constructor: (div) ->
+		super(div)
+		
+		@axisCanvas = document.createElement('canvas')
+		@graphCanvas = document.createElement('canvas')
+		@tmpCanvas = document.createElement('canvas')
+		@div.appendChild(@axisCanvas)
+		@div.appendChild(@graphCanvas)
+		
 		@resized()
-				
+	
 	resized: () ->
 		@width = @div.offsetWidth
 		@height = @div.offsetHeight
@@ -47,23 +89,7 @@ class LiveGraph
 		
 		@redrawAxis()
 		@redrawGraph()
-		
-	transformForAxis: (ctx, xaxis, yaxis) ->
-		ctx.setTransform(1,0,0,1,0,0)
-		ctx.translate(OFFSET-0.5, @height-OFFSET-0.5)
-		
-		xscale = if xaxis then (@width-2*OFFSET)/(xaxis.max-xaxis.min) else 1
-		yscale = if yaxis then (@height-2*OFFSET)/(yaxis.max-yaxis.min) else 1
-		
-		ctx.scale(xscale, -yscale)
-		return [xscale, yscale]
-	
-	transformPoint: (axis, point) ->
-		if axis.direction == 'y'
-			(@height - OFFSET - (point-axis.min) * (@height - OFFSET*2)/(axis.span))
-		else
-			(OFFSET + (point-axis.min) * (@width - OFFSET*2)/(axis.span))
-		
+			
 	redrawAxis: () ->
 		@axisCanvas.width = 1
 		@axisCanvas.width = @width
@@ -111,6 +137,9 @@ class LiveGraph
 				textoffset = 5
 				@ctxa.textAlign = 'center'
 				@ctxa.textBaseline = 'top'
+				
+				
+				continue if axis.autoScroll
 				
 				for x in arange(axis.min, axis.max, grid)
 					@ctxa.beginPath()
@@ -195,35 +224,6 @@ class LiveGraph
 		else
 			@redrawGraph()
 		
-	
-	setData: (@data) ->
-		@redrawGraph()
-	
-	setAxis: (axis, label, property, min, max, color) ->
-		axis.property = property
-		
-		if max == 'auto'
-			axis.autoScroll = min
-			axis.min = min
-			axis.max = 0
-		else
-			axis.min = min
-			axis.max = max
-			axis.autoScroll = false
-			
-		axis.color = color
-		axis.labelSpan.style.color = color
-		axis.labelSpan.innerText = label
-		axis.span = axis.max - axis.min
-		@redrawAxis()
-		@redrawGraph()
-		
-	autoscroll: ->
-		if @axes.xbottom.autoScroll
-			@axes.xbottom.max = @data[@data.length-1][@axes.xbottom.property]
-			@axes.xbottom.min = @axes.xbottom.max + @axes.xbottom.autoScroll
-			
-		
-window.LiveGraph = LiveGraph
+window.LiveGraph_canvas = LiveGraph_canvas	
 
 	
