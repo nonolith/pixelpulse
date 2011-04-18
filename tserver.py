@@ -122,7 +122,8 @@ class DataSocketHandler(WebSocketHandler):
 application = Application([
 	(r"/", MainHandler),
 	(r"/dataws", DataSocketHandler),
-	(r"/js/(.*)", StaticFileHandler, {"path": "./static/js"}),
+	(r"/favicon.ico", StaticFileHandler, {"path": "./static/favicon.ico"}),
+	(r"/js/(.*)", StaticFileHandler, {"path": "./static/js"})
 ])
 
 http_server = HTTPServer(application)
