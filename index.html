@@ -274,7 +274,7 @@ function setInput(input, number){
 
 
 $(document).ready(function(){
-	graph = new LiveGraph_svg(document.getElementById('graph'));
+	graph = new LiveGraph_canvas(document.getElementById('graph'));
 	
 	setup_dnd_target(graph.axes.xbottom);
 	setup_dnd_target(graph.axes.yleft);

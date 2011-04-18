@@ -9,7 +9,7 @@ sock.connect((host, 8098))
 
 smu = modconsmu.smu()
 
-tick = 0.1
+tick = 0.022
 tstart = time.time()
 
 sock.settimeout(tick)
@@ -27,7 +27,7 @@ settings = {
 			'displayname': 'Time',
 			'units': 's',
 			'type': 'linspace',
-			'axisMin': -100,
+			'axisMin': -30,
 			'axisMax': 'auto',
 		},
 		{
