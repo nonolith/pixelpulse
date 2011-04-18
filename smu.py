@@ -9,7 +9,7 @@ sock.connect((host, 8098))
 
 smu = modconsmu.smu()
 
-tick = 0.06
+tick = 0.1
 tstart = time.time()
 
 sock.settimeout(tick)

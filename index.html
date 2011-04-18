@@ -142,6 +142,7 @@ body{
 
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
 <script src='livegraph.js'></script>
+<script src='raphael-min.js'></script>
 <script src="/socket.io/socket.io.js"></script> 
 
 </head>
@@ -273,7 +274,7 @@ function setInput(input, number){
 
 
 $(document).ready(function(){
-	graph = new LiveGraph_canvas(document.getElementById('graph'));
+	graph = new LiveGraph_svg(document.getElementById('graph'));
 	
 	setup_dnd_target(graph.axes.xbottom);
 	setup_dnd_target(graph.axes.yleft);
