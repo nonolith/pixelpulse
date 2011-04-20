@@ -181,8 +181,7 @@ body{
 </style>
 
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
-<script src='protovis.min.js'></script>
-<script src="/socket.io/socket.io.js"></script> 
+<script src='js/protovis.min.js'></script>
 
 </head>
 <body>
@@ -203,7 +202,6 @@ body{
 </div>
 
 <script>
-
 var meters={};
 var metersByName = {};
 
@@ -220,7 +218,7 @@ function addMeter(m){
 	m.input.change(function(e){
 		msg = {'_action':'set'}
 		msg[m.name] = parseFloat($(m.input).val(), 10)
-		socket.send(msg)
+		ws.send(JSON.stringify(msg))
 		$(m.input).blur()
 		console.log('sent', m.name)
 	});
@@ -354,30 +352,67 @@ setup_dnd_target('xlabel', axisconfig_x);
 setup_dnd_target('ylabel1', axisconfig_y1);
 setup_dnd_target('ylabel2', axisconfig_y2);
 
-var socket = new io.Socket(); 
-socket.connect();
+/* URL params */
 
-socket.on('connect', function(){
-	$('#loading').text("Waiting for data...")
-	$(document.body).css('background', 'transparent')
-	$('#reconnect').hide()
-	setup = false;
-	if (reconnectTimer){
-		reconnectTimer = false;
-		clearInterval(reconnectTimer);
-	}
-})
+var key, pair, params, _i, _len, _ref, _ref2;
 
-socket.on('disconnect', function(){
-	$('#loading').text('Disconnected').show()
-	setInterval(tryReconnect, 1000);
-})
-	
+params = {};
 
-var reconnectTimer = false;
-function tryReconnect(){
-	socket.connect()
+_ref = document.location.search.slice(1).split('&');
+
+for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+ pair = _ref[_i];
+ _ref2 = pair.split('='), key = _ref2[0], params[key] = _ref2[1];
 }
+
+/* websocket */
+ 
+var hostname = params.server || document.location.host
+var ws
+ 
+function connect() {
+    ws = new WebSocket("ws://" + hostname + "/dataws");
+     
+    ws.onopen = function()
+    {
+        // websocket is connected, send data using send()                                                                                                                          
+        document.title = "Nonolith Client(Connected)"
+        document.body.className = "connected"
+    };
+    ws.onmessage = function (evt) 
+    {
+		m = JSON.parse(evt.data)
+		if (m._action == 'update'){
+    	    if (!setup){
+    	        $('#loading').hide()
+    	        resize();
+    	        setup = true
+    	    }
+    	    update(m)
+        
+    	    if (axisconfig_x.max == 'auto'){    
+    	        xmax = m.time
+    	        xmin = xmax - xspan;
+    	        x.domain(xmin, xmax);
+    	    }
+        
+    	    data.push(m)
+        
+    	    while(data[0].time<xmin) data.shift()
+        
+    	    vis.render()
+    	}else if(m._action == 'config'){
+    	    configChannels(m.channels)
+    	}
+    };
+    ws.onclose = function()
+    { 
+        document.title = "Nonolith Client(Disconnected)"
+        document.body.className = "disconnected"
+    };
+}
+connect()
+
 
 var xspan = 30;
 var setup = false;
@@ -393,31 +428,6 @@ function setInput(input, number){
 	}
 }
 
-socket.on('message', function(m){ 	 	
- 	if (m._action == 'update'){
- 		if (!setup){
-	 		$('#loading').hide()
-	 		resize();
-	 		setup = true
- 		}
-		update(m)
-		
-		if (axisconfig_x.max == 'auto'){	
-	  		xmax = m.time
-	  		xmin = xmax - xspan;
-	  		x.domain(xmin, xmax);
-	  	}
-	  	
-	  	data.push(m)
-	  	
-	  	while(data[0].time<xmin) data.shift()
-	  	
-		vis.render()
-	}else if(m._action == 'config'){
-		configChannels(m.channels)
-	}
- }) 
- 
 </script>
 
 </body>
