@@ -179,7 +179,7 @@ class LiveGraph_canvas extends LiveGraph
 		if @data.length < 2
 			return
 		
-		#return @redrawGraph()
+		return @redrawGraph()
 		
 		if @axes.xbottom.autoScroll
 			xaxis = @axes.xbottom
