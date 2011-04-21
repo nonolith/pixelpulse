@@ -1,0 +1,35 @@
+<!doctype html>
+
+<style>
+@import 'livegraph.css';
+</style>
+
+<script src='livegraph.js'></script>
+
+<div class='livegraph' id='test' style='position: absolute; top: 0; left:0; right:20px; bottom:0'></div>
+
+<script>
+window.onload = function(){
+	a = new LiveGraph(document.getElementById('test'));
+	a.setAxis(a.axes.xbottom, "X Axis", 'x', -30, 'auto')
+	a.setAxis(a.axes.yleft, "Y Axis", 'y', 0, 10, 'blue')
+	a.setAxis(a.axes.yright, "Y2", 'y2', 0, 40, 'red')
+	a.redrawAxis()
+	
+	a.setData([
+		{x: 0, y:1, y2:10},
+		{x: 2, y:2, y2:3},
+		{x: 4, y:3, y2:5},
+		{x: 6, y:4, y2:12},
+		{x: 8, y:5, y2:1}, 
+	])
+	
+	x = 9;
+	setInterval(function(){
+		a.pushData({x:x, y:Math.random()+3, y2:Math.random()+30})
+		x+=0.05
+	}, 30)
+}
+
+window.onresize = function(){a.resized()}
+</script>

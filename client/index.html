@@ -54,10 +54,10 @@ body{
 
 #graph{
 	position: absolute;
-	top: 10px;
-	left: 0;
-	right: 0;
-	bottom: 105px;
+	top: -10px;
+	left: 5px;
+	right: 5px;
+	bottom: 115px;
 }
 
 #meters{
@@ -136,62 +136,20 @@ body{
 	font-size: 200%;
 }
 
-#xlabel{
-	position: absolute;
-	bottom: 10px;
-	width: 100%;
-	text-align: center;
-}
-
-#ylabel1, #ylabel2{
-	position: absolute;
-	top: 0px;
-	bottom: 0px;
-	width: 20px;
-	text-align: center;
-	padding-left: 5px;
-}
-
-#ylabel1:-webkit-drop-target, #ylabel2:-webkit-drop-target{
-	background: #ccc;
-}
-
-#ylabel1{
-	color: blue;
-	left: 0px;
-}
-
-#ylabel2{
-	color:red;
-	right: 0px;
-}
-
-#ylabel1 span, #ylabel2 span{
-	position: absolute;
-	top: 50%;
-	width: 150px;
-	text-align: center;
-	display: inline-block;
-	-webkit-transform: rotate(-90deg);
-	-moz-transform: rotate(-90deg);
-	-webkit-transform-origin: 0% 0%;
-	
-}
-
 </style>
+<link rel='stylesheet' href='livegraph.css' />
+
 
 <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
-<script src='js/protovis.min.js'></script>
+<script src='livegraph.js'></script>
+<script src='raphael-min.js'></script>
 
 </head>
 <body>
 <div id='wrap'>
 
 <div id='graph'>
-<div id='xlabel'><span>Time</span></div>
-<div id='ylabel1'><span>Voltage</span></div>
-<div id='ylabel2'><span>Current</span></div>
-<div id='graphcanvas'></div>
+
 </div>
 
 <div id='loading'>Connecting...</div>
@@ -230,9 +188,8 @@ function addMeter(m){
 
 }
 
-function setup_dnd_target(element, axisconfig){
-	var elem = document.getElementById(element);
-	axisconfig.labelElement = elem.firstChild;
+function setup_dnd_target(axisconfig){
+	var elem = axisconfig.labelDiv;
 	elem.ondragover = function(e){
 	 	e.preventDefault()
 	}
@@ -246,13 +203,7 @@ function setup_dnd_target(element, axisconfig){
 
 function bindAxis(axis, channel){
 	var meter=metersByName[channel];
-	axis.name = meter.name
-	axis.labelElement.innerText = meter.displayname + ' ('+meter.units+')';
-	axis.min = meter.axisMin;
-	axis.max = meter.axisMax;
-	
-	if (axis.max != 'auto')
-		axis.scale.domain(axis.min, axis.max);
+	graph.setAxis(axis, meter.displayname + ' ('+meter.units+')', meter.name, meter.axisMin, meter.axisMax, axis.color)
 }
 
 function updateAxis(axisconfig, defaultchan){
@@ -270,11 +221,15 @@ function configChannels(s){
 	for (var i=0; i<meters.length; i++){
 		addMeter(meters[i]);
 	}
-	
-	updateAxis(axisconfig_x, 'time');
-	updateAxis(axisconfig_y1, 'voltage');
-	updateAxis(axisconfig_y2, 'current');
+	graph.axes.yleft.color = 'blue'
+	graph.axes.yright.color = 'red'
+	updateAxis(graph.axes.xbottom, 'time');
+	updateAxis(graph.axes.yleft, 'voltage');
+	updateAxis(graph.axes.yright, 'current');
 }
+
+var renderTime = 0;
+var renders = 0;
 
 function update(data){
 	for (var i=0; i<meters.length; i++){
@@ -283,74 +238,18 @@ function update(data){
 			setInput(m.input, data[m.name])
 		}
 	}
+	
+	var t1 =new Date()
+	graph.pushData(data)
+	var t2 = new Date()
+	
+	renderTime += t2 - t1
+	renders++; 
 }
 
-var w=600, h=300;
-
-var x = pv.Scale.linear(-10, 10).nice()
-var y = pv.Scale.linear(-10, 10).nice()
-var y2 = pv.Scale.linear(-200, 200).nice()
-
-var data = [];
-
-var vis = new pv.Panel()
-			.bottom(20)
-			.left(40)
-			.right(40)
-			.top(5)
-			.canvas('graphcanvas')
-
-function resize(){
-	w = $("#graph").width() - 90;
-	h = $("#graph").height() - 40;
-	vis.width(w).height(h);
-	x = x.range(0,w);
-	y = y.range(0,h);
-	y2 = y2.range(0,h); 
-	console.log('resized');
+if(console){
+	setInterval(function(){console.log('avg:', renderTime/renders); renderTime=renders=0}, 5000);
 }
-
-$(window).resize(resize);
-						
-yt = vis.add(pv.Rule)
-    .data(function(){return y.ticks(5)})
-    .bottom(y)
-    .strokeStyle(function(d){return d ? "#ccc" : "#000"})
-	.anchor("left").add(pv.Label)
-    	.text(y.tickFormat)
-    	.textStyle('blue')
-    
-yt2 = vis.add(pv.Rule)
-    .data(function(){return y2.ticks(5)})
-    .bottom(y2)
-    .strokeStyle('rgba(0,0,0,0)')
-	.anchor("right").add(pv.Label)
-  		.text(y2.tickFormat)
-  		.textStyle('red')
-
-panel = vis.add(pv.Panel)
-    .overflow("hidden")
-    
-panel.add(pv.Line)
-			.data(function(){return data})
-			.left(function(d){return x(d[axisconfig_x.name])})
-			.bottom(function(d){return y(d[axisconfig_y1.name])})
-			.lineWidth(3)
-			.strokeStyle('blue')
-			
-panel.add(pv.Line)
-			.data(function(){return data})
-			.left(function(d){return x(d[axisconfig_x.name])})
-			.bottom(function(d){return y2(d[axisconfig_y2.name])})
-			.lineWidth(3)
-			.strokeStyle('red')
-
-var axisconfig_x = {scale:x};
-var axisconfig_y1 = {scale:y};
-var axisconfig_y2 = {scale:y2};
-setup_dnd_target('xlabel', axisconfig_x);
-setup_dnd_target('ylabel1', axisconfig_y1);
-setup_dnd_target('ylabel2', axisconfig_y2);
 
 /* URL params */
 
@@ -365,54 +264,8 @@ for (_i = 0, _len = _ref.length; _i < _len; _i++) {
  _ref2 = pair.split('='), key = _ref2[0], params[key] = _ref2[1];
 }
 
-/* websocket */
- 
 var hostname = params.server || document.location.host
-var ws
- 
-function connect() {
-    ws = new WebSocket("ws://" + hostname + "/dataws");
-     
-    ws.onopen = function()
-    {
-        // websocket is connected, send data using send()                                                                                                                          
-        document.title = "Nonolith Client(Connected)"
-        document.body.className = "connected"
-    };
-    ws.onmessage = function (evt) 
-    {
-		m = JSON.parse(evt.data)
-		if (m._action == 'update'){
-    	    if (!setup){
-    	        $('#loading').hide()
-    	        resize();
-    	        setup = true
-    	    }
-    	    update(m)
-        
-    	    if (axisconfig_x.max == 'auto'){    
-    	        xmax = m.time
-    	        xmin = xmax - xspan;
-    	        x.domain(xmin, xmax);
-    	    }
-        
-    	    data.push(m)
-        
-    	    while(data[0].time<xmin) data.shift()
-        
-    	    vis.render()
-    	}else if(m._action == 'config'){
-    	    configChannels(m.channels)
-    	}
-    };
-    ws.onclose = function()
-    { 
-        document.title = "Nonolith Client(Disconnected)"
-        document.body.className = "disconnected"
-    };
-}
-connect()
-
+var ws;
 
 var xspan = 30;
 var setup = false;
@@ -428,6 +281,52 @@ function setInput(input, number){
 	}
 }
 
+
+$(document).ready(function(){
+	graph = new LiveGraph_canvas(document.getElementById('graph'));
+	
+	setup_dnd_target(graph.axes.xbottom);
+	setup_dnd_target(graph.axes.yleft);
+	setup_dnd_target(graph.axes.yright);
+	
+	
+	ws = new WebSocket("ws://" + hostname + "/dataws");
+     
+    ws.onopen = function(){
+        document.title = "Nonolith Client (Connected)"
+        document.body.className = "connected"
+        
+        
+        $('#loading').text("Waiting for data...")
+		setup = false;
+		if (reconnectTimer){
+			reconnectTimer = false;
+			clearInterval(reconnectTimer);
+		}
+    };
+    
+    ws.onmessage = function (evt){
+		m = JSON.parse(evt.data)
+		if (m._action == 'update'){
+	 		if (!setup){
+		 		$('#loading').hide()
+		 		setup = true
+	 		}
+			update(m)
+		}else if(m._action == 'config'){
+			configChannels(m.channels)
+		}
+    };
+    
+    ws.onclose = function(){ 
+        document.title = "Nonolith Client(Disconnected)"
+        document.body.className = "disconnected"
+        $('#loading').text('Disconnected').show()
+		// setInterval(tryReconnect, 1000);
+    };
+	
+	$(window).resize(function(){graph.resized()})
+}) 
 </script>
 
 </body>

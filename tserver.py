@@ -122,9 +122,8 @@ class DataSocketHandler(WebSocketHandler):
 		print "ws closed"
 
 application = Application([
-	(r"/", MainHandler),
 	(r"/dataws", DataSocketHandler),
-	(r"/js/(.*)", StaticFileHandler, {"path": "./static/js"})
+	(r"/(.*)", StaticFileHandler, {"path": "./client/", "default_filename":"index.html"})
 ])
 
 http_server = HTTPServer(application)
