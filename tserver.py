@@ -5,120 +5,94 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.web import Application, RequestHandler, StaticFileHandler
 from tornado.websocket import WebSocketHandler
 
-import os
-import modconsmu
-import time
-import json
+import sys, os, glob, imp, time, json
 
-clients = []
-smu = modconsmu.smu()
+if len(sys.argv) >= 2:
+	tick = float(sys.argv[1])
+else:
+	tick = 0.1
 
-tick = .05
-
-settings = {
-	'channels': [
-		{
-			'name': 'time',
-			'displayname': 'Time',
-			'units': 's',
-			'type': 'linspace',
-			'axisMin': -30,
-			'axisMax': 'auto',
-		},
-		{
-			'name': 'voltage',
-			'displayname': 'Voltage',
-			'units': 'V',
-			'type': 'device',
-			'axisMin': -10,
-			'axisMax': 10,
-		},
-		{
-			'name': 'current',
-			'displayname': 'Current',
-			'units': 'mA',
-			'type': 'device',
-			'axisMin': -200,
-			'axisMax': 200,
-		},
-		{
-			'name': 'resistance',
-			'displayname': 'Resistance',
-			'units': u'Ω',
-			'type': 'computed',
-			'axisMin': 0,
-			'axisMax': 1000,
-		},
-		{
-			'name': 'power',
-			'displayname': 'Power',
-			'units': 'W',
-			'type': 'computed',
-			'axisMin': 0,
-			'axisMax': 2,
-		},
-		{
-			'name': 'voltage(AI0)',
-			'displayname': 'Voltage(AI0)',
-			'units': 'V',
-			'type': 'computed',
-			'axisMin': 0,
-			'axisMax': 4.096,
-		}
-	]
-}
+def findDevices(matching=None):
+	devices = []
+	
+	drivers_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "drivers")
+	files = glob.glob1(drivers_dir, '*.py')
+	
+	if 'dummy.py' in files:
+		#make dummy driver last priority
+		files.remove('dummy.py')
+		files.append('dummy.py')
+	
+	for fname in files:
+		if fname.startswith('__'):
+			continue
+		name = fname.replace(".py", "")
+		if matching and matching != name:
+			continue
+		try:
+			module = imp.load_source(name, os.path.join(drivers_dir, fname))
+			devices += module.getDevices()
+		except Exception, e:
+			print "Error loading driver %s:\n\t%s"%(name, e)
+		else:
+			print "Loaded driver %s"%(name)
+			
+	return devices
 
 
-def sendToAll(clients, message):
-	for client in clients:
-		client.write_message(message)
+if len(sys.argv) >= 3:
+	match = sys.argv[2]
+else:
+	match = None
+devices = findDevices(matching=match)
+if not len(devices):
+	print "No drivers found"
+	sys.exit(1)
+else:
+	backend = devices[0]
+	print "Using device", backend
+
+
 
 def formJSON(action, message):
 	message['_action'] = action
 	message = json.dumps(message)+'\n'
 	return message
 
-def formMessage(smu):
-	data = smu.update()
-	return {
-		'time': time.time()-startT,
-		'voltage': data[0],
-		'current': data[1]*1000,
-		'power': abs(data[0] * data[1]),
-		'resistance': abs(data[0]/data[1]),
-		'voltage(AI0)': data[2],
-		'_driving': 'current' if smu.driving=='i' else 'voltage'}
-
 def log():
-	if len(clients) != 0:
-		sendToAll(clients, formJSON('update', formMessage(smu)))
-	time.sleep(tick)
+	if len(DataSocketHandler.clients) != 0:
+		t = time.time()-startT
+		packet = backend.getData(t)
+		DataSocketHandler.sendToAll(formJSON('update', packet))
 
 class MainHandler(RequestHandler):
 	def get(self):
 		self.write(open("./index.html").read())
-
+		
 class DataSocketHandler(WebSocketHandler):
+	clients = []
+	
+	@classmethod
+	def sendToAll(self, message):
+		for client in self.clients:
+			client.write_message(message)
+
 	def	open(self):
-		clients.append(self)
-		self.write_message(formJSON('config', settings))
+		self.clients.append(self)
+		self.write_message(formJSON('config', backend.getConfig()))
+		
 	def on_message(self, message):
 		try:
 			message = json.loads(message)
-			if message['_action'] == 'set':
-				for prop, val in message.iteritems():
-					if prop == 'voltage':
-						smu.set(volts=val)
-					elif prop == 'current':
-						smu.set(amps=val/1000.0)
-					elif prop == '_action' and val == 'set':
-						pass
-					else:
-						print prop, val + "is invalid"
+			action = message['_action']
+			del message['_action']
+			if action == 'set':
+				backend.onSet(message)
 		except Exception as e:
 			print e
+			
 	def on_close(self):
-		clients.remove(self)
+		self.clients.remove(self)
 		print "ws closed"
 
 application = Application([
