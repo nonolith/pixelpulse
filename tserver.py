@@ -63,7 +63,8 @@ def log():
 	if len(DataSocketHandler.clients) != 0:
 		t = time.time()-startT
 		packet = backend.getData(t)
-		DataSocketHandler.sendToAll(formJSON('update', packet))
+		if packet:
+			DataSocketHandler.sendToAll(formJSON('update', packet))
 
 class MainHandler(RequestHandler):
 	def get(self):
