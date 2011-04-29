@@ -181,6 +181,10 @@ function addMeter(m){
 		console.log('sent', m.name)
 	});
 	
+	m.input.click(function(e){
+		this.select()
+	});
+	
 	m.h2.get(0).draggable = true;
 	m.h2.get(0).ondragstart = function(e){
 		e.dataTransfer.setData('text/plain', m.name)
