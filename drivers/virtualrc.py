@@ -46,19 +46,22 @@ class Dummy(object):
 		if self.setCurrent is not None:
 			current = self.setCurrent
 			voltage = self.q/self.c
+			
+			if (voltage>=10 and current<0) or (voltage<=-10 and current>0):
+				current = 0
+			
 			self.q += current*dt
 		elif self.setVoltage is not None:
 			voltage = self.setVoltage
 			current = -(self.setVoltage-self.q/self.c)/self.r
 			self.q += current*dt
-		print self.q
 			
 		self.lastTime = t
 		return {
 			'time': t,
 			'voltage': voltage,
 			'current': current*1000.0,
-			'_driving': 'voltage'
+			'_driving': 'voltage' if self.setVoltage else 'current'
 		}
 		
 	def onSet(self, vals):
