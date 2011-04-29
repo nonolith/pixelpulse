@@ -160,6 +160,10 @@ body{
 </div>
 
 <script>
+if (!window.WebSocket){
+	document.getElementById('loading').innerHTML = "This demo requires WebSockets and currently only works in Chrome and Safari"
+}
+
 var meters={};
 var metersByName = {};
 
