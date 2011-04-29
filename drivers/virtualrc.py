@@ -58,7 +58,7 @@ class Dummy(object):
 			'time': t,
 			'voltage': voltage,
 			'current': current*1000.0,
-			'_driving': 'voltage'
+			'_driving': 'voltage' if self.setVoltage else 'current'
 		}
 		
 	def onSet(self, vals):

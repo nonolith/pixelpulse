@@ -170,7 +170,7 @@ function addMeter(m){
 		.append($("<span class='reading'>")
 			.append(m.input = $("<input>")))
 		.append(m.unit = $("<span class='unit'>").text(m.units))
-		.append($("<small>").text("Unknown"))
+		.append($("<small>"))
 		.appendTo('#meters');
 	
 	m.input.change(function(e){
@@ -230,12 +230,23 @@ function configChannels(s){
 
 var renderTime = 0;
 var renders = 0;
+var lastDriving = null;
 
 function update(data){
 	for (var i=0; i<meters.length; i++){
 		var m = meters[i]
 		if (data[m.name] !== undefined){
 			setInput(m.input, data[m.name])
+		}
+		
+		if (data._driving != lastDriving){
+			if (m.name == data._driving){
+				$(m.div).find('small').text("Source")
+			}else if (m.name != 'time'){
+				$(m.div).find('small').text("Measure")
+			}else{
+				$(m.div).find('small').text("Live")
+			}
 		}
 	}
 	
