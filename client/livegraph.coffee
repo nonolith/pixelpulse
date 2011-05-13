@@ -179,7 +179,8 @@ class LiveGraph_canvas extends LiveGraph
 		if @data.length < 2
 			return
 		
-		return @redrawGraph()
+		if window.graphmode != 'blit'
+			return @redrawGraph()
 		
 		if @axes.xbottom.autoScroll
 			xaxis = @axes.xbottom
@@ -195,7 +196,7 @@ class LiveGraph_canvas extends LiveGraph
 			xmin = xaxis.min
 			
 			prevX = @transformPoint(xaxis, prevPt[xaxis.property])
-			move = Math.min(Math.ceil(@width - OFFSET - prevX),1)
+			move = 1
 			
 			@tmpCanvas.width=0
 			@tmpCanvas.width=@width
