@@ -22,6 +22,10 @@ def findDevices(matching=None):
 		#make dummy driver last priority
 		files.remove('dummy.py')
 		files.append('dummy.py')
+
+	if 'modconsmu.py' in files:
+		files.remove('modconsmu.py')
+		files.insert(0, 'modconsmu.py')
 	
 	for fname in files:
 		if fname.startswith('__'):

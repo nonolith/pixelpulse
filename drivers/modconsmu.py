@@ -123,6 +123,7 @@ class ModconSMU(object):
 		if self.updateNeeded == 1:
 			self.dev.ctrl_transfer(bmRequestType = 0x40, bRequest = self.vReqs['SET_DIGOUT'], wValue = direction, wIndex = 0, data_or_wLength = [0]*12)
 			self.updateNeeded = 0
+		print value
 		data = self.dev.ctrl_transfer(bmRequestType = 0xC0, bRequest = self.vReqs['UPDATE'], wValue = value, wIndex = 0, data_or_wLength = 12)
 		retVolt = ((data[0]|data[1]<<8)-self.VADC)/self.VADCGAIN
 		retAmp = ((data[4]|data[5]<<8)-self.IADC)/(self.IADCGAIN*self.RES)
