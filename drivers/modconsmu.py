@@ -78,7 +78,7 @@ class ModconSMU(object):
 
 	def __init__(self):
 		"""Find a USB device with the VID and PID of the ModCon SMU."""
-		self.zeroV = 0x07CF
+		self.zeroV = 0x07CF 
 		self.zeroI = 0x07CF
 		self.maxV = 9.93
 		self.minV = -10.45
@@ -110,23 +110,27 @@ class ModconSMU(object):
 		#add safety feature
 		atexit.register(self.setCurrent, amps = 0)
 
+	
+
 	def update(self, mod = 1):
 		"""updates smu target V/I, returns actual V/I"""
 		if self.driving == 'v':
-			value = int(self.zeroV - self.v/self.scaleFactorV)
+			value = int(round(self.zeroV - self.v/self.scaleFactorV))
+			if cmp(value, 0) == -1:
+				value = int(round(self.v/self.scaleFactorV - self.zeroV))
 			direction = 0
 		elif self.driving == 'i':
-			value = int(self.zeroI + self.i * 10000)
+			value = int(round(self.zeroI + self.i * 10000))
 			direction = 1
 		else:
 			print("bad type")
 		if self.updateNeeded == 1:
+			self.dev.ctrl_transfer(bmRequestType = 0xC0, bRequest = self.vReqs['UPDATE'], wValue = self.zeroV, wIndex = 0, data_or_wLength = 12)
 			self.dev.ctrl_transfer(bmRequestType = 0x40, bRequest = self.vReqs['SET_DIGOUT'], wValue = direction, wIndex = 0, data_or_wLength = [0]*12)
 			self.updateNeeded = 0
-		print value
 		data = self.dev.ctrl_transfer(bmRequestType = 0xC0, bRequest = self.vReqs['UPDATE'], wValue = value, wIndex = 0, data_or_wLength = 12)
-		retVolt = ((data[0]|data[1]<<8)-self.VADC)/self.VADCGAIN
-		retAmp = ((data[4]|data[5]<<8)-self.IADC)/(self.IADCGAIN*self.RES)
+		retVolt = ((data[0]|data[1]<<8)-self.VADC)/self.VADCGAIN + 0.053
+		retAmp = ((data[4]|data[5]<<8)-self.IADC)/(self.IADCGAIN*self.RES) - 0.000263 
 		modVolt = (data[6]|data[7]<<8)*(4.096/1023)
 		if mod:
 			return (retVolt, retAmp, modVolt)
