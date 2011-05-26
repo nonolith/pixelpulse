@@ -119,14 +119,20 @@ class LiveGraph_canvas extends LiveGraph
 		@ctxa.textAlign = 'center'
 		@ctxa.textBaseline = 'top'
 		
-		if not @xaxis.autoScroll
-			for x in arange(@xaxis.min, @xaxis.max, xgrid)
-				@ctxa.beginPath()
-				xp = @xaxis.transform(x)
-				@ctxa.moveTo(xp,y-4)
-				@ctxa.lineTo(xp,y+4)
-				@ctxa.stroke()
-				@ctxa.fillText(Math.round(x*10)/10, xp ,y+textoffset)
+		if @xaxis.autoScroll
+			[min, max] = [@xaxis.autoScroll, 0]
+			offset = @xaxis.max
+		else
+			[min, max] = [@xaxis.min, @xaxis.max]
+			offset = 0
+		
+		for x in arange(min, max, xgrid)
+			@ctxa.beginPath()
+			xp = @xaxis.transform(x+offset)
+			@ctxa.moveTo(xp,y-4)
+			@ctxa.lineTo(xp,y+4)
+			@ctxa.stroke()
+			@ctxa.fillText(Math.round(x*10)/10, xp ,y+textoffset)
 		
 		for axis in @yaxes
 			grid = axis.grid()
