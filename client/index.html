@@ -54,9 +54,9 @@ body{
 
 #graph{
 	position: absolute;
-	top: -10px;
+	top: 0;
 	left: 5px;
-	right: 215px;
+	right: 170px;
 	bottom: 115px;
 }
 
@@ -75,21 +75,38 @@ body{
 	position: absolute;
 	top: 0;
 	bottom: 0;
-	width: 210px;
+	width: 180px;
 	right: 0;
 	
 	background: #444;
-	padding: 10px 10px 15px 20px;
 	color: white;
 }
 
-#meters > div{
+#meters > .meter{
 	display: inline-block;
+}
+
+#meters-side .meter{
+	position: absolute;
+	width: 180px;
+	border-bottom: 1px solid #888;
+	padding: 0 20px;
+}
+
+.meter{
 	height: 80px;
 	width: 200px;
 }
 
-#meters > div h2{
+.meter-drag{
+	background: #ccc;
+	padding: 10px;
+	font-size: 20px;
+	text-transform: uppercase;
+	display: inline-block;
+}
+
+.meter h2{
 	font-variant: small-caps;
 	text-transform: uppercase;
 	font-weight: bold;
@@ -97,20 +114,20 @@ body{
 	margin: 5px 0;
 }
 
-#meters > div span{
+.meter span{
 	font-size: 40px;
 }
 
-#meters > div .reading{
+.meter .reading{
 	font-weight: bold;
 }
 
-#meters > div .unit{
+.meter .unit{
 	color: #ccc;
 	font-size: 30px;
 }
 
-#meters > div small{
+.meter small{
 	display: block;
 	text-transform: uppercase;
 	font-weight: bold;
@@ -118,17 +135,9 @@ body{
 	margin-top: 5px;
 }
 
-#loading{
-	position: absolute;
-	top: 200px;
-	text-align:center;
-	font-size: 30px;
-	width: 100%;
-}
-
 .reading input{
 	background: transparent;
-	width: 2.5em;
+	width: 2.65em;
 	font-size: inherit;
 	font-weight: inherit;
 	color: inherit;
@@ -142,10 +151,12 @@ body{
 	margin-left: -0.36em;
 }
 
-.reading h2:-webkit-drag{
-	background: white;
-	color: black;
-	font-size: 200%;
+#loading{
+	position: absolute;
+	top: 200px;
+	text-align:center;
+	font-size: 30px;
+	width: 100%;
 }
 
 </style>
@@ -172,6 +183,8 @@ body{
 
 </div>
 </div>
+
+<div id='hidden' style='position: absolute; bottom: 0; z-index: -10'></div>
 
 </body>
 </html>

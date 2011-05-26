@@ -9,10 +9,12 @@ class Channel
 		
 		if @name == 'time'
 			@axis = new livegraph.XAxis(@name, o.axisMin, o.axisMax)
+			@showGraph = false
 		else
 			@axis = new livegraph.YAxis(@name, 'blue', o.axisMin, o.axisMax)
+			@showGraph = true
 		
-		@div = $("<div>")
+		@div = $("<div class='meter'>")
 			.append((@h2 = $("<h2>")).text(@displayName))
 			.append($("<span class='reading'>")
 				.append(@input = $("<input>")))
@@ -27,13 +29,16 @@ class Channel
 		@input.click ->
 			this.select()
 			
-		@h2.get(0).draggable = true
-		@h2.get(0).ondragstart = (e) ->
-			e.dataTransfer.setData('text/plain', m.name)
+		@div.get(0).draggable = true
+		@div.get(0).ondragstart = (e) =>
+			e.dataTransfer.setData('text/plain', @name)
+			i = $("<div class='meter-drag'>").text(@displayName).appendTo('#hidden')
+			e.dataTransfer.setDragImage(i.get(0), 0, 0)
+			setTimeout((-> i.remove()), 0)
 			
 	onValue: (v) ->
 		if !@input.is(':focus')
-			@input.val(v.toFixed(3))
+			@input.val(if Math.abs(v)>1 then v.toPrecision(4) else v.toFixed(3))
 			if (v < 0)
 				@input.addClass('negative')
 			else
@@ -46,7 +51,7 @@ class LiveData
 	constructor: ->
 		@channels = {}
 		@graph = new livegraph.canvas(document.getElementById('graph'), {}, [])
-		$(window).resize => @graph.resized()
+		$(window).resize(@onResized)
 		
 	onConfig: (o) ->
 		$('#meters, #meters-side').empty()
@@ -61,9 +66,13 @@ class LiveData
 				@graph.yaxes.push(n.axis)
 			else
 				@graph.xaxis = n.axis
-			$('#meters').append(n.div)
+				
+			if n.showGraph
+				$('#meters-side').append(n.div)
+			else
+				$('#meters').append(n.div)
 			
-		@graph.resized()
+		@onResized()
 			
 	onData: (data) ->
 		for name, c of @channels
@@ -77,16 +86,21 @@ class LiveData
 	setChannel: (name, value) -> 
 		console.error("setChannel should be overridden by transport")
 		
+	onResized: =>
+		@graph.resized()
+		for name, c of @channels
+			if c.showGraph
+				c.div.css('top', c.axis.ytop).css('height', c.axis.ybottom-c.axis.ytop)
+		
 			
 
-setup_dnd_target = (axisconfig) ->
-	elem = axisconfig.labelDiv
+setup_dnd_target = (elem, callback) ->
 	elem.ondragover = (e) ->
 	 	e.preventDefault()
 
 	elem.ondrop = (e) ->
 		channel = e.dataTransfer.getData('text/plain')
-		bindAxis(axisconfig, channel)
+		console.log(channel, e.dataTransfer)
 		e.preventDefault()
 		return false
 		
@@ -241,3 +255,5 @@ $(document).ready ->
 		virtualrc_start(app)
 	else
 		websocket_start(hostname, app)
+		
+	setup_dnd_target(document.getElementById('meters-side'))
