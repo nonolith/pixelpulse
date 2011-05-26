@@ -57,7 +57,7 @@ class LiveGraph
 			@xaxis.min = @xaxis.max + @xaxis.autoScroll
 			
 	relayout: ->
-		subplot_height = (@height-(@yaxes.length-1)*OFFSET)/@yaxes.length - OFFSET
+		subplot_height = (@height-(Math.max(1, @yaxes.length-1))*OFFSET)/@yaxes.length - OFFSET
 		y = OFFSET
 		
 		for i in @yaxes

@@ -12,7 +12,7 @@ class Channel
 			@showGraph = false
 		else
 			@axis = new livegraph.YAxis(@name, 'blue', o.axisMin, o.axisMax)
-			@showGraph = true
+			@showGraph = o.showGraph
 		
 		@div = $("<div class='meter'>")
 			.append((@h2 = $("<h2>")).text(@displayName))
@@ -28,13 +28,14 @@ class Channel
 			
 		@input.click ->
 			this.select()
-			
-		@div.get(0).draggable = true
-		@div.get(0).ondragstart = (e) =>
-			e.dataTransfer.setData('text/plain', @name)
-			i = $("<div class='meter-drag'>").text(@displayName).appendTo('#hidden')
-			e.dataTransfer.setDragImage(i.get(0), 0, 0)
-			setTimeout((-> i.remove()), 0)
+		
+		if @name != 'time'
+			@div.get(0).draggable = true
+			@div.get(0).ondragstart = (e) =>
+				e.dataTransfer.setData('text/plain', @name)
+				i = $("<div class='meter-drag'>").text(@displayName).appendTo('#hidden')
+				e.dataTransfer.setDragImage(i.get(0), 0, 0)
+				setTimeout((-> i.remove()), 0)
 			
 	onValue: (v) ->
 		if !@input.is(':focus')
@@ -53,6 +54,9 @@ class LiveData
 		@graph = new livegraph.canvas(document.getElementById('graph'), {}, [])
 		$(window).resize(@onResized)
 		
+		dnd_target(document.getElementById('meters-side'),@showChannel)
+		dnd_target(document.getElementById('meters'),@collapseChannel)
+		
 	onConfig: (o) ->
 		$('#meters, #meters-side').empty()
 		@channels = {}
@@ -62,12 +66,11 @@ class LiveData
 			n = new Channel(c)
 			@channels[n.name] = n
 			n.setValue = (v) -> self.setChannel(this.name, v)
-			if n.name != 'time'
-				@graph.yaxes.push(n.axis)
-			else
+			if n.name == 'time'
 				@graph.xaxis = n.axis
-				
+	
 			if n.showGraph
+				@graph.yaxes.push(n.axis)
 				$('#meters-side').append(n.div)
 			else
 				$('#meters').append(n.div)
@@ -91,17 +94,36 @@ class LiveData
 		for name, c of @channels
 			if c.showGraph
 				c.div.css('top', c.axis.ytop).css('height', c.axis.ybottom-c.axis.ytop)
+				
+	showChannel: (name) =>
+		c = @channels[name]
+		if not c then return
+		if c.showGraph then return
+		c.div.detach().attr('style', '').appendTo('#meters-side')
+		c.showGraph = true
+		@graph.yaxes.push(c.axis)
+		@onResized()
+	
+	collapseChannel: (name) =>
+		c = @channels[name]
+		if not c then return
+		if not c.showGraph then return
+		c.div.detach().attr('style', '').appendTo('#meters')
+		i = @graph.yaxes.indexOf(c.axis)
+		if i!=-1 then @graph.yaxes.splice(i, 1)
+		c.showGraph = false
+		@onResized()
 		
 			
 
-setup_dnd_target = (elem, callback) ->
+dnd_target = (elem, callback) ->
 	elem.ondragover = (e) ->
 	 	e.preventDefault()
 
 	elem.ondrop = (e) ->
-		channel = e.dataTransfer.getData('text/plain')
-		console.log(channel, e.dataTransfer)
+		data = e.dataTransfer.getData('text/plain')
 		e.preventDefault()
+		callback(data)
 		return false
 		
 setup = false
@@ -168,7 +190,6 @@ virtualrc_start = (app) ->
 				'name': 'time',
 				'displayname': 'Time',
 				'units': 's',
-				'type': 'linspace',
 				'axisMin': -30,
 				'axisMax': 'auto',
 				'state': 'live',
@@ -177,19 +198,27 @@ virtualrc_start = (app) ->
 				'name': 'voltage',
 				'displayname': 'Voltage',
 				'units': 'V',
-				'type': 'device',
 				'axisMin': -10,
 				'axisMax': 10,
 				'state': 'source',
+				'showGraph': true,
 			},
 			{
 				'name': 'current',
 				'displayname': 'Current',
 				'units': 'mA',
-				'type': 'device',
 				'axisMin': -200,
 				'axisMax': 200,
 				'state': 'measure',
+				'showGraph': true,
+			},
+			{
+				'name': 'resistance',
+				'displayname': 'Resistance',
+				'units': '\u03A9',
+				'axisMin': 0,
+				'axisMax': 10000,
+				'state': 'computed',
 			},
 		]
 		
@@ -219,10 +248,13 @@ virtualrc_start = (app) ->
 				q += current*dt
 			
 		lastTime = t
+		imp = Math.min(Math.abs(voltage/(current)), 9999)
+		if isNaN(imp) then imp = 9999
 		app.onData {
 			'time': t,
 			'voltage': voltage,
 			'current': current*1000.0,
+			'resistance':imp,
 		}
 		
 		
@@ -255,5 +287,4 @@ $(document).ready ->
 		virtualrc_start(app)
 	else
 		websocket_start(hostname, app)
-		
-	setup_dnd_target(document.getElementById('meters-side'))
+
