@@ -1,7 +1,4 @@
 
-if !window.WebSocket
-	document.getElementById('loading').innerHTML = "This demo requires WebSockets and currently only works in Chrome and Safari"
-
 meters={}
 metersByName = {}
 graph = false
@@ -115,6 +112,9 @@ setInput = (input, number) ->
 			input.removeClass('negative')
 			
 websocket_start = ->
+	if !window.WebSocket
+		document.getElementById('loading').innerHTML = "This demo requires WebSockets and currently only works in Chrome and Safari"
+
 	ws = new WebSocket("ws://" + hostname + "/dataws")
 	 
 	ws.onopen = ->
