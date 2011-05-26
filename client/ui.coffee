@@ -49,18 +49,15 @@ updateAxis = (axisconfig, defaultchan) ->
 	else
 		bindAxis(axisconfig, axisconfig.name);
 
-configChannels = (s) ->
-	meters = s
+configChannels = (channels) ->
 	$('#meters').empty()
+	meters = channels
 	
-	for m in meters
-		addMeter(m)
+	for c in channels
+		addMeter(c)
+		if c.name != 'time'
+			graph.addSubplot(new livegraph.YAxis(c.name, 'blue', c.axisMin, c.axisMax))
 
-	graph.axes.yleft.color = 'blue'
-	graph.axes.yright.color = 'red'
-	updateAxis(graph.axes.xbottom, 'time')
-	updateAxis(graph.axes.yleft, 'voltage')
-	updateAxis(graph.axes.yright, 'current')
 
 renderTime = 0
 renders = 0
@@ -226,15 +223,13 @@ virtualrc_start = ->
 		source = chan
 		
 	
-	setInterval(step, 80)
+	setInterval(step, 100)
 	
 
 $(document).ready ->
-	graph = new LiveGraph_canvas(document.getElementById('graph'))
-	
-	setup_dnd_target(graph.axes.xbottom)
-	setup_dnd_target(graph.axes.yleft)
-	setup_dnd_target(graph.axes.yright)
+	x = new livegraph.XAxis('time', -30, 'auto')
+	graph = new livegraph.canvas(document.getElementById('graph'), x, [])
+	window.graph = graph
 
 	if hostname == 'virtualrc'
 		virtualrc_start()
