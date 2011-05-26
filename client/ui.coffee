@@ -7,6 +7,8 @@ metersByName = {}
 graph = false
 ws = false
 
+channelSet = ->
+
 addMeter = (m) ->
 	metersByName[m.name] = m;
 	m.div = $("<div>")
@@ -18,11 +20,8 @@ addMeter = (m) ->
 		.appendTo('#meters')
 	
 	m.input.change (e) ->
-		msg = {'_action':'set'}
-		msg[m.name] = parseFloat($(m.input).val(), 10)
-		ws.send(JSON.stringify(msg))
+		channelSet(m.name, parseFloat($(m.input).val(), 10))
 		$(m.input).blur()
-		console.log('sent', m.name)
 	
 	m.input.click ->
 		this.select()
@@ -114,14 +113,8 @@ setInput = (input, number) ->
 			input.addClass('negative')
 		else
 			input.removeClass('negative')
-
-$(document).ready ->
-	graph = new LiveGraph_canvas(document.getElementById('graph'))
-	
-	setup_dnd_target(graph.axes.xbottom)
-	setup_dnd_target(graph.axes.yleft)
-	setup_dnd_target(graph.axes.yright)
-
+			
+websocket_start = ->
 	ws = new WebSocket("ws://" + hostname + "/dataws")
 	 
 	ws.onopen = ->
@@ -149,6 +142,103 @@ $(document).ready ->
 		document.body.className = "disconnected"
 		$('#loading').text('Disconnected').show()
 		# setInterval(tryReconnect, 1000);
+		
+	channelSet = (chan, val) ->
+		msg = {'_action':'set'}
+		msg[chan] = val
+		ws.send(JSON.stringify(msg))
+		console.log('sent', chan)
+		
+virtualrc_start = ->
+	$('#loading').hide()
+	setup = true
 	
+	configChannels [
+			{
+				'name': 'time',
+				'displayname': 'Time',
+				'units': 's',
+				'type': 'linspace',
+				'axisMin': -30,
+				'axisMax': 'auto',
+			},
+			{
+				'name': 'voltage',
+				'displayname': 'Voltage',
+				'units': 'V',
+				'type': 'device',
+				'axisMin': -10,
+				'axisMax': 10,
+			},
+			{
+				'name': 'current',
+				'displayname': 'Current',
+				'units': 'mA',
+				'type': 'device',
+				'axisMin': -200,
+				'axisMax': 200,
+			},
+		]
+		
+	r = 100.0
+	c = 100e-4
+	q = 0.0
+	
+	source = 'voltage'
+	
+	voltage = current = 0
+	lastTime = 0
+	tstart = new Date()
+	
+	step = ->
+		t = (new Date() - tstart) / 1000
+		dt = lastTime-t
+		switch source
+			when 'current'
+				voltage = q/c
+			
+				if (voltage>=10 and current<0) or (voltage<=-10 and current>0)
+					current = 0
+			
+				q += current*dt
+			when 'voltage'
+				current = -(voltage-q/c)/r
+				q += current*dt
+			
+		lastTime = t
+		result = {
+			'time': t,
+			'voltage': voltage,
+			'current': current*1000.0,
+			'_driving': source
+		}
+		
+		update(result)
+		
+	channelSet = (chan, val) ->
+		switch chan
+			when 'voltage'
+				voltage = val
+			when 'current'
+				current = val/1000
+			else
+				return
+		source = chan
+		
+	
+	setInterval(step, 80)
+	
+
+$(document).ready ->
+	graph = new LiveGraph_canvas(document.getElementById('graph'))
+	
+	setup_dnd_target(graph.axes.xbottom)
+	setup_dnd_target(graph.axes.yleft)
+	setup_dnd_target(graph.axes.yright)
+
+	if hostname == 'virtualrc'
+		virtualrc_start()
+	else
+		websocket_start()
 	$(window).resize -> graph.resized()
 
