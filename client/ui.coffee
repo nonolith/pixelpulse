@@ -1,32 +1,83 @@
 
-meters={}
-metersByName = {}
-graph = false
-ws = false
+class Channel
+	constructor: (o) ->
+		@name = o.name
+		@displayName = o.displayname
+		@unit = o.units
+		@editable = true
+		@state = ''
+		
+		if @name == 'time'
+			@axis = new livegraph.XAxis(@name, o.axisMin, o.axisMax)
+		else
+			@axis = new livegraph.YAxis(@name, 'blue', o.axisMin, o.axisMax)
+		
+		@div = $("<div>")
+			.append((@h2 = $("<h2>")).text(@displayName))
+			.append($("<span class='reading'>")
+				.append(@input = $("<input>")))
+			.append($("<span class='unit'>").text(@unit))
+			.append(@stateElem = $("<small>").text(o.state))
+			.appendTo('#meters')	
+			
+		@input.change (e) =>
+			@setValue(parseFloat($(@input).val(), 10))
+			$(@input).blur()
+			
+		@input.click ->
+			this.select()
+			
+		@h2.get(0).draggable = true
+		@h2.get(0).ondragstart = (e) ->
+			e.dataTransfer.setData('text/plain', m.name)
+			
+	onValue: (v) ->
+		if !@input.is(':focus')
+			@input.val(v.toFixed(3))
+			if (v < 0)
+				@input.addClass('negative')
+			else
+				@input.removeClass('negative')
+				
+	onState: (s) ->
+		@stateElem.text(s)
 
-channelSet = ->
-
-addMeter = (m) ->
-	metersByName[m.name] = m;
-	m.div = $("<div>")
-		.append(m.h2 = $("<h2>").text(m.displayname))
-		.append($("<span class='reading'>")
-			.append(m.input = $("<input>")))
-		.append(m.unit = $("<span class='unit'>").text(m.units))
-		.append($("<small>"))
-		.appendTo('#meters')
-	
-	m.input.change (e) ->
-		channelSet(m.name, parseFloat($(m.input).val(), 10))
-		$(m.input).blur()
-	
-	m.input.click ->
-		this.select()
-	
-	m.h2.get(0).draggable = true
-	m.h2.get(0).ondragstart = (e) ->
-		e.dataTransfer.setData('text/plain', m.name)
-
+class LiveData
+	constructor: ->
+		@channels = {}
+		@graph = new livegraph.canvas(document.getElementById('graph'), {}, [])
+		$(window).resize => @graph.resized()
+		
+	onConfig: (o) ->
+		$('#meters, #meters-side').empty()
+		@channels = {}
+		@graph.yaxes = []
+		self = this
+		for c in o
+			n = new Channel(c)
+			@channels[n.name] = n
+			n.setValue = (v) -> self.setChannel(this.name, v)
+			if n.name != 'time'
+				@graph.yaxes.push(n.axis)
+			else
+				@graph.xaxis = n.axis
+			$('#meters').append(n.div)
+			
+		@graph.resized()
+			
+	onData: (data) ->
+		for name, c of @channels
+			if data[name]?
+				c.onValue(data[name])
+		@graph.pushData(data)
+		
+	onState: (channel, state) ->
+		@channels[channel].onState(state)
+		
+	setChannel: (name, value) -> 
+		console.error("setChannel should be overridden by transport")
+		
+			
 
 setup_dnd_target = (axisconfig) ->
 	elem = axisconfig.labelDiv
@@ -38,56 +89,10 @@ setup_dnd_target = (axisconfig) ->
 		bindAxis(axisconfig, channel)
 		e.preventDefault()
 		return false
-
-bindAxis = (axis, channel) ->
-	meter=metersByName[channel]
-	graph.setAxis(axis, meter.displayname + ' ('+meter.units+')', meter.name, meter.axisMin, meter.axisMax, axis.color)
-
-updateAxis = (axisconfig, defaultchan) ->
-	if !axisconfig.name || !meters[axisconfig.name]
-		bindAxis(axisconfig, defaultchan);
-	else
-		bindAxis(axisconfig, axisconfig.name);
-
-configChannels = (channels) ->
-	$('#meters').empty()
-	meters = channels
-	
-	for c in channels
-		addMeter(c)
-		if c.name != 'time'
-			graph.addSubplot(new livegraph.YAxis(c.name, 'blue', c.axisMin, c.axisMax))
-
-
-renderTime = 0
-renders = 0
-lastDriving = null
-
-update = (data) ->
-	for m in meters
-		if data[m.name]?
-			setInput(m.input, data[m.name])
 		
-		if data._driving != lastDriving
-			if m.name == data._driving
-				$(m.div).find('small').text("Source")
-			else if m.name != 'time'
-				$(m.div).find('small').text("Measure")
-			else
-				$(m.div).find('small').text("Live")
-	
-	t1 =new Date()
-	graph.pushData(data)
-	t2 = new Date()
-	
-	renderTime += t2 - t1
-	renders++; 
-
-if console
-	setInterval((-> console.log('avg:', renderTime/renders); renderTime=renders=0), 5000);
+setup = false
 
 #URL params
-
 params = {}
 
 for pair in document.location.search.slice(1).split('&')
@@ -97,22 +102,12 @@ for pair in document.location.search.slice(1).split('&')
 hostname = params.server || document.location.host
 window.graphmode = params.graphmode || 'canvas'
 
-xspan = 30;
-setup = false;
 
-setInput = (input, number) ->
-	if !input.is(':focus')
-		input.val(number.toFixed(3))
-		if (number < 0)
-			input.addClass('negative')
-		else
-			input.removeClass('negative')
-			
-websocket_start = ->
+websocket_start = (host, app) ->
 	if !window.WebSocket
 		document.getElementById('loading').innerHTML = "This demo requires WebSockets and currently only works in Chrome and Safari"
 
-	ws = new WebSocket("ws://" + hostname + "/dataws")
+	ws = new WebSocket("ws://" + host + "/dataws")
 	 
 	ws.onopen = ->
 		document.title = "Nonolith Client (Connected)"
@@ -126,13 +121,16 @@ websocket_start = ->
 	
 	ws.onmessage = (evt) ->
 		m = JSON.parse(evt.data)
-		if m._action == 'update'
-			if !setup
-				$('#loading').hide()
-				setup = true
-			update(m)
-		else if(m._action == 'config')
-			configChannels(m.channels)
+		switch m._action
+			when 'update'
+				if !setup
+					$('#loading').hide()
+					setup = true
+				app.onData(m)
+			when 'config'
+				app.onConfig(m.channels)
+			when 'state'
+				app.onState(m.chan, m.state)
 	
 	ws.onclose = ->
 		document.title = "Nonolith Client(Disconnected)"
@@ -140,17 +138,18 @@ websocket_start = ->
 		$('#loading').text('Disconnected').show()
 		# setInterval(tryReconnect, 1000);
 		
-	channelSet = (chan, val) ->
+	app.setChannel = (chan, val) ->
 		msg = {'_action':'set'}
 		msg[chan] = val
 		ws.send(JSON.stringify(msg))
-		console.log('sent', chan)
 		
-virtualrc_start = ->
+	
+		
+virtualrc_start = (app) ->
 	$('#loading').hide()
 	setup = true
 	
-	configChannels [
+	app.onConfig [
 			{
 				'name': 'time',
 				'displayname': 'Time',
@@ -158,6 +157,7 @@ virtualrc_start = ->
 				'type': 'linspace',
 				'axisMin': -30,
 				'axisMax': 'auto',
+				'state': 'live',
 			},
 			{
 				'name': 'voltage',
@@ -166,6 +166,7 @@ virtualrc_start = ->
 				'type': 'device',
 				'axisMin': -10,
 				'axisMax': 10,
+				'state': 'source',
 			},
 			{
 				'name': 'current',
@@ -174,6 +175,7 @@ virtualrc_start = ->
 				'type': 'device',
 				'axisMin': -200,
 				'axisMax': 200,
+				'state': 'measure',
 			},
 		]
 		
@@ -203,16 +205,15 @@ virtualrc_start = ->
 				q += current*dt
 			
 		lastTime = t
-		result = {
+		app.onData {
 			'time': t,
 			'voltage': voltage,
 			'current': current*1000.0,
-			'_driving': source
 		}
 		
-		update(result)
 		
-	channelSet = (chan, val) ->
+	app.setChannel = (chan, val) ->
+		console.log('setChannel', chan, val)
 		switch chan
 			when 'voltage'
 				voltage = val
@@ -220,20 +221,23 @@ virtualrc_start = ->
 				current = val/1000
 			else
 				return
-		source = chan
-		
-	
+		if source != chan
+			source = chan
+			switch source
+				when 'voltage'
+					app.onState('voltage', 'source')
+					app.onState('current', 'measure')
+				when 'current'
+					app.onState('current', 'source')
+					app.onState('voltage', 'measure')
+					
 	setInterval(step, 100)
 	
 
 $(document).ready ->
-	x = new livegraph.XAxis('time', -30, 'auto')
-	graph = new livegraph.canvas(document.getElementById('graph'), x, [])
-	window.graph = graph
-
+	window.app = new LiveData()
+	
 	if hostname == 'virtualrc'
-		virtualrc_start()
+		virtualrc_start(app)
 	else
-		websocket_start()
-	$(window).resize -> graph.resized()
-
+		websocket_start(hostname, app)
