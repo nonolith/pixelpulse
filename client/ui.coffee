@@ -3,15 +3,15 @@ class Channel
 	constructor: (o) ->
 		@name = o.name
 		@displayName = o.displayname
-		@unit = o.units
+		@unit = o.unit
 		@editable = true
 		@state = ''
 		
 		if @name == 'time'
-			@axis = new livegraph.XAxis(@name, o.axisMin, o.axisMax)
+			@axis = new livegraph.XAxis(@name, o.min, o.max)
 			@showGraph = false
 		else
-			@axis = new livegraph.YAxis(@name, 'blue', o.axisMin, o.axisMax)
+			@axis = new livegraph.YAxis(@name, 'blue', o.min, o.max)
 			@showGraph = o.showGraph
 		
 		@div = $("<div class='meter'>")
@@ -189,35 +189,35 @@ virtualrc_start = (app) ->
 			{
 				'name': 'time',
 				'displayname': 'Time',
-				'units': 's',
-				'axisMin': -30,
-				'axisMax': 'auto',
+				'unit': 's',
+				'min': -30,
+				'max': 'auto',
 				'state': 'live',
 			},
 			{
 				'name': 'voltage',
 				'displayname': 'Voltage',
-				'units': 'V',
-				'axisMin': -10,
-				'axisMax': 10,
+				'unit': 'V',
+				'min': -10,
+				'max': 10,
 				'state': 'source',
 				'showGraph': true,
 			},
 			{
 				'name': 'current',
 				'displayname': 'Current',
-				'units': 'mA',
-				'axisMin': -200,
-				'axisMax': 200,
+				'unit': 'mA',
+				'min': -200,
+				'max': 200,
 				'state': 'measure',
 				'showGraph': true,
 			},
 			{
 				'name': 'resistance',
 				'displayname': 'Resistance',
-				'units': '\u03A9',
-				'axisMin': 0,
-				'axisMax': 10000,
+				'unit': '\u03A9',
+				'min': 0,
+				'max': 10000,
 				'state': 'computed',
 			},
 		]
