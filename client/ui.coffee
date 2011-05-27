@@ -19,8 +19,10 @@ class Channel
 			.append($("<span class='reading'>")
 				.append(@input = $("<input>")))
 			.append($("<span class='unit'>").text(@unit))
-			.append(@stateElem = $("<small>").text(o.state))
-			.appendTo('#meters')	
+			.append(@stateElem = $("<small>"))
+			.appendTo('#meters')
+			
+		@onState(o.state)	
 			
 		@input.change (e) =>
 			@setValue(parseFloat($(@input).val(), 10))
@@ -47,6 +49,15 @@ class Channel
 				
 	onState: (s) ->
 		@stateElem.text(s)
+		if s=='source' or s=='set' or s=='output'
+			@axis.grabDot = 'fill'
+		else if s=='measure'
+			@axis.grabDot = 'stroke'
+
+
+relMousePos = (elem, event) ->
+	o = $(elem).offset()
+	return [event.pageX-o.left, event.pageY-o.top]
 
 class LiveData
 	constructor: ->
@@ -56,6 +67,28 @@ class LiveData
 		
 		dnd_target(document.getElementById('meters-side'),@showChannel)
 		dnd_target(document.getElementById('meters'),@collapseChannel)
+		
+		$(@graph.graphCanvas).mousedown (e) =>
+			[x, y] = relMousePos(@graph.graphCanvas, e)
+			if x > @graph.width - 50
+				channel = @findChannelAtPos(x, y)
+				if channel
+					channel.setValue(channel.axis.invTransform(y))
+					mousemove = (e) =>
+						[x, y] = relMousePos(@graph.graphCanvas, e)
+						ch = @findChannelAtPos(x, y)
+						if ch != channel then return
+						channel.setValue(channel.axis.invTransform(y))
+					$(@graph.graphCanvas).mousemove(mousemove)
+					$(@graph.graphCanvas).mouseup =>
+						$(@graph.graphCanvas).unbind('mousemove', mousemove)
+					
+			
+	findChannelAtPos: (x,y) ->
+		for name, c of @channels
+			if c.showGraph and y>c.axis.ytop and y<c.axis.ybottom
+				return c
+		return false
 		
 	onConfig: (o) ->
 		$('#meters, #meters-side').empty()
@@ -259,7 +292,6 @@ virtualrc_start = (app) ->
 		
 		
 	app.setChannel = (chan, val) ->
-		console.log('setChannel', chan, val)
 		switch chan
 			when 'voltage'
 				voltage = val
@@ -277,7 +309,7 @@ virtualrc_start = (app) ->
 					app.onState('current', 'source')
 					app.onState('voltage', 'measure')
 					
-	setInterval(step, 100)
+	setInterval(step, 80)
 	
 
 $(document).ready ->

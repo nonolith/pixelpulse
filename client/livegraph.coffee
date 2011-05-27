@@ -39,7 +39,8 @@ class YAxis extends Axis
 	transform: (point) ->
 		@ybottom - (point - @min) * @height / @span
 		
-
+	invTransform: (y) ->
+		(@ybottom - y)/@height * @span + @min
 
 class LiveGraph
 	constructor: (@div, @xaxis, @yaxes) ->
@@ -134,17 +135,9 @@ class LiveGraph_canvas extends LiveGraph
 			@ctxa.stroke()
 			@ctxa.fillText(Math.round(x*10)/10, xp ,y+textoffset)
 		
-		for axis in @yaxes
+		drawYAxis = (axis, x, align, textoffset) =>
 			grid = axis.grid()
-			
-			if true # Labels on left
-				x = OFFSET
-				@ctxa.textAlign = 'right'
-				textoffset = -5
-			else  # Labels on right
-				x = @width-OFFSET
-				@ctxa.textAlign = 'left'
-				textoffset = 5
+			@ctxa.textAlign = align
 				
 			@ctxa.textBaseline = 'middle'
 			
@@ -160,6 +153,12 @@ class LiveGraph_canvas extends LiveGraph
 				@ctxa.lineTo(x+4, yp)
 				@ctxa.stroke()
 				@ctxa.fillText(Math.round(y*10)/10, x+textoffset, yp)
+		
+		
+		for axis in @yaxes
+			drawYAxis(axis, OFFSET,        'right', -5)
+			drawYAxis(axis, @width-OFFSET, 'left',   8)
+			
 			
 	redrawGraph: ()->
 		if !@data.length then return
@@ -186,6 +185,16 @@ class LiveGraph_canvas extends LiveGraph
 				
 				@ctxg.lineTo(@xaxis.transform(x), yaxis.transform(y))
 			@ctxg.stroke()
+			
+			if yaxis.grabDot
+				@ctxg.beginPath()
+				@ctxg.arc(@xaxis.transform(x), yaxis.transform(y), 5, 0, Math.PI*2, true);
+				if yaxis.grabDot == 'fill'
+					@ctxg.fillStyle = yaxis.color
+				else
+					@ctxg.fillStyle = 'white'
+				@ctxg.fill()
+				@ctxg.stroke()
 		
 	
 	pushData: (pt) ->
