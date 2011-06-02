@@ -315,7 +315,7 @@ virtualrc_start = (app) ->
 $(document).ready ->
 	window.app = new LiveData()
 	
-	if hostname == 'virtualrc'
+	if hostname == 'virtualrc' or document.location.protocol == 'file:'
 		virtualrc_start(app)
 	else
 		websocket_start(hostname, app)
