@@ -79,9 +79,12 @@ class LiveData
 						ch = @findChannelAtPos(x, y)
 						if ch != channel then return
 						channel.setValue(channel.axis.invTransform(y))
-					$(@graph.graphCanvas).mousemove(mousemove)
-					$(@graph.graphCanvas).mouseup =>
-						$(@graph.graphCanvas).unbind('mousemove', mousemove)
+					mouseup = =>
+						$(document.body).unbind('mousemove', mousemove)
+						                .unbind('mouseup', mouseup)
+					$(document.body).mousemove(mousemove)
+					$(document.body).mouseup(mouseup)
+					
 					
 			
 	findChannelAtPos: (x,y) ->
