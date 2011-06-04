@@ -4,8 +4,9 @@
 import sys
 import usb.core
 import atexit
+import livedata
 
-class ModconSMU(object):
+class ModconSMU(livedata.Device):
 	vReqs = {'UPDATE' : 1, 
 			'SET_DIGOUT' : 2, 
 			'GET_DAC_VALS' : 3,
@@ -16,67 +17,16 @@ class ModconSMU(object):
 			'GET_NAME' : 11,
 			'SET_NAME' : 12}
 	
-	CONFIG = {
-		'channels': [
-			{
-				'name': 'time',
-				'displayname': 'Time',
-				'units': 's',
-				'type': 'linspace',
-				'axisMin': -30,
-				'axisMax': 'auto',
-			},
-			{
-				'name': 'voltage',
-				'displayname': 'Voltage',
-				'units': 'V',
-				'type': 'device',
-				'axisMin': -10,
-				'axisMax': 10,
-			},
-			{
-				'name': 'current',
-				'displayname': 'Current',
-				'units': 'mA',
-				'type': 'device',
-				'axisMin': -200,
-				'axisMax': 200,
-			},
-			{
-				'name': 'resistance',
-				'displayname': 'Resistance',
-				'units': u'Ω',
-				'type': 'computed',
-				'axisMin': 0,
-				'axisMax': 1000,
-			},
-			{
-				'name': 'power',
-				'displayname': 'Power',
-				'units': 'W',
-				'type': 'computed',
-				'axisMin': 0,
-				'axisMax': 2,
-			},
-			{
-				'name': 'voltage(AI0)',
-				'displayname': 'Voltage(AI0)',
-				'units': 'V',
-				'type': 'computed',
-				'axisMin': 0,
-				'axisMax': 4.096,
-			}
-		]
-	}
-
-	def sign(self, x):
-		"""Undo two's complement signing."""
-		if x > 32767:
-			return 65536-x
-		else:
-			return x
-
 	def __init__(self):
+		self.voltageChan =    livedata.AnalogChannel('Voltage',     'V',  -10,  10,   'source',  showGraph=True, onSet=self.setVoltage)
+		self.currentChan =    livedata.AnalogChannel('Current',     'mA', -200, 200,  'measure', showGraph=True, onSet=self.setCurrent)
+		self.resistanceChan = livedata.AnalogChannel('Resistance',  u'Ω', 0,    2000, 'computed')
+		self.powerChan =      livedata.AnalogChannel('Power',        'W', 0,    2,    'computed')
+		self.aiChan =         livedata.AnalogChannel('Voltage(AI0)', 'V', 0,    4096, 'input')
+		self.channels = [self.voltageChan, self.currentChan, self.resistanceChan,
+		                 self.powerChan, self.aiChan]
+	
+	
 		"""Find a USB device with the VID and PID of the ModCon SMU."""
 		self.zeroV = 0x07CF 
 		self.zeroI = 0x07CF
@@ -108,9 +58,14 @@ class ModconSMU(object):
 		VALUE = self.sign( RES_VAL[0] | ( RES_VAL[1] << 8 ) )
 		self.RES = 51*VALUE/16384.0
 		#add safety feature
-		atexit.register(self.setCurrent, amps = 0)
+		atexit.register(self.setCurrent, ma = 0)
 
-	
+	def sign(self, x):
+		"""Undo two's complement signing."""
+		if x > 32767:
+			return 65536-x
+		else:
+			return x
 
 	def update(self, mod = 1):
 		"""updates smu target V/I, returns actual V/I"""
@@ -137,46 +92,36 @@ class ModconSMU(object):
 		else:
 			return (retVolt, retAmp)
 			
-	def setVolts(self, volts):
-		if self.driving == 'v':
-			self.v = volts
-		elif self.driving == 'i':
-			self.v = volts
+	def setVoltage(self, volts):
+		self.v = volts
+		if self.driving != 'v':
 			self.driving = 'v'
 			self.updateNeeded = True
+			self.currentChan.setState('measure')
+			self.voltageChan.setState('source')
 			
-	def setCurrent(self, amps):
-		if self.driving == 'i':
-			self.i = amps
-		elif self.driving == 'v':
-			self.i = amps
+	def setCurrent(self, ma):
+		self.i = ma/-1000.0
+		if self.driving != 'i':
 			self.driving = 'i'
 			self.updateNeeded = True
-			
-	def getConfig(self):
-		return self.CONFIG
+			self.currentChan.setState('source')
+			self.voltageChan.setState('measure')
 		
-	def getData(self, t):
+	def start(self, server):
+		server.poll(self.poll)
+		
+	def poll(self):
 		data = self.update()
-		return {
-			'time': t,
-			'voltage': data[0],
-			'current': data[1]*1000,
-			'power': abs(data[0] * data[1]),
-			'resistance': abs(data[0]/data[1]),
-			'voltage(AI0)': data[2],
-			'_driving': 'current' if self.driving=='i' else 'voltage'
-		}
-		
-	def onSet(self, vals):
-		for prop, val in vals.iteritems():
-			if prop == 'voltage':
-				self.setVolts(val)
-			elif prop == 'current':
-				self.setCurrent(val/1000.0)
+		return [
+			(self.voltageChan, data[0]),
+			(self.currentChan, data[1]*1000),
+			(self.powerChan, abs(data[0] * data[1])),
+			(self.resistanceChan, abs(data[0]/data[1])),
+			(self.aiChan, data[2]),
+		]
 
-def getDevices():
-	try: 
-		return [ModconSMU()]
-	except IOError:
-		return []
+if __name__ == '__main__':
+	dev = ModconSMU()
+	server = livedata.DataServer(dev)
+	server.start()

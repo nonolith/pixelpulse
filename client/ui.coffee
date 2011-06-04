@@ -202,7 +202,7 @@ websocket_start = (host, app) ->
 			when 'config'
 				app.onConfig(m.channels)
 			when 'state'
-				app.onState(m.chan, m.state)
+				app.onState(m.channel, m.state)
 	
 	ws.onclose = ->
 		document.title = "Nonolith Client(Disconnected)"
