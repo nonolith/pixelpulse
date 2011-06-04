@@ -2,20 +2,20 @@
 class Channel
 	constructor: (o) ->
 		@name = o.name
-		@displayName = o.displayname
+		@id = o.id
 		@unit = o.unit
 		@editable = true
 		@state = ''
 		
-		if @name == 'time'
-			@axis = new livegraph.XAxis(@name, o.min, o.max)
+		if @id == 'time'
+			@axis = new livegraph.XAxis(@id, o.min, o.max)
 			@showGraph = false
 		else
-			@axis = new livegraph.YAxis(@name, 'blue', o.min, o.max)
+			@axis = new livegraph.YAxis(@id, 'blue', o.min, o.max)
 			@showGraph = o.showGraph
 		
 		@div = $("<div class='meter'>")
-			.append((@h2 = $("<h2>")).text(@displayName))
+			.append((@h2 = $("<h2>")).text(@name))
 			.append($("<span class='reading'>")
 				.append(@input = $("<input>")))
 			.append($("<span class='unit'>").text(@unit))
@@ -31,11 +31,11 @@ class Channel
 		@input.click ->
 			this.select()
 		
-		if @name != 'time'
+		if @id != 'time'
 			@div.get(0).draggable = true
 			@div.get(0).ondragstart = (e) =>
-				e.dataTransfer.setData('text/plain', @name)
-				i = $("<div class='meter-drag'>").text(@displayName).appendTo('#hidden')
+				e.dataTransfer.setData('text/plain', @id)
+				i = $("<div class='meter-drag'>").text(@id).appendTo('#hidden')
 				e.dataTransfer.setDragImage(i.get(0), 0, 0)
 				setTimeout((-> i.remove()), 0)
 			
@@ -100,9 +100,9 @@ class LiveData
 		self = this
 		for c in o
 			n = new Channel(c)
-			@channels[n.name] = n
-			n.setValue = (v) -> self.setChannel(this.name, v)
-			if n.name == 'time'
+			@channels[n.id] = n
+			n.setValue = (v) -> self.setChannel(this.id, v)
+			if n.id == 'time'
 				@graph.xaxis = n.axis
 	
 			if n.showGraph
@@ -223,16 +223,16 @@ virtualrc_start = (app) ->
 	
 	app.onConfig [
 			{
-				'name': 'time',
-				'displayname': 'Time',
+				'id': 'time',
+				'name': 'Time',
 				'unit': 's',
 				'min': -30,
 				'max': 'auto',
 				'state': 'live',
 			},
 			{
-				'name': 'voltage',
-				'displayname': 'Voltage',
+				'id': 'voltage',
+				'name': 'Voltage',
 				'unit': 'V',
 				'min': -10,
 				'max': 10,
@@ -240,8 +240,8 @@ virtualrc_start = (app) ->
 				'showGraph': true,
 			},
 			{
-				'name': 'current',
-				'displayname': 'Current',
+				'id': 'current',
+				'name': 'Current',
 				'unit': 'mA',
 				'min': -200,
 				'max': 200,
@@ -249,8 +249,8 @@ virtualrc_start = (app) ->
 				'showGraph': true,
 			},
 			{
-				'name': 'resistance',
-				'displayname': 'Resistance',
+				'id': 'resistance',
+				'name': 'Resistance',
 				'unit': '\u03A9',
 				'min': 0,
 				'max': 10000,

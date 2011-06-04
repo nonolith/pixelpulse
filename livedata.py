@@ -8,11 +8,11 @@ from tornado.websocket import WebSocketHandler
 import sys, os, glob, imp, time, json
 
 class Channel(object):
-	json_properties = ['name', 'displayname', 'state', 'showGraph']
+	json_properties = ['name', 'id', 'state', 'showGraph']
 	
-	def __init__(self, name, displayname, state='input', showGraph=False):
+	def __init__(self, name, state='input', showGraph=False):
 		self.name = name
-		self.displayname = displayname
+		self.id = name.lower()
 		self.state = state
 		self.showGraph = showGraph
 		
@@ -31,12 +31,18 @@ class Channel(object):
 class AnalogChannel(Channel):
 	json_properties = ['unit', 'min', 'max']
 
-	def __init__(self, name, displayname, unit, min, max, **kw):
-		super(AnalogChannel, self).__init__(name, displayname, **kw)
+	def __init__(self, name, unit, min, max, **kw):
+		super(AnalogChannel, self).__init__(name, **kw)
 		self.unit = unit
 		self.min = min
 		self.max = max
 
+class Device(object):
+	def start(self):
+		pass
+	
+	def stop(self):
+		pass
 
 class DataSocketHandler(WebSocketHandler):
 	def __init__(self, *args, **kwds):
@@ -60,16 +66,19 @@ class DataSocketHandler(WebSocketHandler):
 		self.server.onDisconnect(self)
 
 class DataServer(object):
-	def __init__(self, channels=[], port=8888, poll_tick=0.1):
+	def __init__(self, devices, port=8888, poll_tick=0.1):
+		if not isinstance(devices, list): devices =  [devices]
+		self.devices = devices 
 		self.clients = []
 		self.channels = {}
 		self.poll_tick = poll_tick
 		self.poll_fns = []
-		for channel in channels:
-			self.channels[channel.name] = channel
+		for dev in devices:
+			for channel in dev.channels:
+				self.channels[channel.id] = channel
 			
 		if not 'time' in self.channels:
-			self.channels['time'] = AnalogChannel('time','Time','s',-30,'auto',state='live')
+			self.channels['time'] = AnalogChannel('Time','s',-30,'auto',state='live')
 		
 		self.application = Application([
 			(r"/dataws", DataSocketHandler, {'server_instance':self}),
@@ -89,7 +98,7 @@ class DataServer(object):
 		if len(self.clients) != 0:
 			packet = {}
 			for channel, value in data:
-				packet[channel.name] = value
+				packet[channel.id] = value
 			
 			if not packet.has_key('time'):
 				packet['time'] = time.time() - self.startT	
@@ -121,6 +130,9 @@ class DataServer(object):
 	def start(self):
 		self.startT = time.time()
 		
+		for dev in self.devices:
+			dev.start(self)
+		
 		if self.poll_fns:
 			self.poller = PeriodicCallback(self.onPoll, self.poll_tick*1000)
 			self.poller.start()
@@ -131,7 +143,7 @@ class DataServer(object):
 		self.poll_fns.append(callback)
 	
 	def onPoll(self):
-		for f in self.poll_fns: f()
+		for f in self.poll_fns: self.data(f())
 
 if __name__ == "__main__":
 	AnalogChannel('test', 'Test', 'A', 0, 10).getConfig()
