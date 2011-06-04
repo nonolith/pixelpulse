@@ -136,7 +136,7 @@ class DataServer(object):
 			self.channels[k].onSet(v)
 			
 	def onStateChange(self, channel):
-		self.sendToAll(self.formJSON('update', {'channel':channel.id,'state':channel.state}))
+		self.sendToAll(self.formJSON('state', {'channel':channel.id,'state':channel.state}))
 			
 	def start(self):
 		self.startT = time.time()
