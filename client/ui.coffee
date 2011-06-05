@@ -4,7 +4,7 @@ class Channel
 		@name = o.name
 		@id = o.id
 		@unit = o.unit
-		@editable = true
+		@settable = o.settable
 		@state = ''
 		
 		if @id == 'time'
@@ -30,6 +30,9 @@ class Channel
 			
 		@input.click ->
 			this.select()
+		
+		if not @settable
+			$(@input).attr('disabled', true)
 		
 		if @id != 'time'
 			@div.get(0).draggable = true
