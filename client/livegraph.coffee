@@ -2,9 +2,11 @@
 OFFSET = 35
 
 window.arange = (lo, hi, step) ->
-	lo -= step
-	while lo < hi
+	ret = []
+	while lo <= hi
+		ret.push(lo)
 		lo += step
+	return ret
 		
 class Axis
 	grid: ->
@@ -58,7 +60,7 @@ class LiveGraph
 			@xaxis.min = @xaxis.max + @xaxis.autoScroll
 			
 	relayout: ->
-		subplot_height = (@height-(Math.max(1, @yaxes.length-1))*OFFSET)/@yaxes.length - OFFSET
+		subplot_height = (@height-(@yaxes.length+1)*OFFSET)/@yaxes.length
 		y = OFFSET
 		
 		for i in @yaxes

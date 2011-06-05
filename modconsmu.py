@@ -22,7 +22,7 @@ class ModconSMU(livedata.Device):
 		self.currentChan =    livedata.AnalogChannel('Current',     'mA', -200, 200,  'measure', showGraph=True, onSet=self.setCurrent)
 		self.resistanceChan = livedata.AnalogChannel('Resistance',  u'Ω', 0,    2000, 'computed')
 		self.powerChan =      livedata.AnalogChannel('Power',        'W', 0,    2,    'computed')
-		self.aiChan =         livedata.AnalogChannel('Voltage(AI0)', 'V', 0,    4096, 'input')
+		self.aiChan =         livedata.AnalogChannel('Voltage(AI0)', 'V', 0,    4.096, 'input')
 		self.channels = [self.voltageChan, self.currentChan, self.resistanceChan,
 		                 self.powerChan, self.aiChan]
 	
