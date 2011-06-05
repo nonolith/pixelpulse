@@ -78,15 +78,19 @@ class DataServer(object):
 		self.devices = devices 
 		self.clients = []
 		self.channels = {}
+		self.channel_list = []
 		self.poll_tick = poll_tick
 		self.poll_fns = []
 		for dev in devices:
+			self.channel_list.extend(dev.channels)
 			for channel in dev.channels:
 				channel._stateChanged = self.onStateChange
 				self.channels[channel.id] = channel
 			
 		if not 'time' in self.channels:
-			self.channels['time'] = AnalogChannel('Time','s',-30,'auto',state='live')
+			ch = AnalogChannel('Time','s',-30,'auto',state='live')
+			self.channels['time'] = ch
+			self.channel_list.insert(0, ch)
 		
 		self.application = Application([
 			(r"/dataws", DataSocketHandler, {'server_instance':self}),
@@ -120,7 +124,7 @@ class DataServer(object):
 			
 	def getConfigMessage(self):
 		s = []
-		for name, channel in self.channels.iteritems():
+		for channel in self.channel_list:
 			s.append(channel.getConfig())
 		return {'channels': s}
 		
