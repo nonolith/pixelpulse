@@ -8,7 +8,7 @@ from tornado.websocket import WebSocketHandler
 import sys, os, glob, imp, time, json
 
 class Channel(object):
-	json_properties = ['name', 'id', 'state', 'showGraph', 'settable']
+	json_properties = ['name', 'id', 'type', 'state', 'showGraph', 'settable']
 	
 	def __init__(self, name, state='input', showGraph=False, onSet=None):
 		self.name = name
@@ -27,7 +27,7 @@ class Channel(object):
 			o = super(type(o), o)
 		return config
 		
-	def onSet(self, v):
+	def onSet(self, this, v):
 		print "Can't set channel %s"%self.name
 		
 	def setState(self, state):
@@ -37,12 +37,21 @@ class Channel(object):
 
 class AnalogChannel(Channel):
 	json_properties = ['unit', 'min', 'max']
+	type = 'analog'
 
 	def __init__(self, name, unit, min, max, state='input', **kw):
 		super(AnalogChannel, self).__init__(name, state, **kw)
 		self.unit = unit
 		self.min = min
 		self.max = max
+		
+class DigitalChannel(Channel):
+	json_properties = ['hasPullUp']
+	type = 'digital'
+	
+	def __init__(self, name, hasPullUp=False, state='input', **kw):
+		super(DigitalChannel, self).__init__(name, state, **kw)
+		self.hasPullUp = hasPullUp
 
 class Device(object):
 	def start(self):
@@ -138,7 +147,7 @@ class DataServer(object):
 		
 	def onSet(self, message):
 		for k, v in message.iteritems():
-			self.channels[k].onSet(v)
+			self.channels[k].onSet(self.channels[k], v)
 			
 	def onStateChange(self, channel):
 		self.sendToAll(self.formJSON('state', {'channel':channel.id,'state':channel.state}))

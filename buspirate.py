@@ -13,7 +13,7 @@ channel_masks = {
 class BusPirateDevice(livedata.Device):
 	def __init__(self, port='/dev/ttyUSB0'):
 		self.digitalChannels = [
-			livedata.AnalogChannel(name, 'V', 0.0, 1.0, showGraph=True)
+			livedata.DigitalChannel(name, True, showGraph=True, onSet=self.onSet)
 			for name in ['AUX','MOSI', 'CLK', 'MISO', 'CS']]
 			
 		self.channels = self.digitalChannels
@@ -26,8 +26,6 @@ class BusPirateDevice(livedata.Device):
 		
 	def start(self, server):
 		def onReceive(data):
-			print '>', data
-		
 			if self.recv_mode == 'init':
 				self.initData += data
 				if 'BBIO1' in self.initData:
@@ -41,7 +39,7 @@ class BusPirateDevice(livedata.Device):
 				out = []
 				for chan in self.digitalChannels:
 					mask = channel_masks[chan.name]
-					out.append((chan, float(bool(data & mask))))
+					out.append((chan, bool(data & mask)))
 				server.data(out)
 				
 		self.serial = tornado_serial.TornadoSerial(self.port, 115200, onReceive)
@@ -61,9 +59,16 @@ class BusPirateDevice(livedata.Device):
 		self.serial.flush()
 		
 	def onPoll(self):
-		print repr(chr(self.output_state) + chr(self.output_mode))
 		self.serial.write(chr(self.output_state) + chr(self.output_mode))
 		
+	def onSet(self, chan, val):
+		chan.setState('output')
+		mask = channel_masks[chan.name]
+		self.output_mode &= ~mask
+		if val:
+			self.output_state |= mask
+		else:
+			self.output_state &= ~mask
 	
 		
 		

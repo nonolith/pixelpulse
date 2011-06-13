@@ -92,7 +92,7 @@ class ModconSMU(livedata.Device):
 		else:
 			return (retVolt, retAmp)
 			
-	def setVoltage(self, volts):
+	def setVoltage(self, chan, volts):
 		self.v = volts
 		if self.driving != 'v':
 			self.driving = 'v'
@@ -100,7 +100,7 @@ class ModconSMU(livedata.Device):
 			self.currentChan.setState('measure')
 			self.voltageChan.setState('source')
 			
-	def setCurrent(self, ma):
+	def setCurrent(self, chan, ma):
 		self.i = ma/-1000.0
 		if self.driving != 'i':
 			self.driving = 'i'

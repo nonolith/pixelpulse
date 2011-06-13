@@ -3,49 +3,15 @@ class Channel
 	constructor: (o) ->
 		@name = o.name
 		@id = o.id
-		@unit = o.unit
 		@settable = o.settable
-		@state = ''
-		
-		@createTile()
-		
-		if @id == 'time'
-			@axis = new livegraph.XAxis(@id, o.min, o.max)
-			@showGraph = false
-			$("#timesection").append(@tile)
-		else
-			@axis = new livegraph.YAxis(@id, 'blue', o.min, o.max)
-			if o.showGraph
-				@showTimeseries().appendTo('#timeseries')
-			else
-				@showGraph = false
-				$('#meters').append(@tile)
-		
-			
-		@onState(o.state)
-		
-		
+		@state = ''		
 				
 	createTile: ->
 		return @tile if @tile
 		
-		@tile = $("<div class='meter'>")
-			.append((@h2 = $("<h2>")).text(@name))
-			.append($("<span class='reading'>")
-				.append(@input = $("<input>")))
-			.append($("<span class='unit'>").text(@unit))
-			.append(@stateElem = $("<small>&nbsp;</small>"))
-			.appendTo('#meters')
-			
-		@input.change (e) =>
-			@setValue(parseFloat($(@input).val(), 10))
-			$(@input).blur()
-			
-		@input.click ->
-			this.select()
-		
-		if not @settable
-			$(@input).attr('disabled', true)
+		@tile = $("<div class='meter'>").append((@h2 = $("<h2>")).text(@name))
+		@addReadingUI(@tile)
+		@tile.append(@stateElem = $("<small>&nbsp;</small>"))
 			
 		@tile.get(0).draggable = true
 		@tile.get(0).ondragstart = (e) =>
@@ -90,7 +56,79 @@ class Channel
 		@tile.detach().attr('style', '').appendTo('#meters')
 		@tsRow.remove()
 		@showGraph = false
+							
+	onState: (s) ->
+		@stateElem.text(s)
+		if s=='source' or s=='set' or s=='output'
+			@axis.grabDot = 'fill'
+		else if s=='measure'
+			@axis.grabDot = 'stroke'
 			
+	addToUI: (o) ->
+		if o.showGraph
+			@showTimeseries().appendTo('#timeseries')
+		else
+			@showGraph = false
+			$('#meters').append(@tile)
+		@onState(o.state)
+		
+	setValue: (v) ->
+		@_setValue(v)
+			
+class DigitalChannel extends Channel
+	constructor: (o) ->
+		super(o)
+		@hasPullUp = o.hasPullUp
+		@createTile()
+		@axis = new livegraph.YAxis(@id, 'blue', 0, 1)
+		@addToUI(o)
+		@value = 0
+		
+	addReadingUI: (tile) ->
+		tile.append @reading = $("<span class='reading'>")
+		
+		@reading.mouseup =>
+			console.log('toggle')
+			@setValue(!@value)
+				
+	onValue: (time, v) ->
+		@value = v
+		
+		@reading.text(if v then "HIGH" else "LOW")
+		
+		if @showGraph
+			o = {time:time}
+			o[@id] = v
+			@graph.pushData(o) 
+			
+	setValue: (v) ->
+		super(v>0.5)
+		
+
+class AnalogChannel extends Channel
+	constructor: (o) ->
+		super(o)
+		@unit = o.unit
+		@createTile()
+		@axis = new livegraph.YAxis(@id, 'blue', o.min, o.max)
+		@addToUI(o)
+		
+	addReadingUI: (tile) ->
+		tile.append($("<span class='reading'>")
+			.append(@input = $("<input>")))
+			.append($("<span class='unit'>").text(@unit))
+		
+		if not @settable
+			$(@input).attr('disabled', true)
+		else
+		@input.change (e) =>
+			@setValue(parseFloat($(@input).val(), 10))
+			$(@input).blur()
+			
+		@input.click ->
+			this.select()
+			
+	
 	onValue: (time, v) ->
 		if !@input.is(':focus')
 			@input.val(if Math.abs(v)>1 then v.toPrecision(4) else v.toFixed(3))
@@ -102,14 +140,16 @@ class Channel
 			o = {time:time}
 			o[@id] = v
 			@graph.pushData(o) 
-				
-	onState: (s) ->
-		@stateElem.text(s)
-		if s=='source' or s=='set' or s=='output'
-			@axis.grabDot = 'fill'
-		else if s=='measure'
-			@axis.grabDot = 'stroke'
 
+class TimeChannel extends AnalogChannel
+	constructor: (o) ->
+		Channel.call(this, o)
+		
+		@createTile()
+		
+		@axis = new livegraph.XAxis(@id, o.min, o.max)
+		@showGraph = false
+		$("#timesection").append(@tile)
 
 relMousePos = (elem, event) ->
 	o = $(elem).offset()
@@ -177,9 +217,14 @@ class LiveData
 		@channels = {}
 		self = this
 		for c in o
-			n = new Channel(c)
+			if c.id == 'time'
+				n = new TimeChannel(c)
+			else if c.type == 'digital'
+				n = new DigitalChannel(c)
+			else
+				n = new AnalogChannel(c)
 			@channels[n.id] = n
-			n.setValue = (v) -> self.setChannel(this.id, v)
+			n._setValue = (v) -> self.setChannel(this.id, v)
 			
 	onData: (data) ->
 		for name, c of @channels
