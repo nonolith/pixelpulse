@@ -121,54 +121,17 @@ class LiveData
 		
 		ts = $("#timeseries").get(0)
 		
-		ts.ondragover = (e) ->
+		handleDragOver = (self, e, draggedElem, draggableMatch, posFunc) ->
 			if $(e.target).hasClass('insertion-cursor')
 				return e.preventDefault()
 				
-			tgt = $(e.target).closest('section')
-			
-			draggedElem = window.draggedChannel.showGraph and window.draggedChannel.tsRow.get(0)
-			
-			if draggedElem == tgt.get(0)
-				$(".insertion-cursor").remove()
-				tgt.replaceWith("<div class='insertion-cursor'>")
-			
-			if tgt
-				if e.offsetY < tgt.get(0).offsetHeight/2
-					if not tgt.prev().hasClass('insertion-cursor')
-						$(".insertion-cursor").remove()
-						tgt.before("<div class='insertion-cursor'>")
-				else
-					if not tgt.next().hasClass('insertion-cursor')
-						$(".insertion-cursor").remove()
-						tgt.after("<div class='insertion-cursor'>")
-						
-			e.preventDefault()
-			
-		ts.ondrop = (e) ->
-			cur = $(this).find(".insertion-cursor")
-			if cur.length
-				cur.replaceWith(window.draggedChannel.showTimeseries())
-				
-				ts = $("#timeseries").get(0)
-		
-		
-		mp = $('#meters').get(0)
-		
-		mp.ondragover = (e) ->
-			if $(e.target).hasClass('insertion-cursor')
-				return e.preventDefault()
-				
-			draggedElem = window.draggedChannel.tile.get(0)
-			tgt = $(e.target).closest('.meter')
+			tgt = $(e.target).closest(draggableMatch)
 			
 			if tgt.length
 				if draggedElem == tgt.get(0)
 					$(".insertion-cursor").remove()
-					tgt.replaceWith("<div class='insertion-cursor'>")
-					return
-				
-				if e.offsetX < tgt.get(0).offsetWidth/2
+					tgt.addClass('dnd-oldpos').hide().after("<div class='insertion-cursor'>")
+				else if posFunc(tgt)
 					if not tgt.prev().hasClass('insertion-cursor')
 						$(".insertion-cursor").remove()
 						tgt.before("<div class='insertion-cursor'>")
@@ -178,15 +141,36 @@ class LiveData
 						tgt.after("<div class='insertion-cursor'>")
 			else
 				$(".insertion-cursor").remove()
-				$(this).prepend("<div class='insertion-cursor'>")
+				$(self).prepend("<div class='insertion-cursor'>")
 						
 			e.preventDefault()
+		
+		ts.ondragover = (e) ->
+			draggedElem = window.draggedChannel.showGraph and window.draggedChannel.tsRow.get(0)
+			handleDragOver(this, e, draggedElem, 'section', (tgt) -> e.offsetY < tgt.get(0).offsetHeight/2)
+			
+		ts.ondrop = (e) ->
+			cur = $(this).find(".insertion-cursor")
+			if cur.length
+				cur.replaceWith(window.draggedChannel.showTimeseries())
+				ts = $("#timeseries").get(0)
+		
+		
+		mp = $('#meters').get(0)
+		
+		mp.ondragover = (e) ->
+			draggedElem = window.draggedChannel.tile.get(0)
+			handleDragOver(this, e, draggedElem, '.meter', (tgt) -> e.offsetX < tgt.get(0).offsetWidth/2)
 			
 		mp.ondrop = (e) ->
 			cur = $(this).find(".insertion-cursor")
 			if cur.length
 				window.draggedChannel.hideTimeseries()
 				cur.replaceWith(window.draggedChannel.tile)
+				
+		mp.ondragend = ts.ondragend = (e) ->
+			$('.insertion-cursor').remove()
+			$('.dnd-oldpos').show().removeClass('.dnd-oldpos')
 		
 	onConfig: (o) ->
 		$('#meters, #meters-side').empty()
