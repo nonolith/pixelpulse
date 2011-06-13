@@ -7,22 +7,35 @@ class Channel
 		@settable = o.settable
 		@state = ''
 		
+		@createTile()
+		
 		if @id == 'time'
 			@axis = new livegraph.XAxis(@id, o.min, o.max)
 			@showGraph = false
+			$("#timesection").append(@tile)
 		else
 			@axis = new livegraph.YAxis(@id, 'blue', o.min, o.max)
-			@showGraph = o.showGraph
+			if o.showGraph
+				@showTimeseries()
+			else
+				@showGraph = false
+				$('#meters').append(@tile)
 		
-		@div = $("<div class='meter'>")
+			
+		@onState(o.state)
+		
+		
+				
+	createTile: ->
+		return @tile if @tile
+		
+		@tile = $("<div class='meter'>")
 			.append((@h2 = $("<h2>")).text(@name))
 			.append($("<span class='reading'>")
 				.append(@input = $("<input>")))
 			.append($("<span class='unit'>").text(@unit))
-			.append(@stateElem = $("<small>"))
+			.append(@stateElem = $("<small>&nbsp;</small>"))
 			.appendTo('#meters')
-			
-		@onState(o.state)	
 			
 		@input.change (e) =>
 			@setValue(parseFloat($(@input).val(), 10))
@@ -33,22 +46,59 @@ class Channel
 		
 		if not @settable
 			$(@input).attr('disabled', true)
-		
+			
 		if @id != 'time'
-			@div.get(0).draggable = true
-			@div.get(0).ondragstart = (e) =>
+			@tile.get(0).draggable = true
+			@tile.get(0).ondragstart = (e) =>
 				e.dataTransfer.setData('text/plain', @id)
 				i = $("<div class='meter-drag'>").text(@id).appendTo('#hidden')
 				e.dataTransfer.setDragImage(i.get(0), 0, 0)
 				setTimeout((-> i.remove()), 0)
+				
+		return @tile
+		
+	showTimeseries: ->
+		if @showGraph then return
+		
+		@tsRow = $("<section>")
+			.append(@graphDiv = $("<div class='livegraph'>"))
+			.append(@tsAside = $("<aside>"))
+			.appendTo('#timeseries')
+		@graph = new livegraph.canvas(@graphDiv.get(0), app.channels.time.axis, [@axis])
+		
+		$(@graph.graphCanvas).mousedown (e) =>
+			[x, y] = relMousePos(@graph.graphCanvas, e)
+			if x > @graph.width - 50
+				@setValue(@axis.invTransform(y))
+				mousemove = (e) =>
+					[x, y] = relMousePos(@graph.graphCanvas, e)
+					@setValue(@axis.invTransform(y))
+				mouseup = =>
+					$(document.body).unbind('mousemove', mousemove)
+					                .unbind('mouseup', mouseup)
+				$(document.body).mousemove(mousemove)
+				$(document.body).mouseup(mouseup)
+		
+		@tile.detach().attr('style', '').appendTo(@tsAside)
+		@showGraph = true
+	
+	hideTimeseries: -> 
+		if not @showGraph then return
+		@tile.detach().attr('style', '').appendTo('#meters')
+		@tsRow.remove()
+		@showGraph = false
 			
-	onValue: (v) ->
+	onValue: (time, v) ->
 		if !@input.is(':focus')
 			@input.val(if Math.abs(v)>1 then v.toPrecision(4) else v.toFixed(3))
 			if (v < 0)
 				@input.addClass('negative')
 			else
 				@input.removeClass('negative')
+		if @showGraph
+			o = {time:time}
+			o[@id] = v
+			@graph.pushData(o) 
 				
 	onState: (s) ->
 		@stateElem.text(s)
@@ -65,93 +115,26 @@ relMousePos = (elem, event) ->
 class LiveData
 	constructor: ->
 		@channels = {}
-		@graph = new livegraph.canvas(document.getElementById('graph'), {}, [])
-		$(window).resize(@onResized)
-		
-		dnd_target(document.getElementById('meters-side'),@showChannel)
-		dnd_target(document.getElementById('meters'),@collapseChannel)
-		
-		$(@graph.graphCanvas).mousedown (e) =>
-			[x, y] = relMousePos(@graph.graphCanvas, e)
-			if x > @graph.width - 50
-				channel = @findChannelAtPos(x, y)
-				if channel
-					channel.setValue(channel.axis.invTransform(y))
-					mousemove = (e) =>
-						[x, y] = relMousePos(@graph.graphCanvas, e)
-						ch = @findChannelAtPos(x, y)
-						if ch != channel then return
-						channel.setValue(channel.axis.invTransform(y))
-					mouseup = =>
-						$(document.body).unbind('mousemove', mousemove)
-						                .unbind('mouseup', mouseup)
-					$(document.body).mousemove(mousemove)
-					$(document.body).mouseup(mouseup)
-					
-					
-			
-	findChannelAtPos: (x,y) ->
-		for name, c of @channels
-			if c.showGraph and y>c.axis.ytop and y<c.axis.ybottom
-				return c
-		return false
 		
 	onConfig: (o) ->
 		$('#meters, #meters-side').empty()
 		@channels = {}
-		@graph.yaxes = []
 		self = this
 		for c in o
 			n = new Channel(c)
 			@channels[n.id] = n
 			n.setValue = (v) -> self.setChannel(this.id, v)
-			if n.id == 'time'
-				@graph.xaxis = n.axis
-	
-			if n.showGraph
-				@graph.yaxes.push(n.axis)
-				$('#meters-side').append(n.div)
-			else
-				$('#meters').append(n.div)
-			
-		@onResized()
 			
 	onData: (data) ->
 		for name, c of @channels
 			if data[name]?
-				c.onValue(data[name])
-		@graph.pushData(data)
+				c.onValue(data.time, data[name])
 		
 	onState: (channel, state) ->
 		@channels[channel].onState(state)
 		
 	setChannel: (name, value) -> 
 		console.error("setChannel should be overridden by transport")
-		
-	onResized: =>
-		@graph.resized()
-		for name, c of @channels
-			if c.showGraph
-				c.div.css('top', c.axis.ytop).css('height', c.axis.ybottom-c.axis.ytop)
-				
-	showChannel: (name) =>
-		c = @channels[name]
-		if not c then return
-		if c.showGraph then return
-		c.div.detach().attr('style', '').appendTo('#meters-side')
-		c.showGraph = true
-		@graph.yaxes.push(c.axis)
-		@onResized()
-	
-	collapseChannel: (name) =>
-		c = @channels[name]
-		if not c then return
-		if not c.showGraph then return
-		c.div.detach().attr('style', '').appendTo('#meters')
-		i = @graph.yaxes.indexOf(c.axis)
-		if i!=-1 then @graph.yaxes.splice(i, 1)
-		c.showGraph = false
-		@onResized()
 		
 			
 
@@ -241,6 +224,7 @@ virtualrc_start = (app) ->
 				'max': 10,
 				'state': 'source',
 				'showGraph': true,
+				'settable': true,
 			},
 			{
 				'id': 'current',
@@ -250,6 +234,7 @@ virtualrc_start = (app) ->
 				'max': 200,
 				'state': 'measure',
 				'showGraph': true,
+				'settable': true,
 			},
 			{
 				'id': 'resistance',

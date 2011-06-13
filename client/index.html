@@ -53,50 +53,28 @@ body{
 }
 
 
-#graph{
-	position: absolute;
-	top: 0;
-	left: 5px;
-	right: 190px;
-	bottom: 115px;
-}
-
 #meters{
 	position: absolute;
-	bottom: 0;
+	top: 0;
 	height: 85px;
 	left: 0;
 	right: 0;
 	background: #444;
-	padding: 10px 10px 15px 20px;
+	background: -webkit-linear-gradient(270deg, #333 0%, #444 25%, #333 100%);
 	color: white;
-}
-
-#meters-side{
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	width: 190px;
-	right: 0;
 	
-	background: #444;
-	color: white;
+	display: -webkit-box;
+  	-webkit-box-orient: horizontal;
+  	-webkit-box-align: center;
+	-webkit-box-pack: end;
 }
 
 #meters > .meter{
-	display: inline-block;
-}
-
-#meters-side .meter{
-	position: absolute;
-	border-bottom: 1px solid #888;
-	padding: 0 20px;
-	width: 150px;
+	margin-left: 10px;
 }
 
 .meter{
-	height: 80px;
-	width: 200px;
+	width: 140px;
 	white-space:nowrap;
 }
 
@@ -117,7 +95,7 @@ body{
 }
 
 .meter span{
-	font-size: 40px;
+	font-size: 30px;
 }
 
 .meter .reading{
@@ -125,8 +103,8 @@ body{
 }
 
 .meter .unit{
-	color: #ccc;
-	font-size: 30px;
+	color: #888;
+	font-size: 25px;
 }
 
 .meter small{
@@ -140,8 +118,7 @@ body{
 .reading input{
 	background: transparent;
 	width: 2.65em;
-	font-size: inherit;
-	font-weight: inherit;
+	font: inherit;
 	color: inherit;
 	border: 0;
 	padding: 0;
@@ -154,8 +131,8 @@ body{
 }
 
 .reading input[disabled]{
-	color: white;
-	-webkit-text-fill-color: white;
+	color: inherit;
+	-webkit-text-fill-color: inherit;
 }
 
 #loading{
@@ -166,6 +143,135 @@ body{
 	width: 100%;
 }
 
+
+/* defaults */
+
+/* See http://hacks.mozilla.org/2010/04/the-css-3-flexible-box-model/ for info on experimental box layout */
+
+#timeseries{
+	position: absolute;
+	top: 85px;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	
+	display: -webkit-box;
+  	-webkit-box-orient: vertical;
+  	
+  	-webkit-transition: left 0.8s ease-in-out;
+}
+
+#timeseries > section{
+	-webkit-box-flex: 1;
+	background: -webkit-linear-gradient(270deg, #eee 0%, #fff 20%, #e8e8e8 100%);
+	background: -moz-linear-gradient(270deg, #eee 0%, #fff 20%, #e8e8e8 100%);
+	position: relative;
+}
+
+#timeseries > section > .livegraph{
+	position: absolute;
+	left: 0;
+	right: 168px;
+	top: 0;
+	bottom: 0;
+}
+
+#timeseries > section#timesection{
+	height: 32px;
+	background: -webkit-linear-gradient(270deg, #ccc 0%, #d4d4d4 20%, #c8c8c8 100%);
+	-webkit-box-flex: 0;
+	-webkit-box-ordinal-group: 10;
+	text-align: center;
+}
+
+#timesection .meter{
+	display: inline-block;
+	vertical-align: middle;
+	color: black;
+	height: 100%;
+}
+
+#timesection h2{
+	display: inline-block;
+	margin-right: 10px;
+}
+
+#timesection h2:after{
+	content: ':';
+}
+
+#timesection small{
+	display: none;
+}
+
+#timeseries > section > aside{
+	position: absolute;
+	right: 0;
+	height: 100%;
+	width: 168px;
+	
+	display: -webkit-box;
+  	-webkit-box-orient: vertical;
+  	
+  	-webkit-box-align: center;
+	-webkit-box-pack: center;
+}
+
+
+#sidegraphs{
+	position: absolute;
+	top: 85px;
+	bottom: 0;
+	width: 0;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-box-align: center;
+	-webkit-box-pack: center;
+	
+	-webkit-transition: width 0.8s ease-in-out;
+}
+
+#sidegraphs > section{
+	display: none;
+	width: 100%;
+}
+
+/* layout-1side */
+
+body.layout-1side #timeseries{
+	left: 540px;
+}
+
+body.layout-1side #sidegraphs{
+	width: 540px;
+}
+
+body.layout-1side #sidegraph1{
+	display: -webkit-box;
+	height: 540px;
+	background: blue;
+}
+
+/* layout-2side */
+
+body.layout-2side #timeseries{
+	left: 280px;
+}
+
+body.layout-2side #sidegraphs{
+	width: 280px;
+}
+
+body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
+	display: -webkit-box;
+	height: 280px;
+	background: blue;
+}
+
+
+
+
+
 </style>
 <link href='http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold' rel='stylesheet' type='text/css'>
 <link rel='stylesheet' href='livegraph.css' />
@@ -175,21 +281,23 @@ body{
 <script src='ui.js'></script>
 
 </head>
-<body>
-<div id='wrap'>
-
-<div id='graph'>
-
-</div>
+<body class='layout-0side'>
 
 <div id='loading'>Connecting...</div>
 
-<div id='meters-side'></div>
-
-<div id='meters'>
-
+<div id='timeseries'>
+<section id='timesection'></section>
 </div>
+
+<div id='sidegraphs'>
+<section id='sidegraph1'></section>
+<section id='sidegraph2'></section>
 </div>
+
+
+
+<div id='meters'></div>
+
 
 <div id='hidden' style='position: absolute; bottom: 0; z-index: -10'></div>
 

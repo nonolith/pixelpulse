@@ -86,6 +86,8 @@ class LiveGraph_canvas extends LiveGraph
 		@tmpCanvas = document.createElement('canvas')
 		@div.appendChild(@axisCanvas)
 		@div.appendChild(@graphCanvas)
+		
+		@height = 0
 	
 	resized: () ->
 		@width = @div.offsetWidth
@@ -164,6 +166,10 @@ class LiveGraph_canvas extends LiveGraph
 			
 	redrawGraph: ()->
 		if !@data.length then return
+		
+		if @height != @div.offsetHeight
+			@resized()
+		
 		@graphCanvas.width = 1
 		@graphCanvas.width = @width
 		@ctxg.lineWidth = 2
