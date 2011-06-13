@@ -73,7 +73,7 @@ class DataSocketHandler(WebSocketHandler):
 		self.server.onDisconnect(self)
 
 class DataServer(object):
-	def __init__(self, devices, port=8888, poll_tick=0.1):
+	def __init__(self, devices, port=8888, poll_tick=0.07):
 		if not isinstance(devices, list): devices =  [devices]
 		self.devices = devices 
 		self.clients = []
@@ -81,6 +81,7 @@ class DataServer(object):
 		self.channel_list = []
 		self.poll_tick = poll_tick
 		self.poll_fns = []
+		self.started = False
 		for dev in devices:
 			self.channel_list.extend(dev.channels)
 			for channel in dev.channels:
@@ -148,17 +149,26 @@ class DataServer(object):
 		for dev in self.devices:
 			dev.start(self)
 		
+		self.start_poller()
+		
+		self.started = True
+		self.mainLoop.start()
+		
+	def start_poller(self):
 		if self.poll_fns:
 			self.poller = PeriodicCallback(self.onPoll, self.poll_tick*1000)
 			self.poller.start()
 		
-		self.mainLoop.start()
-		
 	def poll(self, callback):
 		self.poll_fns.append(callback)
+		if self.started and not hasattr(self, 'poller'):
+			self.start_poller()
 	
 	def onPoll(self):
-		for f in self.poll_fns: self.data(f())
+		for f in self.poll_fns:
+			r = f()
+			if r:
+				self.data(r)
 
 if __name__ == "__main__":
 	AnalogChannel('test', 'Test', 'A', 0, 10).getConfig()

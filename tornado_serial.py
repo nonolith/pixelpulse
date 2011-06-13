@@ -18,6 +18,10 @@ class TornadoSerial(object):
 	def write(self, data):
 		self.serial.write(str(data))
 		
+	def flush(self):
+		self.serial.flushInput()
+		self.serial.flushOutput()
+		
 class TornadoLineSerial(TornadoSerial):
 	def __init__(self, port=None, baud=9600, on_receive=None, line_sep='\r\n', *args):
 		super(TornadoLineSerial, self).__init__(port, baud, self.on_receive, *args)

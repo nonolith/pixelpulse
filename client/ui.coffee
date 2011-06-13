@@ -337,6 +337,8 @@ virtualrc_start = (app) ->
 			'resistance':imp,
 		}
 		
+		setTimeout(step, 30)
+		
 		
 	app.setChannel = (chan, val) ->
 		switch chan
@@ -356,7 +358,7 @@ virtualrc_start = (app) ->
 					app.onState('current', 'source')
 					app.onState('voltage', 'measure')
 					
-	setInterval(step, 80)
+	step()
 	
 
 $(document).ready ->
