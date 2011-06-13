@@ -90,6 +90,8 @@ class LiveGraph_canvas extends LiveGraph
 		@height = 0
 	
 	resized: () ->
+		if @div.offsetWidth == 0 or @div.offsetHeight == 0 then return
+			
 		@width = @div.offsetWidth
 		@height = @div.offsetHeight
 		@axisCanvas.width = @width
@@ -167,7 +169,7 @@ class LiveGraph_canvas extends LiveGraph
 	redrawGraph: ()->
 		if !@data.length then return
 		
-		if @height != @div.offsetHeight
+		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
 		
 		@graphCanvas.width = 1
@@ -266,7 +268,7 @@ class LiveGraph_svg extends LiveGraph
 		
 		@resized()
 		
-	resized: ->
+	resized: ->	
 		@width = @div.offsetWidth
 		@height = @div.offsetHeight
 		
