@@ -131,20 +131,14 @@ class LiveData
 			
 			if draggedElem == tgt.get(0)
 				$(".insertion-cursor").remove()
-				return
+				tgt.replaceWith("<div class='insertion-cursor'>")
 			
 			if tgt
 				if e.offsetY < tgt.get(0).offsetHeight/2
-					if tgt.prev().get(0) is draggedElem
-						$(".insertion-cursor").remove()
-						return
 					if not tgt.prev().hasClass('insertion-cursor')
 						$(".insertion-cursor").remove()
 						tgt.before("<div class='insertion-cursor'>")
 				else
-					if tgt.next().get(0) is draggedElem
-						$(".insertion-cursor").remove()
-						return
 					if not tgt.next().hasClass('insertion-cursor')
 						$(".insertion-cursor").remove()
 						tgt.after("<div class='insertion-cursor'>")
@@ -171,19 +165,14 @@ class LiveData
 			if tgt.length
 				if draggedElem == tgt.get(0)
 					$(".insertion-cursor").remove()
+					tgt.replaceWith("<div class='insertion-cursor'>")
 					return
 				
 				if e.offsetX < tgt.get(0).offsetWidth/2
-					if tgt.prev().get(0) is draggedElem
-						$(".insertion-cursor").remove()
-						return
 					if not tgt.prev().hasClass('insertion-cursor')
 						$(".insertion-cursor").remove()
 						tgt.before("<div class='insertion-cursor'>")
 				else
-					if tgt.next().get(0) is draggedElem
-						$(".insertion-cursor").remove()
-						return
 					if not tgt.next().hasClass('insertion-cursor')
 						$(".insertion-cursor").remove()
 						tgt.after("<div class='insertion-cursor'>")
