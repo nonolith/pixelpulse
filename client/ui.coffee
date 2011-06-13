@@ -16,7 +16,7 @@ class Channel
 		else
 			@axis = new livegraph.YAxis(@id, 'blue', o.min, o.max)
 			if o.showGraph
-				@showTimeseries()
+				@showTimeseries().appendTo('#timeseries')
 			else
 				@showGraph = false
 				$('#meters').append(@tile)
@@ -47,23 +47,24 @@ class Channel
 		if not @settable
 			$(@input).attr('disabled', true)
 			
-		if @id != 'time'
-			@tile.get(0).draggable = true
-			@tile.get(0).ondragstart = (e) =>
-				e.dataTransfer.setData('text/plain', @id)
-				i = $("<div class='meter-drag'>").text(@id).appendTo('#hidden')
-				e.dataTransfer.setDragImage(i.get(0), 0, 0)
-				setTimeout((-> i.remove()), 0)
+		@tile.get(0).draggable = true
+		@tile.get(0).ondragstart = (e) =>
+			window.draggedChannel = this
+			e.dataTransfer.setData('text/plain', @id)
+			i = $("<div class='meter-drag'>").text(@id).appendTo('#hidden')
+			e.dataTransfer.setDragImage(i.get(0), 0, 0)
+			setTimeout((-> i.remove()), 0)
 				
 		return @tile
 		
 	showTimeseries: ->
-		if @showGraph then return
+		if @showGraph
+			@tsRow.detach()
+			return @tsRow
 		
 		@tsRow = $("<section>")
 			.append(@graphDiv = $("<div class='livegraph'>"))
 			.append(@tsAside = $("<aside>"))
-			.appendTo('#timeseries')
 		@graph = new livegraph.canvas(@graphDiv.get(0), app.channels.time.axis, [@axis])
 		
 		$(@graph.graphCanvas).mousedown (e) =>
@@ -81,6 +82,8 @@ class Channel
 		
 		@tile.detach().attr('style', '').appendTo(@tsAside)
 		@showGraph = true
+		
+		return @tsRow
 	
 	hideTimeseries: -> 
 		if not @showGraph then return
@@ -115,6 +118,86 @@ relMousePos = (elem, event) ->
 class LiveData
 	constructor: ->
 		@channels = {}
+		
+		ts = $("#timeseries").get(0)
+		
+		ts.ondragover = (e) ->
+			if $(e.target).hasClass('insertion-cursor')
+				return e.preventDefault()
+				
+			tgt = $(e.target).closest('section')
+			
+			draggedElem = window.draggedChannel.showGraph and window.draggedChannel.tsRow.get(0)
+			
+			if draggedElem == tgt.get(0)
+				$(".insertion-cursor").remove()
+				return
+			
+			if tgt
+				if e.offsetY < tgt.get(0).offsetHeight/2
+					if tgt.prev().get(0) is draggedElem
+						$(".insertion-cursor").remove()
+						return
+					if not tgt.prev().hasClass('insertion-cursor')
+						$(".insertion-cursor").remove()
+						tgt.before("<div class='insertion-cursor'>")
+				else
+					if tgt.next().get(0) is draggedElem
+						$(".insertion-cursor").remove()
+						return
+					if not tgt.next().hasClass('insertion-cursor')
+						$(".insertion-cursor").remove()
+						tgt.after("<div class='insertion-cursor'>")
+						
+			e.preventDefault()
+			
+		ts.ondrop = (e) ->
+			cur = $(this).find(".insertion-cursor")
+			if cur.length
+				cur.replaceWith(window.draggedChannel.showTimeseries())
+				
+				ts = $("#timeseries").get(0)
+		
+		
+		mp = $('#meters').get(0)
+		
+		mp.ondragover = (e) ->
+			if $(e.target).hasClass('insertion-cursor')
+				return e.preventDefault()
+				
+			draggedElem = window.draggedChannel.tile.get(0)
+			tgt = $(e.target).closest('.meter')
+			
+			if tgt.length
+				if draggedElem == tgt.get(0)
+					$(".insertion-cursor").remove()
+					return
+				
+				if e.offsetX < tgt.get(0).offsetWidth/2
+					if tgt.prev().get(0) is draggedElem
+						$(".insertion-cursor").remove()
+						return
+					if not tgt.prev().hasClass('insertion-cursor')
+						$(".insertion-cursor").remove()
+						tgt.before("<div class='insertion-cursor'>")
+				else
+					if tgt.next().get(0) is draggedElem
+						$(".insertion-cursor").remove()
+						return
+					if not tgt.next().hasClass('insertion-cursor')
+						$(".insertion-cursor").remove()
+						tgt.after("<div class='insertion-cursor'>")
+			else
+				$(".insertion-cursor").remove()
+				$(this).prepend("<div class='insertion-cursor'>")
+						
+			e.preventDefault()
+			
+		mp.ondrop = (e) ->
+			cur = $(this).find(".insertion-cursor")
+			if cur.length
+				window.draggedChannel.hideTimeseries()
+				cur.replaceWith(window.draggedChannel.tile)
 		
 	onConfig: (o) ->
 		$('#meters, #meters-side').empty()

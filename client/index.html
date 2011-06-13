@@ -50,6 +50,7 @@ table {
 
 body{
 	font-family: 'Droid Sans', sans-serif;
+	overflow: hidden;
 }
 
 
@@ -65,12 +66,12 @@ body{
 	
 	display: -webkit-box;
   	-webkit-box-orient: horizontal;
-  	-webkit-box-align: center;
+  	/*-webkit-box-align: center;*/
 	-webkit-box-pack: end;
 }
 
 #meters > .meter{
-	margin-left: 10px;
+	padding: 3px 0 2px 10px;
 }
 
 .meter{
@@ -171,7 +172,7 @@ body{
 #timeseries > section > .livegraph{
 	position: absolute;
 	left: 0;
-	right: 168px;
+	right: 135px;
 	top: 0;
 	bottom: 0;
 }
@@ -208,7 +209,7 @@ body{
 	position: absolute;
 	right: 0;
 	height: 100%;
-	width: 168px;
+	width: 128px;
 	
 	display: -webkit-box;
   	-webkit-box-orient: vertical;
@@ -268,15 +269,24 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	background: blue;
 }
 
+/* DnD */
 
+.insertion-cursor{
+	-webkit-box-flex: 1;
+	background: rgba(255, 255, 0, 0.3);
+}
 
-
+#meters .insertion-cursor{
+	-webkit-box-flex: 0;
+	width: 140px;
+	margin-left: 10px;
+}
 
 </style>
 <link href='http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold' rel='stylesheet' type='text/css'>
 <link rel='stylesheet' href='livegraph.css' />
 
-<script src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js'></script>
+<script src='http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js'></script>
 <script src='livegraph.js'></script>
 <script src='ui.js'></script>
 
