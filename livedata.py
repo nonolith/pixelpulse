@@ -8,12 +8,16 @@ from tornado.websocket import WebSocketHandler
 import sys, os, glob, imp, time, json
 
 class Channel(object):
-	json_properties = ['name', 'id', 'type', 'state', 'showGraph', 'settable']
+	json_properties = ['name', 'id', 'type', 'state', 'stateOptions', 'showGraph', 'settable']
 	
-	def __init__(self, name, state='input', showGraph=False, onSet=None):
+	def __init__(self, name, state='input', stateOptions=None, showGraph=False, onSet=None):
 		self.name = name
 		self.id = name.lower()
 		self.state = state
+		if not stateOptions:
+			self.stateOptions = [state]
+		else:
+			self.stateOptions = stateOptions
 		self.showGraph = showGraph
 		self.onSet = onSet
 		self.settable = bool(onSet)
@@ -27,7 +31,7 @@ class Channel(object):
 			o = super(type(o), o)
 		return config
 		
-	def onSet(self, this, v):
+	def onSet(self, this, v, s):
 		print "Can't set channel %s"%self.name
 		
 	def setState(self, state):
@@ -146,8 +150,8 @@ class DataServer(object):
 		self.clients.remove(client)
 		
 	def onSet(self, message):
-		for k, v in message.iteritems():
-			self.channels[k].onSet(self.channels[k], v)
+		chan = self.channels[message['channel']]
+		chan.onSet(chan, message['value'], message['state'])
 			
 	def onStateChange(self, channel):
 		self.sendToAll(self.formJSON('state', {'channel':channel.id,'state':channel.state}))

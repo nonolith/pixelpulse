@@ -13,7 +13,7 @@ channel_masks = {
 class BusPirateDevice(livedata.Device):
 	def __init__(self, port='/dev/ttyUSB0'):
 		self.digitalChannels = [
-			livedata.DigitalChannel(name, True, showGraph=True, onSet=self.onSet)
+			livedata.DigitalChannel(name, True, showGraph=True, onSet=self.onSet, stateOptions=['input','output'])
 			for name in ['AUX','MOSI', 'CLK', 'MISO', 'CS']]
 			
 		self.channels = self.digitalChannels
@@ -61,14 +61,29 @@ class BusPirateDevice(livedata.Device):
 	def onPoll(self):
 		self.serial.write(chr(self.output_state) + chr(self.output_mode))
 		
-	def onSet(self, chan, val):
-		chan.setState('output')
+	def setPullup(self):
+		pass
+		
+	def onSet(self, chan, val, state):
 		mask = channel_masks[chan.name]
 		self.output_mode &= ~mask
-		if val:
-			self.output_state |= mask
-		else:
-			self.output_state &= ~mask
+		
+		if state == 'output':
+			self.output_mode &= ~mask
+			chan.setState('output')
+		elif state == 'input':
+			self.output_mode |= mask
+			self.setPullup(False)
+			chan.setState('input')
+		elif state == 'pull-up':
+			self.output_mode |= mask
+			self.setPullup(True)
+		
+		if state == 'output' and val is not None:
+			if val:
+				self.output_state |= mask
+			else:
+				self.output_state &= ~mask
 	
 		
 		

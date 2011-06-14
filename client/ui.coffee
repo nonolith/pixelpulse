@@ -1,17 +1,43 @@
 
+dropdownButton = (options, callback) ->
+	r = $("<div class='dropdownButton'>").delegate 'a', 'click', (e) ->
+			if not $(this).is(':first-child')
+				$(this).detach().prependTo(r)
+				callback($(this).text())
+			else if not r.hasClass('opened')
+				r.addClass('opened')
+				$(document.body).one 'click', ->
+					r.removeClass('opened')
+				e.stopPropagation()
+
+	for i in options
+		$("<a>").text(i).appendTo(r)
+				
+	r.set = (option) ->
+		r.children().each ->
+			if $(this).text() == option
+				$(this).remove()
+		r.prepend($("<a>").text(option))
+		
+	return r
+			
+			
+		
+
 class Channel
 	constructor: (o) ->
 		@name = o.name
 		@id = o.id
 		@settable = o.settable
-		@state = ''		
+		@stateOptions = o.stateOptions
 				
 	createTile: ->
 		return @tile if @tile
 		
 		@tile = $("<div class='meter'>").append((@h2 = $("<h2>")).text(@name))
 		@addReadingUI(@tile)
-		@tile.append(@stateElem = $("<small>&nbsp;</small>"))
+		@tile.append(@stateElem = dropdownButton(@stateOptions, @setState))
+		@stateElem.addClass('state')
 			
 		@tile.get(0).draggable = true
 		@tile.get(0).ondragstart = (e) =>
@@ -58,7 +84,7 @@ class Channel
 		@showGraph = false
 							
 	onState: (s) ->
-		@stateElem.text(s)
+		@stateElem.set(s)
 		if s=='source' or s=='set' or s=='output'
 			@axis.grabDot = 'fill'
 		else if s=='measure'
@@ -73,7 +99,13 @@ class Channel
 		@onState(o.state)
 		
 	setValue: (v) ->
-		@_setValue(v)
+		outState = 'output'
+		if 'source' in @stateOptions
+			outState = 'source'
+		@_setValue(v, outState)
+		
+	setState: (s) =>
+		@_setValue(null, s)
 			
 class DigitalChannel extends Channel
 	constructor: (o) ->
@@ -88,7 +120,6 @@ class DigitalChannel extends Channel
 		tile.append @reading = $("<span class='reading'>")
 		
 		@reading.mouseup =>
-			console.log('toggle')
 			@setValue(!@value)
 				
 	onValue: (time, v) ->
@@ -128,7 +159,6 @@ class AnalogChannel extends Channel
 		@input.click ->
 			this.select()
 			
-	
 	onValue: (time, v) ->
 		if !@input.is(':focus')
 			@input.val(if Math.abs(v)>1 then v.toPrecision(4) else v.toFixed(3))
@@ -224,7 +254,7 @@ class LiveData
 			else
 				n = new AnalogChannel(c)
 			@channels[n.id] = n
-			n._setValue = (v) -> self.setChannel(this.id, v)
+			n._setValue = (v, s) -> self.setChannel(this.id, v, s)
 			
 	onData: (data) ->
 		for name, c of @channels
@@ -234,7 +264,7 @@ class LiveData
 	onState: (channel, state) ->
 		@channels[channel].onState(state)
 		
-	setChannel: (name, value) -> 
+	setChannel: (name, value, state) -> 
 		console.error("setChannel should be overridden by transport")
 		
 			
@@ -297,9 +327,8 @@ websocket_start = (host, app) ->
 		$('#loading').text('Disconnected').show()
 		# setInterval(tryReconnect, 1000);
 		
-	app.setChannel = (chan, val) ->
-		msg = {'_action':'set'}
-		msg[chan] = val
+	app.setChannel = (chan, val, state) ->
+		msg = {'_action':'set', channel:chan, value:val, state:state}
 		ws.send(JSON.stringify(msg))
 		
 	
@@ -315,7 +344,7 @@ virtualrc_start = (app) ->
 				'unit': 's',
 				'min': -30,
 				'max': 'auto',
-				'state': 'live',
+				'stateOptions': []
 			},
 			{
 				'id': 'voltage',
@@ -326,6 +355,7 @@ virtualrc_start = (app) ->
 				'state': 'source',
 				'showGraph': true,
 				'settable': true,
+				'stateOptions': ['source', 'measure'],
 			},
 			{
 				'id': 'current',
@@ -336,6 +366,7 @@ virtualrc_start = (app) ->
 				'state': 'measure',
 				'showGraph': true,
 				'settable': true,
+				'stateOptions': ['source', 'measure'],
 			},
 			{
 				'id': 'resistance',
@@ -344,6 +375,7 @@ virtualrc_start = (app) ->
 				'min': 0,
 				'max': 10000,
 				'state': 'computed',
+				'stateOptions': ['computed']
 			},
 		]
 		
@@ -385,16 +417,25 @@ virtualrc_start = (app) ->
 		setTimeout(step, 30)
 		
 		
-	app.setChannel = (chan, val) ->
+	app.setChannel = (chan, val, state) ->
 		switch chan
 			when 'voltage'
-				voltage = val
+				if state == 'source' and val?
+					voltage = val
 			when 'current'
-				current = val/1000
+				if state == 'source' and val?
+					current = val/1000
 			else
 				return
-		if source != chan
-			source = chan
+				
+		if (state == 'source' and source != chan) or (state == 'measure' and source == chan)
+			if state == 'source'
+				source = chan
+			else if state == 'measure' and source == 'voltage'
+				source = 'current'
+			else
+				source = 'voltage'
+				
 			switch source
 				when 'voltage'
 					app.onState('voltage', 'source')
