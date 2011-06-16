@@ -1,23 +1,25 @@
 
 dropdownButton = (options, callback) ->
 	r = $("<div class='dropdownButton'>").delegate 'a', 'click', (e) ->
+			if not $(this).siblings().length then return
 			if not $(this).is(':first-child')
-				$(this).detach().prependTo(r)
+				$(this).detach().prependTo(d)
 				callback($(this).text())
 			else if not r.hasClass('opened')
 				r.addClass('opened')
 				$(document.body).one 'click', ->
 					r.removeClass('opened')
 				e.stopPropagation()
+	d = $('<div>').appendTo(r)
 
 	for i in options
-		$("<a>").text(i).appendTo(r)
+		$("<a>").text(i).appendTo(d)
 				
 	r.set = (option) ->
-		r.children().each ->
+		d.children().each ->
 			if $(this).text() == option
 				$(this).remove()
-		r.prepend($("<a>").text(option))
+		d.prepend($("<a>").text(option))
 		
 	return r
 			
@@ -156,8 +158,8 @@ class AnalogChannel extends Channel
 		
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
-			.append(@input = $("<input>")))
-			.append($("<span class='unit'>").text(@unit))
+			.append(@input = $("<input>"))
+			.append($("<span class='unit'>").text(@unit)))
 		
 		if not @settable
 			$(@input).attr('disabled', true)
@@ -302,7 +304,6 @@ for pair in document.location.search.slice(1).split('&')
 
 hostname = params.server || document.location.host
 window.graphmode = params.graphmode || 'canvas'
-
 
 websocket_start = (host, app) ->
 	if !window.WebSocket
@@ -469,6 +470,9 @@ virtualrc_start = (app) ->
 
 $(document).ready ->
 	window.app = new LiveData()
+	
+	if not params.timebar
+		$('#timesection').hide()
 	
 	if hostname == 'virtualrc' or document.location.protocol == 'file:'
 		virtualrc_start(app)
