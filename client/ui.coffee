@@ -62,16 +62,22 @@ class Channel
 		
 		$(@graph.graphCanvas).mousedown (e) =>
 			[x, y] = relMousePos(@graph.graphCanvas, e)
-			if x > @graph.width - 50
+			if x > @graph.width - 60
 				@setValue(@axis.invYtransform(y, @graph.geom))
 				mousemove = (e) =>
 					[x, y] = relMousePos(@graph.graphCanvas, e)
 					@setValue(@axis.invYtransform(y, @graph.geom))
-				mouseup = =>
+				mouseup =  ->
 					$(document.body).unbind('mousemove', mousemove)
 					                .unbind('mouseup', mouseup)
+					                .unbind('mouseout', mouseout)
+				mouseout = (e) ->
+					if e.relatedTarget.nodeName == 'HTML'
+						mouseup()
+						
 				$(document.body).mousemove(mousemove)
-				$(document.body).mouseup(mouseup)
+				                .mouseup(mouseup)
+				                .mouseout(mouseout)
 		
 		@tile.detach().attr('style', '').appendTo(@tsAside)
 		@showGraph = true
@@ -104,7 +110,7 @@ class Channel
 		outState = 'output'
 		if 'source' in @stateOptions
 			outState = 'source'
-		@_setValue(v, outState)
+		@_setValue(Math.min(Math.max(v, @axis.min), @axis.max), outState)
 		
 	setState: (s) =>
 		@_setValue(null, s)
