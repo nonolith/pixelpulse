@@ -1,6 +1,6 @@
 
-OFFSET = 8
-AXISOFFSET = 28
+OFFSET = 10
+AXISOFFSET = 25
 
 window.arange = (lo, hi, step) ->
 	ret = []
@@ -26,7 +26,8 @@ class Axis
 		return grid
 		
 	grid: ->
-		arange(@min, @max, @gridstep())
+		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]
+		arange(min, max, @gridstep())
 		
 	xtransform: (x, geom) ->
 		(x - @min) * geom.width / @span + geom.xleft
@@ -37,6 +38,19 @@ class Axis
 	invYtransform: (ypx, geom) ->
 		(geom.ybottom - ypx)/geom.height * @span + @min
 		
+class DigitalAxis
+	min = 0
+	max = 1
+	
+	gridstep: -> 1
+	grid: -> [0, 1]
+	
+	xtransform: (x, geom) -> if x then geom.xleft else geom.xright
+	ytransform: (y, geom) -> if y then geom.ytop else geom.ybottom
+	invYtransform: (ypx, geom) -> (geom.ybottom - ypx) > geom.height/2
+		
+digitalAxis = new DigitalAxis()
+
 class Series
 	constructor: (@xvar, @yvar, @color, @style) ->
 
@@ -59,7 +73,7 @@ class LiveGraph_canvas extends LiveGraph
 		@div.appendChild(@axisCanvas)
 		@div.appendChild(@graphCanvas)
 		
-		@showXbottom = true
+		@showXbottom = false
 		@showYleft = true
 		@showYright = true
 		
@@ -334,6 +348,7 @@ class LiveGraph_svg extends LiveGraph
 window.livegraph =
 	LiveGraph: LiveGraph
 	Axis: Axis
+	digitalAxis: digitalAxis
 	Series: Series
 	canvas: LiveGraph_canvas	
 		

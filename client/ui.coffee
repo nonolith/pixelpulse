@@ -114,7 +114,7 @@ class DigitalChannel extends Channel
 		super(o)
 		@hasPullUp = o.hasPullUp
 		@createTile()
-		@axis = new livegraph.Axis(0, 1)
+		@axis = livegraph.digitalAxis
 		@series = new livegraph.Series('time', @id, 'blue', 'line')
 		@addToUI(o)
 		@value = 0
@@ -383,6 +383,13 @@ virtualrc_start = (app) ->
 				'state': 'computed',
 				'stateOptions': ['computed']
 			},
+			{
+				'id': 'digital',
+				'name': 'Digital',
+				'type': 'digital',
+				'state': 'input',
+				'stateOptions': ['input', 'output'],
+			},
 		]
 		
 	r = 100.0
@@ -418,6 +425,7 @@ virtualrc_start = (app) ->
 			'voltage': voltage,
 			'current': current*1000.0,
 			'resistance':imp,
+			'digital': Math.sin(2*t) > 0
 		}
 		
 		setTimeout(step, 30)
