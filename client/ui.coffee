@@ -57,15 +57,16 @@ class Channel
 		@tsRow = $("<section>")
 			.append(@graphDiv = $("<div class='livegraph'>"))
 			.append(@tsAside = $("<aside>"))
-		@graph = new livegraph.canvas(@graphDiv.get(0), app.channels.time.axis, [@axis])
+			
+		@graph = new livegraph.canvas(@graphDiv.get(0), app.channels.time.axis, @axis, app.data, [@series])
 		
 		$(@graph.graphCanvas).mousedown (e) =>
 			[x, y] = relMousePos(@graph.graphCanvas, e)
 			if x > @graph.width - 50
-				@setValue(@axis.invTransform(y))
+				@setValue(@axis.invYtransform(y, @graph.geom))
 				mousemove = (e) =>
 					[x, y] = relMousePos(@graph.graphCanvas, e)
-					@setValue(@axis.invTransform(y))
+					@setValue(@axis.invYtransform(y, @graph.geom))
 				mouseup = =>
 					$(document.body).unbind('mousemove', mousemove)
 					                .unbind('mouseup', mouseup)
@@ -82,13 +83,14 @@ class Channel
 		@tile.detach().attr('style', '').appendTo('#meters')
 		@tsRow.remove()
 		@showGraph = false
+		@graph = false
 							
 	onState: (s) ->
 		@stateElem.set(s)
 		if s=='source' or s=='set' or s=='output'
-			@axis.grabDot = 'fill'
+			@series.grabDot = 'fill'
 		else if s=='measure'
-			@axis.grabDot = 'stroke'
+			@series.grabDot = 'stroke'
 			
 	addToUI: (o) ->
 		if o.showGraph
@@ -112,7 +114,8 @@ class DigitalChannel extends Channel
 		super(o)
 		@hasPullUp = o.hasPullUp
 		@createTile()
-		@axis = new livegraph.YAxis(@id, 'blue', 0, 1)
+		@axis = new livegraph.Axis(0, 1)
+		@series = new livegraph.Series('time', @id, 'blue', 'line')
 		@addToUI(o)
 		@value = 0
 		
@@ -141,7 +144,8 @@ class AnalogChannel extends Channel
 		super(o)
 		@unit = o.unit
 		@createTile()
-		@axis = new livegraph.YAxis(@id, 'blue', o.min, o.max)
+		@axis = new livegraph.Axis(o.min, o.max)
+		@series = new livegraph.Series('time', @id, 'blue', 'line')
 		@addToUI(o)
 		
 	addReadingUI: (tile) ->
@@ -167,9 +171,7 @@ class AnalogChannel extends Channel
 			else
 				@input.removeClass('negative')
 		if @showGraph
-			o = {time:time}
-			o[@id] = v
-			@graph.pushData(o) 
+			@graph.redrawGraph() 
 
 class TimeChannel extends AnalogChannel
 	constructor: (o) ->
@@ -177,7 +179,7 @@ class TimeChannel extends AnalogChannel
 		
 		@createTile()
 		
-		@axis = new livegraph.XAxis(@id, o.min, o.max)
+		@axis = new livegraph.Axis(o.min, o.max)
 		@showGraph = false
 		$("#timesection").append(@tile)
 
@@ -188,6 +190,7 @@ relMousePos = (elem, event) ->
 class LiveData
 	constructor: ->
 		@channels = {}
+		@data = []
 		
 		ts = $("#timeseries").get(0)
 		
@@ -260,9 +263,9 @@ class LiveData
 			n._setValue = (v, s) -> self.setChannel(this.id, v, s)
 			
 	onData: (data) ->
+		@data.push(data)
 		for name, c of @channels
-			if data[name]?
-				c.onValue(data.time, data[name])
+        	if data[name]? then c.onValue(data.time, data[name])
 		
 	onState: (channel, state) ->
 		@channels[channel].onState(state)
