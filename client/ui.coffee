@@ -201,6 +201,9 @@ class LiveData
 				if draggedElem == tgt.get(0)
 					$(".insertion-cursor").remove()
 					tgt.addClass('dnd-oldpos').hide().after("<div class='insertion-cursor'>")
+				if tgt.is('#timesection')
+					if not tgt.parent().children('.insertion-cursor:last-child').length
+						tgt.parent().append("<div class='insertion-cursor'>")
 				else if posFunc(tgt)
 					if not tgt.prev().hasClass('insertion-cursor')
 						$(".insertion-cursor").remove()
