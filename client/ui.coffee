@@ -57,6 +57,7 @@ class Channel
 			return @tsRow
 		
 		@tsRow = $("<section>")
+			.addClass(@cssClass)
 			.append(@graphDiv = $("<div class='livegraph'>"))
 			.append(@tsAside = $("<aside>"))
 			
@@ -118,6 +119,7 @@ class Channel
 		@_setValue(null, s)
 			
 class DigitalChannel extends Channel
+	cssClass: 'digital'
 	constructor: (o) ->
 		super(o)
 		@hasPullUp = o.hasPullUp
@@ -148,6 +150,7 @@ class DigitalChannel extends Channel
 		
 
 class AnalogChannel extends Channel
+	cssClass: 'analog'
 	constructor: (o) ->
 		super(o)
 		@unit = o.unit
@@ -208,24 +211,24 @@ class LiveData
 				
 			tgt = $(e.target).closest(draggableMatch)
 			
+			getCursor = ->
+				$(".insertion-cursor").remove()
+				return $("<div class='insertion-cursor'>").addClass(window.draggedChannel.cssClass)
+			
 			if tgt.length
 				if draggedElem == tgt.get(0)
-					$(".insertion-cursor").remove()
-					tgt.addClass('dnd-oldpos').hide().after("<div class='insertion-cursor'>")
+					tgt.addClass('dnd-oldpos').hide().after(getCursor())
 				if tgt.is('#timesection')
 					if not tgt.parent().children('.insertion-cursor:last-child').length
-						tgt.parent().append("<div class='insertion-cursor'>")
+						tgt.parent().append(getCursor())
 				else if posFunc(tgt)
 					if not tgt.prev().hasClass('insertion-cursor')
-						$(".insertion-cursor").remove()
-						tgt.before("<div class='insertion-cursor'>")
+						tgt.before(getCursor())
 				else
 					if not tgt.next().hasClass('insertion-cursor')
-						$(".insertion-cursor").remove()
-						tgt.after("<div class='insertion-cursor'>")
+						tgt.after(getCursor())
 			else
-				$(".insertion-cursor").remove()
-				$(self).prepend("<div class='insertion-cursor'>")
+				$(self).prepend(getCursor())
 						
 			e.preventDefault()
 		
