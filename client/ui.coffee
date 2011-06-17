@@ -212,6 +212,9 @@ class LiveData
 		
 		ts = $("#timeseries").get(0)
 		
+		@perfstat_count = 0
+		@perfstat_acc = 0
+		
 		handleDragOver = (self, e, draggedElem, draggableMatch, posFunc) ->
 			if $(e.target).hasClass('insertion-cursor')
 				return e.preventDefault()
@@ -281,9 +284,17 @@ class LiveData
 			n._setValue = (v, s) -> self.setChannel(this.id, v, s)
 			
 	onData: (data) ->
+		if params.perfstat
+			t1 = new Date()
 		@data.push(data)
 		for name, c of @channels
         	if data[name]? then c.onValue(data.time, data[name])
+		if params.perfstat
+			t2 = new Date()
+			@perfstat_acc += t2-t1
+			if (@perfstat_count += 1) == 100
+				$('#perfstat').text(@perfstat_acc/100 + "ms/render")
+				@perfstat_acc = @perfstat_count = 0
 		
 	onState: (channel, state) ->
 		@channels[channel].onState(state)
@@ -492,6 +503,9 @@ $(document).ready ->
 		
 	if not params.layouts
 		$('#layout-sel').hide()
+		
+	if params.perfstat
+		$('#perfstat').show()
 	
 	if hostname == 'virtualrc' or document.location.protocol == 'file:'
 		virtualrc_start(app)

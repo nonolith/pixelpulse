@@ -355,6 +355,15 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	padding: 2px;
 }
 
+#perfstat{
+	position: absolute;
+	color: white;
+	bottom: 40px;
+	left:5px;
+	display:none;
+	z-index:21;
+}
+
 
 </style>
 <link href='http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold' rel='stylesheet' type='text/css'>
@@ -387,6 +396,8 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 <button onclick="document.body.setAttribute('class', 'layout-1side')">1</button>
 <button onclick="document.body.setAttribute('class', 'layout-2side')">2</button>
 </div>
+
+<div id='perfstat'></div>
 
 
 <div id='hidden' style='position: absolute; bottom: 0; z-index: -10'></div>
