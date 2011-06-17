@@ -327,6 +327,7 @@ hostname = params.server || document.location.host
 window.graphmode = params.graphmode || 'canvas'
 window.ygrid = params.ygrid != '0'
 window.xbottom = params.xbottom ? false
+window.canvas_clear_width = params.clrw
 
 websocket_start = (host, app) ->
 	if !window.WebSocket

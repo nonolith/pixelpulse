@@ -187,8 +187,11 @@ class LiveGraph_canvas extends LiveGraph
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
 		
-		@graphCanvas.width = 1
-		@graphCanvas.width = @width
+		if window.canvas_clear_width
+			@graphCanvas.width = 1
+			@graphCanvas.width = @width
+		else
+			@ctxg.clearRect(0,0,@width, @height)
 		@ctxg.lineWidth = 2
 		
 		@autoscroll()
