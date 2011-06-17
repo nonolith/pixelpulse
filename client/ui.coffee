@@ -193,6 +193,11 @@ class TimeChannel extends AnalogChannel
 		@axis = new livegraph.Axis(o.min, o.max)
 		@showGraph = false
 		$("#timesection").append(@tile)
+		
+	onValue: (time, v) ->
+		if params.timebar then super(time, v)
+		
+	
 
 relMousePos = (elem, event) ->
 	o = $(elem).offset()
@@ -307,6 +312,8 @@ for pair in document.location.search.slice(1).split('&')
 
 hostname = params.server || document.location.host
 window.graphmode = params.graphmode || 'canvas'
+window.ygrid = params.ygrid ? false
+window.xbottom = params.xbottom ? false
 
 websocket_start = (host, app) ->
 	if !window.WebSocket

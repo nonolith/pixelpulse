@@ -73,9 +73,10 @@ class LiveGraph_canvas extends LiveGraph
 		@div.appendChild(@axisCanvas)
 		@div.appendChild(@graphCanvas)
 		
-		@showXbottom = false
+		@showXbottom = window.xbottom
 		@showYleft = true
 		@showYright = true
+		@showYgrid = window.ygrid
 		
 		@height = 0
 		
@@ -115,12 +116,14 @@ class LiveGraph_canvas extends LiveGraph
 		@ctxa = @axisCanvas.getContext('2d')
 		@ctxa.lineWidth = 2
 		
-		if @showXbottom then @drawXAxis(@geom.ybottom)		
+		if @showXbottom then @drawXAxis(@geom.ybottom)	
+		if @showYgrid   then @drawYgrid()	
 		if @showYleft   then @drawYAxis(@geom.xleft,  'right', -5)
 		if @showYright  then @drawYAxis(@geom.xright, 'left',   8)
 		
 	drawXAxis: (y) ->
 		xgrid = @xaxis.grid()
+		@ctxa.strokeStyle = 'black'
 		@ctxa.beginPath()
 		@ctxa.moveTo(@geom.xleft, y)
 		@ctxa.lineTo(@geom.xright, y)
@@ -147,8 +150,8 @@ class LiveGraph_canvas extends LiveGraph
 		
 	drawYAxis:  (x, align, textoffset) =>
 		grid = @yaxis.grid()
+		@ctxa.strokeStyle = 'black'
 		@ctxa.textAlign = align
-			
 		@ctxa.textBaseline = 'middle'
 		
 		@ctxa.beginPath()
@@ -157,12 +160,26 @@ class LiveGraph_canvas extends LiveGraph
 		@ctxa.stroke()
 		
 		for y in grid
-			@ctxa.beginPath()
 			yp = @yaxis.ytransform(y, @geom)
+			
+			#draw side axis ticks and labels
+			@ctxa.beginPath()
 			@ctxa.moveTo(x-4, yp)
 			@ctxa.lineTo(x+4, yp)
 			@ctxa.stroke()
-			@ctxa.fillText(Math.round(y*10)/10, x+textoffset, yp)			
+			@ctxa.fillText(Math.round(y*10)/10, x+textoffset, yp)
+			
+	drawYgrid: ->
+		grid = @yaxis.grid()
+		@ctxa.strokeStyle = 'rgba(0,0,0,0.05)'
+		for y in grid
+			yp = @yaxis.ytransform(y, @geom)
+			@ctxa.beginPath()
+			@ctxa.moveTo(@geom.xleft, yp)
+			@ctxa.lineTo(@geom.xright, yp)
+			@ctxa.stroke()
+			
+					
 			
 	redrawGraph: ->
 		if !@data.length then return
