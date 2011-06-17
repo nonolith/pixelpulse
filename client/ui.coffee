@@ -127,7 +127,7 @@ class DigitalChannel extends Channel
 		@hasPullUp = o.hasPullUp
 		@createTile()
 		@axis = livegraph.digitalAxis
-		@series = new livegraph.Series('time', @id, 'blue', 'line')
+		@series = new livegraph.Series('time', @id, o.color, 'line')
 		@addToUI(o)
 		@value = 0
 		
@@ -158,7 +158,7 @@ class AnalogChannel extends Channel
 		@unit = o.unit
 		@createTile()
 		@axis = new livegraph.Axis(o.min, o.max)
-		@series = new livegraph.Series('time', @id, 'blue', 'line')
+		@series = new livegraph.Series('time', @id, o.color, 'line')
 		@addToUI(o)
 		
 	addReadingUI: (tile) ->
@@ -381,6 +381,7 @@ virtualrc_start = (app) ->
 				'showGraph': true,
 				'settable': true,
 				'stateOptions': ['source', 'measure'],
+				'color': 'blue',
 			},
 			{
 				'id': 'current',
@@ -392,6 +393,7 @@ virtualrc_start = (app) ->
 				'showGraph': true,
 				'settable': true,
 				'stateOptions': ['source', 'measure'],
+				'color': 'red',
 			},
 			{
 				'id': 'resistance',
@@ -400,7 +402,8 @@ virtualrc_start = (app) ->
 				'min': 0,
 				'max': 10000,
 				'state': 'computed',
-				'stateOptions': ['computed']
+				'stateOptions': ['computed'],
+				'color': 'orange',
 			},
 			{
 				'id': 'digital',
@@ -408,6 +411,7 @@ virtualrc_start = (app) ->
 				'type': 'digital',
 				'state': 'input',
 				'stateOptions': ['input', 'output'],
+				'color': 'green',
 			},
 		]
 		
