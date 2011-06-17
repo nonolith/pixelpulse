@@ -205,7 +205,8 @@ class LiveGraph_canvas extends LiveGraph
 			for i in @data
 				x = i[series.xvar]
 				y = i[series.yvar]
-				if x<xmin or x>xmax
+				
+				if not x? or not y? or x<xmin or x>xmax
 					continue
 				
 				if y<@yaxis.min then y = @yaxis.min

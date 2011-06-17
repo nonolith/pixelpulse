@@ -8,9 +8,9 @@ from tornado.websocket import WebSocketHandler
 import sys, os, glob, imp, time, json
 
 class Channel(object):
-	json_properties = ['name', 'id', 'type', 'state', 'stateOptions', 'showGraph', 'settable']
+	json_properties = ['name', 'id', 'type', 'state', 'stateOptions', 'color', 'showGraph', 'settable']
 	
-	def __init__(self, name, state='input', stateOptions=None, showGraph=False, onSet=None):
+	def __init__(self, name, state='input', stateOptions=None, color='blue', showGraph=False, onSet=None):
 		self.name = name
 		self.id = name.lower()
 		self.state = state
@@ -18,6 +18,7 @@ class Channel(object):
 			self.stateOptions = [state]
 		else:
 			self.stateOptions = stateOptions
+		self.color = color
 		self.showGraph = showGraph
 		self.onSet = onSet
 		self.settable = bool(onSet)
@@ -50,12 +51,11 @@ class AnalogChannel(Channel):
 		self.max = max
 		
 class DigitalChannel(Channel):
-	json_properties = ['hasPullUp']
+	json_properties = []
 	type = 'digital'
 	
-	def __init__(self, name, hasPullUp=False, state='input', **kw):
+	def __init__(self, name, state='input', **kw):
 		super(DigitalChannel, self).__init__(name, state, **kw)
-		self.hasPullUp = hasPullUp
 
 class Device(object):
 	def start(self):

@@ -100,7 +100,7 @@ class Channel
 		@stateElem.set(s)
 		if s=='source' or s=='set' or s=='output'
 			@series.grabDot = 'fill'
-		else if s=='measure'
+		else if 'source' in @stateOptions or 'output' in @stateOptions
 			@series.grabDot = 'stroke'
 			
 	addToUI: (o) ->
@@ -115,10 +115,14 @@ class Channel
 		outState = 'output'
 		if 'source' in @stateOptions
 			outState = 'source'
-		@_setValue(Math.min(Math.max(v, @axis.min), @axis.max), outState)
+		@_setValue(v, outState)
 		
 	setState: (s) =>
 		@_setValue(null, s)
+		
+	onValue: (t, v) ->
+		if @showGraph
+			@graph.redrawGraph()
 			
 class DigitalChannel extends Channel
 	cssClass: 'digital'
@@ -139,17 +143,8 @@ class DigitalChannel extends Channel
 				
 	onValue: (time, v) ->
 		@value = v
-		
 		@reading.text(if v then "HIGH" else "LOW")
-		
-		if @showGraph
-			o = {time:time}
-			o[@id] = v
-			@graph.pushData(o) 
-			
-	setValue: (v) ->
-		super(v>0.5)
-		
+		super(time, v)
 
 class AnalogChannel extends Channel
 	cssClass: 'analog'
@@ -183,8 +178,10 @@ class AnalogChannel extends Channel
 				@input.addClass('negative')
 			else
 				@input.removeClass('negative')
-		if @showGraph
-			@graph.redrawGraph() 
+		super(time, v)
+		
+	setvalue: (v) ->
+		super(Math.min(Math.max(v, @axis.min), @axis.max))
 
 class TimeChannel extends AnalogChannel
 	constructor: (o) ->
@@ -292,8 +289,8 @@ class LiveData
 		if params.perfstat
 			t2 = new Date()
 			@perfstat_acc += t2-t1
-			if (@perfstat_count += 1) == 100
-				$('#perfstat').text(@perfstat_acc/100 + "ms/render")
+			if (@perfstat_count += 1) == 25
+				$('#perfstat').text(@perfstat_acc / 25 + "ms/render")
 				@perfstat_acc = @perfstat_count = 0
 		
 	onState: (channel, state) ->

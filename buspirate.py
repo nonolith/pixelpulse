@@ -10,10 +10,24 @@ channel_masks = {
 	'AUX':  (1<<4),
 }
 
+channel_colors_sparkfun = {
+	'CS':   'red',
+	'MISO': 'brown',
+	'CLK':  '#eeee00',
+	'MOSI': 'orange',
+	'AUX':  '#00ff00',
+}
+
 class BusPirateDevice(livedata.Device):
 	def __init__(self, port='/dev/ttyUSB0'):
+		colors = channel_colors_sparkfun
+		
+		opts = dict(
+			onSet=self.onSet, stateOptions=['input','output']
+		)
+		
 		self.digitalChannels = [
-			livedata.DigitalChannel(name, True, showGraph=True, onSet=self.onSet, stateOptions=['input','output'])
+			livedata.DigitalChannel(name, showGraph=True, color=colors[name], **opts)
 			for name in ['AUX','MOSI', 'CLK', 'MISO', 'CS']]
 			
 		self.channels = self.digitalChannels
@@ -61,9 +75,6 @@ class BusPirateDevice(livedata.Device):
 	def onPoll(self):
 		self.serial.write(chr(self.output_state) + chr(self.output_mode))
 		
-	def setPullup(self):
-		pass
-		
 	def onSet(self, chan, val, state):
 		mask = channel_masks[chan.name]
 		self.output_mode &= ~mask
@@ -73,11 +84,7 @@ class BusPirateDevice(livedata.Device):
 			chan.setState('output')
 		elif state == 'input':
 			self.output_mode |= mask
-			self.setPullup(False)
 			chan.setState('input')
-		elif state == 'pull-up':
-			self.output_mode |= mask
-			self.setPullup(True)
 		
 		if state == 'output' and val is not None:
 			if val:
