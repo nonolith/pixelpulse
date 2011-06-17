@@ -314,7 +314,7 @@ for pair in document.location.search.slice(1).split('&')
 
 hostname = params.server || document.location.host
 window.graphmode = params.graphmode || 'canvas'
-window.ygrid = params.ygrid ? false
+window.ygrid = params.ygrid != '0'
 window.xbottom = params.xbottom ? false
 
 websocket_start = (host, app) ->
@@ -489,6 +489,9 @@ $(document).ready ->
 	
 	if not params.timebar
 		$('#timesection').hide()
+		
+	if not params.layouts
+		$('#layout-sel').hide()
 	
 	if hostname == 'virtualrc' or document.location.protocol == 'file:'
 		virtualrc_start(app)
