@@ -66,6 +66,7 @@ class Channel
 		$(@graph.graphCanvas).mousedown (e) =>
 			[x, y] = relMousePos(@graph.graphCanvas, e)
 			if x > @graph.width - 60
+				$(document.body).css('cursor', 'row-resize')
 				@setValue(@axis.invYtransform(y, @graph.geom))
 				mousemove = (e) =>
 					[x, y] = relMousePos(@graph.graphCanvas, e)
@@ -74,6 +75,7 @@ class Channel
 					$(document.body).unbind('mousemove', mousemove)
 					                .unbind('mouseup', mouseup)
 					                .unbind('mouseout', mouseout)
+					                .css('cursor', 'auto')
 				mouseout = (e) ->
 					if e.relatedTarget.nodeName == 'HTML'
 						mouseup()
