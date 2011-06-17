@@ -42,7 +42,7 @@ class BusPirateDevice(livedata.Device):
 					out.append((chan, bool(data & mask)))
 				server.data(out)
 				
-		self.serial = tornado_serial.TornadoSerial(self.port, 115200, onReceive)
+		self.serial = tornado_serial.TornadoSerial(self.port, 115200, onReceive, on_error=server.quit)
 		self.enter_bbio()
 				
 		

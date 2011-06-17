@@ -182,6 +182,9 @@ class DataServer(object):
 			r = f()
 			if r:
 				self.data(r)
+				
+	def quit(self, *ignore):
+		self.mainLoop.stop()
 
 if __name__ == "__main__":
 	AnalogChannel('test', 'Test', 'A', 0, 10).getConfig()

@@ -2,8 +2,9 @@ import serial
 from tornado.ioloop import IOLoop
 
 class TornadoSerial(object):
-	def __init__(self, port=None, baud=9600, on_receive=None, *args):
+	def __init__(self, port=None, baud=9600, on_receive=None, on_error=None, *args):
 		self.on_receive = on_receive
+		self.on_error = on_error
 		self.serial = serial.Serial(port, baud, timeout=0, *args)
 		self.io_loop = IOLoop.instance()
 		self.io_loop.add_handler(
@@ -11,9 +12,15 @@ class TornadoSerial(object):
 						IOLoop.READ)
 	
 	def _serial_event(self, fd, events):
-		data = self.serial.read(self.serial.inWaiting())
-		if data:
-			self.on_receive(data)
+		try:
+			data = self.serial.read(self.serial.inWaiting())
+		except IOError, e:
+			print "Serial IO error", e
+			if self.on_error:
+				self.on_error(e)
+		else: 
+			if data:
+				self.on_receive(data)
 			
 	def write(self, data):
 		self.serial.write(str(data))
@@ -23,8 +30,8 @@ class TornadoSerial(object):
 		self.serial.flushOutput()
 		
 class TornadoLineSerial(TornadoSerial):
-	def __init__(self, port=None, baud=9600, on_receive=None, line_sep='\r\n', *args):
-		super(TornadoLineSerial, self).__init__(port, baud, self.on_receive, *args)
+	def __init__(self, port=None, baud=9600, on_receive=None, on_error=None, line_sep='\r\n', *args):
+		super(TornadoLineSerial, self).__init__(port, baud, self.on_receive, on_error, *args)
 		self._on_receive = on_receive
 		self.line_sep = line_sep
 		self.buffer = ""
