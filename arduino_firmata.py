@@ -64,7 +64,7 @@ class FirmataDevice(livedata.Device):
 						print 'unknown', hex(self.buf_cmd), hex(self.buf_low), hex(hi)
 					self.buf_cmd = self.buf_low = None
 					
-		self.serial = tornado_serial.TornadoSerial(self.port, 57600, onData)
+		self.serial = tornado_serial.TornadoSerial(self.port, 57600, onData, on_error=server.quit)
 		self.setup_report()
 		server.poll(self.onPoll)
 		
