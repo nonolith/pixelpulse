@@ -5,21 +5,26 @@ import sys
 import usb.core
 import atexit
 import livedata
+from optparse import OptionParser
+import random, time
 
 class ModconSMU(livedata.Device):
 	vReqs = {'UPDATE' : 1, 
-			'SET_DIGOUT' : 2, 
-			'GET_DAC_VALS' : 3,
-			'SET_DAC_VALS' : 4,
-			'GET_VADC_VALS' : 5,
-			'GET_IADC_VALS' : 7,
-			'GET_RES_VAL' : 9,
-			'GET_NAME' : 11,
-			'SET_NAME' : 12}
+	        'SET_DIGOUT' : 2, 
+	        'GET_DAC_VALS' : 3,
+	        'SET_DAC_VALS' : 4,
+	        'GET_VADC_VALS' : 5,
+	        'GET_IADC_VALS' : 7,
+	        'GET_RES_VAL' : 9,
+	        'GET_NAME' : 11,
+	        'SET_NAME' : 12}
 	
-	def __init__(self):
-		self.voltageChan =    livedata.AnalogChannel('Voltage',     'V',  -10,  10,   'source',  showGraph=True, onSet=self.setVoltage)
-		self.currentChan =    livedata.AnalogChannel('Current',     'mA', -200, 200,  'measure', showGraph=True, onSet=self.setCurrent)
+	def __init__(self, vlimit):
+		stateOpts = ['source', 'measure']
+		self.voltageChan =    livedata.AnalogChannel('Voltage',     'V',  vlimit[0],  vlimit[1],   'source',  
+		                            stateOptions=stateOpts, showGraph=True, onSet=self.setVoltage)
+		self.currentChan =    livedata.AnalogChannel('Current',     'mA', -200, 200,  'measure',
+		                            stateOptions=stateOpts, showGraph=True, onSet=self.setCurrent)
 		self.resistanceChan = livedata.AnalogChannel('Resistance',  u'Ω', 0,    2000, 'computed')
 		self.powerChan =      livedata.AnalogChannel('Power',        'W', 0,    2,    'computed')
 		self.aiChan =         livedata.AnalogChannel('Voltage(AI0)', 'V', 0,    4.096, 'input')
@@ -58,7 +63,7 @@ class ModconSMU(livedata.Device):
 		VALUE = self.sign( RES_VAL[0] | ( RES_VAL[1] << 8 ) )
 		self.RES = 51*VALUE/16384.0
 		#add safety feature
-		atexit.register(self.setCurrent, ma = 0)
+		atexit.register(self.stop)
 
 	def sign(self, x):
 		"""Undo two's complement signing."""
@@ -70,9 +75,9 @@ class ModconSMU(livedata.Device):
 	def update(self, mod = 1):
 		"""updates smu target V/I, returns actual V/I"""
 		if self.driving == 'v':
-			value = int(round(self.zeroV - self.v/self.scaleFactorV))
+			value = int(round(self.zeroV - (self.v+0.04)/self.scaleFactorV))
 			if cmp(value, 0) == -1:
-				value = int(round(self.v/self.scaleFactorV - self.zeroV))
+				value = int(round((self.v+0.04)/self.scaleFactorV - self.zeroV))
 			direction = 0
 		elif self.driving == 'i':
 			value = int(round(self.zeroI + self.i * 10000))
@@ -92,27 +97,39 @@ class ModconSMU(livedata.Device):
 		else:
 			return (retVolt, retAmp)
 			
-	def setVoltage(self, chan, volts):
-		self.v = volts
-		if self.driving != 'v':
-			self.driving = 'v'
+	def setDriving(self, driving):
+		if self.driving != driving:
 			self.updateNeeded = True
-			self.currentChan.setState('measure')
-			self.voltageChan.setState('source')
+			self.driving = driving
+			if self.driving == 'v':
+				self.currentChan.setState('measure')
+				self.voltageChan.setState('source')
+			else:
+				self.currentChan.setState('source')
+				self.voltageChan.setState('measure')
+				
 			
-	def setCurrent(self, chan, ma):
-		self.i = ma/-1000.0
-		if self.driving != 'i':
-			self.driving = 'i'
-			self.updateNeeded = True
-			self.currentChan.setState('source')
-			self.voltageChan.setState('measure')
+	def setVoltage(self, chan, volts, state=None):
+		if state is not None:
+			self.setDriving('v' if state=='source' else 'i')
+		if volts is not None:
+			self.v = volts
+			
+			
+	def setCurrent(self, chan, ma, state=None):
+		if state is not None:
+			self.setDriving('i' if state=='source' else 'v')
+		if ma is not None:
+			self.i = ma/-1000.0
 		
 	def start(self, server):
 		server.poll(self.poll)
 		
+	def stop(self):
+		self.setCurrent(None, 0)
+		
 	def poll(self):
-		data = self.update()
+		data =  self.update()
 		return [
 			(self.voltageChan, data[0]),
 			(self.currentChan, data[1]*1000),
@@ -122,6 +139,13 @@ class ModconSMU(livedata.Device):
 		]
 
 if __name__ == '__main__':
-	dev = ModconSMU()
+	parser = OptionParser()
+	parser.add_option("--cee",  action="store_true", dest="cee")
+	(options, args) = parser.parse_args()
+	if options.cee:
+		vlimit = (-5, 5)
+	else:
+		vlimit = (-10, 10)
+	dev = ModconSMU(vlimit)
 	server = livedata.DataServer(dev)
 	server.start()
