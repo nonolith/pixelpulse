@@ -182,7 +182,7 @@ class LiveGraph_canvas extends LiveGraph
 					
 			
 	redrawGraph: ->
-		if !@data.length then return
+		if @data.length<2 then return
 		
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()

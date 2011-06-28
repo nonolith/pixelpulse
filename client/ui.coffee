@@ -45,7 +45,7 @@ class Channel
 		@tile.get(0).draggable = true
 		@tile.get(0).ondragstart = (e) =>
 			window.draggedChannel = this
-			e.dataTransfer.setData('text/plain', @id)
+			e.dataTransfer.setData('application/x-nonolith-channel-id', @id)
 			i = $("<div class='meter-drag'>").text(@id).appendTo('#hidden')
 			e.dataTransfer.setDragImage(i.get(0), 0, 0)
 			setTimeout((-> i.remove()), 0)
@@ -268,7 +268,7 @@ class LiveData
 				
 		mp.ondragend = ts.ondragend = (e) ->
 			$('.insertion-cursor').remove()
-			$('.dnd-oldpos').show().removeClass('.dnd-oldpos')
+			$('.dnd-oldpos').show().removeClass('dnd-oldpos')
 		
 	onConfig: (o) ->
 		$('#meters, #meters-side').empty()
@@ -302,18 +302,6 @@ class LiveData
 		
 	setChannel: (name, value, state) -> 
 		console.error("setChannel should be overridden by transport")
-		
-			
-
-dnd_target = (elem, callback) ->
-	elem.ondragover = (e) ->
-	 	e.preventDefault()
-
-	elem.ondrop = (e) ->
-		data = e.dataTransfer.getData('text/plain')
-		e.preventDefault()
-		callback(data)
-		return false
 		
 setup = false
 
