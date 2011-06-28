@@ -364,6 +364,28 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	z-index:21;
 }
 
+#info{
+	position: absolute;
+	z-index: 22;
+	bottom: 0;
+	left: 0;
+	height: 65px;
+	width: 330px;
+	background: rgba(0,0,0,0.5);
+	color: white;
+	font-size: 13px;
+	line-height: 16px;
+	padding: 10px;
+}
+
+#info h1{
+	font-weight: bold;
+}
+
+#info a{
+	color: white;
+}
+
 
 </style>
 <link href='http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold' rel='stylesheet' type='text/css'>
@@ -398,6 +420,11 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 </div>
 
 <div id='perfstat'></div>
+
+<div id='info' style='display: none'>
+<h1>What am I looking at?</h1>
+<p>This is <a href='http://nonolithlabs.com/pixelpulse/'>Pixelpulse</a>, a web interface for visualizing and controling signals in real time. This demo simulates a <a href='http://en.wikipedia.org/wiki/Rc_circuit'>resistor-capacitor</a> circuit attached to a <a href='http://nonolithlabs.com/cee/'>CEE</a>.</p>
+</div>
 
 
 <div id='hidden' style='position: absolute; bottom: 0; z-index: -10'></div>

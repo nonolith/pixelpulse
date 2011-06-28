@@ -23,7 +23,7 @@ class Axis
 		grid=Math.pow(10, Math.round(Math.log(@max-@min)/Math.LN10)-1)
 		if (@max-@min)/grid >= 10
 			grid *= 2
-		return grid
+		return grid/2
 		
 	grid: ->
 		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]

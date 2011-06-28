@@ -40,7 +40,8 @@ class Channel
 		@addReadingUI(@tile)
 		@tile.append(@stateElem = dropdownButton(@stateOptions, @setState))
 		@stateElem.addClass('state')
-			
+		
+		@tile.attr("title", "Drag and drop to rearrange")
 		@tile.get(0).draggable = true
 		@tile.get(0).ondragstart = (e) =>
 			window.draggedChannel = this
@@ -137,6 +138,9 @@ class DigitalChannel extends Channel
 		
 	addReadingUI: (tile) ->
 		tile.append @reading = $("<span class='reading'>")
+		
+		if @settable
+			@reading.attr("title", "Click to toggle")
 		
 		@reading.mouseup =>
 			@setValue(!@value)
@@ -384,8 +388,8 @@ virtualrc_start = (app) ->
 				'id': 'voltage',
 				'name': 'Voltage',
 				'unit': 'V',
-				'min': -10,
-				'max': 10,
+				'min': -5,
+				'max': 5,
 				'state': 'source',
 				'showGraph': true,
 				'settable': true,
@@ -441,7 +445,7 @@ virtualrc_start = (app) ->
 			when 'current'
 				voltage = q/c
 			
-				if (voltage>=10 and current<0) or (voltage<=-10 and current>0)
+				if (voltage>=5 and current<0) or (voltage<=-5 and current>0)
 					current = 0
 			
 				q += current*dt
@@ -504,6 +508,9 @@ $(document).ready ->
 		
 	if params.perfstat
 		$('#perfstat').show()
+		
+	if params.demohint
+		$('#info').show()
 	
 	if hostname == 'virtualrc' or document.location.protocol == 'file:'
 		virtualrc_start(app)
