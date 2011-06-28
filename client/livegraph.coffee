@@ -1,14 +1,15 @@
+PADDING = 10
+AXIS_SPACING = 25
 
-OFFSET = 10
-AXISOFFSET = 25
-
-window.arange = (lo, hi, step) ->
-	ret = []
-	while lo <= hi
-		ret.push(lo)
-		lo += step
-	return ret
+class LiveGraph
+	constructor: (@div, @xaxis, @yaxis, @data, @series) ->		
+		@div.setAttribute('class', 'livegraph')
 		
+	autoscroll: ->
+		if @xaxis.autoScroll
+			@xaxis.max = @data[@data.length-1][@series[0].xvar]
+			@xaxis.min = @xaxis.max + @xaxis.autoScroll
+			
 class Axis
 	constructor: (@min, @max) ->	
 		if @max == 'auto'
@@ -53,15 +54,6 @@ digitalAxis = new DigitalAxis()
 
 class Series
 	constructor: (@xvar, @yvar, @color, @style) ->
-
-class LiveGraph
-	constructor: (@div, @xaxis, @yaxis, @data, @series) ->		
-		@div.setAttribute('class', 'livegraph')
-		
-	autoscroll: ->
-		if @xaxis.autoScroll
-			@xaxis.max = @data[@data.length-1][@series[0].xvar]
-			@xaxis.min = @xaxis.max + @xaxis.autoScroll
 					
 class LiveGraph_canvas extends LiveGraph
 	constructor: (div, xaxis, yaxis, data, series) ->
@@ -99,12 +91,12 @@ class LiveGraph_canvas extends LiveGraph
 		@ctxg.lineWidth = 2
 		
 		@geom = 
-			ytop: OFFSET
-			ybottom: @height - (OFFSET + @showXbottom * AXISOFFSET)
-			xleft: OFFSET + @showYleft * AXISOFFSET
-			xright: @width - (OFFSET + @showYright * AXISOFFSET)
-			width: @width - 2*OFFSET - (@showYleft+@showYright) * AXISOFFSET
-			height: @height - 2*OFFSET - @showXbottom  * AXISOFFSET
+			ytop: PADDING
+			ybottom: @height - (PADDING + @showXbottom * AXIS_SPACING)
+			xleft: PADDING + @showYleft * AXIS_SPACING
+			xright: @width - (PADDING + @showYright * AXIS_SPACING)
+			width: @width - 2*PADDING - (@showYleft+@showYright) * AXIS_SPACING
+			height: @height - 2*PADDING - @showXbottom  * AXIS_SPACING
 		
 		@redrawAxis()
 		@redrawGraph()
@@ -240,10 +232,10 @@ class LiveGraph_canvas extends LiveGraph
 		if @axes.xbottom.autoScroll
 			xaxis = @axes.xbottom
 			
-			drawWidth = @width - OFFSET*2
-			drawHeight = @height - OFFSET*2
-			drawLeft = OFFSET
-			drawTop = OFFSET
+			drawWidth = @width - PADDING*2
+			drawHeight = @height - PADDING*2
+			drawLeft = PADDING
+			drawTop = PADDING
 			
 			@autoscroll()
 			
@@ -274,97 +266,18 @@ class LiveGraph_canvas extends LiveGraph
 				
 				prevY = @transformPoint(yaxis,prevPt[yaxis.property])
 				newY = @transformPoint(yaxis, pt[yaxis.property])
-				@ctxg.moveTo(@width-OFFSET-move, prevY)
-				@ctxg.lineTo(@width-OFFSET, newY)
+				@ctxg.moveTo(@width-PADDING-move, prevY)
+				@ctxg.lineTo(@width-PADDING, newY)
 				@ctxg.stroke()
 		else
 			@redrawGraph()
-		
-class LiveGraph_svg extends LiveGraph
-	constructor: (div) ->
-		super(div)
-		
-		@r = Raphael(@div, @div.offsetWidth, @div.offsetHeight)
-		
-		@resized()
-		
-	resized: ->	
-		@width = @div.offsetWidth
-		@height = @div.offsetHeight
-		
-		@r.setSize(@width, @height)
-		
-		@redrawAxis()
-		@redrawGraph()
-		
-	redrawAxis: () ->
-		if @asvg
-			@asvg.remove()
 			
-		@asvg = @r.set()
-		
-		for name, axis of @axes
-			grid=Math.pow(10, Math.round(Math.log(axis.max-axis.min)/Math.LN10)-1)
-			if (axis.max-axis.min)/grid >= 10
-				grid *= 2
-			
-			if axis.direction=='y'
-				if axis.xpos==0
-					x = OFFSET
-				else 
-					x = @width-OFFSET
-					
-				@asvg.push(@r.path("M#{x} #{OFFSET}V#{@height-OFFSET}"))
-				
-				for y in arange(axis.min, axis.max, grid)
-					@asvg.push(@r.path("M#{x-4} #{@transformPoint(axis,y)}h8"))
-			else
-				y = @height-OFFSET
-				
-				@asvg.push(@r.path("M#{OFFSET} #{y}H#{@width-OFFSET}"))
-				
-				continue if axis.autoScroll
-				
-				for x in arange(axis.min, axis.max, grid)
-					@asvg.push(@r.path("M#{@transformPoint(axis,x)} #{y-4}v8"))
-					
-		@asvg.attr('stroke-width':2)
-	
-	redrawGraph: ()->
-		if !@data.length then return
-		
-		if @gsvg
-			@gsvg.remove()
-			
-		@gsvg = @r.set()
-		
-		@autoscroll()
-		
-		xaxis = @axes.xbottom
-		xmin = xaxis.min
-		xmax = xaxis.max
-			
-		for yaxis in [@axes.yleft, @axes.yright]
-			pth = for i in @data
-				pt = i[xaxis.property]
-				if pt<xmin or pt>xmax
-					continue
-				"L#{@transformPoint(xaxis,pt).toFixed(1)} #{@transformPoint(yaxis,i[yaxis.property]).toFixed(1)}"
-			pth = 'M'+pth.join('').slice(1)
-			p = @r.path(pth)
-			p.attr(stroke:yaxis.color, 'stroke-width':2)
-			@gsvg.push(p)
-			
-						
-	pushData: (pt) ->
-		prevPt = @data[@data.length-1]
-		@data.push(pt)
-		
-		if @data.length < 2
-			return
-		
-		@redrawGraph()
-
+arange = (lo, hi, step) ->
+	ret = []
+	while lo <= hi
+		ret.push(lo)
+		lo += step
+	return ret
 
 window.livegraph =
 	LiveGraph: LiveGraph
