@@ -27,9 +27,11 @@ class ModconSMU(livedata.Device):
 		                            stateOptions=stateOpts, showGraph=True, onSet=self.setCurrent)
 		self.resistanceChan = livedata.AnalogChannel('Resistance',  u'Ω', 0,    2000, 'computed')
 		self.powerChan =      livedata.AnalogChannel('Power',        'W', 0,    2,    'computed')
-		self.aiChan =         livedata.AnalogChannel('Voltage(AI0)', 'V', 0,    4.096, 'input')
+		#self.aiChan =         livedata.AnalogChannel('Voltage(AI0)', 'V', 0,    4.096, 'input')
 		self.channels = [self.voltageChan, self.currentChan, self.resistanceChan,
-		                 self.powerChan, self.aiChan]
+		                 self.powerChan]
+		                 
+		self.ifilt = 0
 	
 	
 		"""Find a USB device with the VID and PID of the ModCon SMU."""
@@ -130,12 +132,13 @@ class ModconSMU(livedata.Device):
 		
 	def poll(self):
 		data =  self.update()
+		self.ifilt = self.ifilt*0.3 + data[1]*0.7
 		return [
 			(self.voltageChan, data[0]),
-			(self.currentChan, data[1]*1000),
-			(self.powerChan, abs(data[0] * data[1])),
-			(self.resistanceChan, abs(data[0]/data[1])),
-			(self.aiChan, data[2]),
+			(self.currentChan, self.ifilt*1000),
+			(self.powerChan, abs(data[0] * self.ifilt)),
+			(self.resistanceChan, abs(data[0]/self.ifilt)),
+			#(self.aiChan, data[2]),
 		]
 
 if __name__ == '__main__':
