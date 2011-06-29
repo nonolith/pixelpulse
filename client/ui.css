@@ -212,6 +212,12 @@ body{
 	position: relative;
 }
 
+.livegraph canvas{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
 #timeseries > section#timesection{
 	height: 32px;
 	background: linear-gradient(270deg, #ccc 0%, #d4d4d4 20%, #c8c8c8 100%);
