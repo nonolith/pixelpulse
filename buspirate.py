@@ -109,14 +109,9 @@ if __name__ == '__main__':
 		help="Wire colors - 'seeed' or 'sparkfun'", metavar="MODEL")
 	op.add_option("-d", dest="nopullups", action="store_true", help="Disable pullups",)
 	(options, args) = op.parse_args()
-	if options.port == 'auto':
-		options.port = tornado_serial.default_port()
-		if not options.port:
-			print "No serial port found. Use -p PORT to specify"
-			exit()
-		else:
-			print "Using port", options.port
 	
-	dev = BusPirateDevice(options.port, COLORS[options.colors], not options.nopullups)
+	port = tornado_serial.check_port(options.port)
+	
+	dev = BusPirateDevice(port, COLORS[options.colors], not options.nopullups)
 	server = livedata.DataServer(dev)
 	server.start()

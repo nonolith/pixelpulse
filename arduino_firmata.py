@@ -1,6 +1,7 @@
-import livedata
-import tornado_serial
+from optparse import OptionParser
 import time
+import tornado_serial
+import livedata
 
 ANALOG_MESSAGE = 0xE0
 DIGITAL_MESSAGE = 0x90
@@ -15,14 +16,15 @@ SAMPLING_INTERVAL = 0x7A
 sample_interval_ms = 50
 
 class FirmataDevice(livedata.Device):
-	def __init__(self, port='/dev/ttyUSB0'):
-		self.analogChannels = [livedata.AnalogChannel('A%i'%i, 'V', 0.0, 5.0, showGraph=i<=1) for i in range(6)]
+	def __init__(self, port='/dev/ttyUSB0', dpins=[], apins=[]):
+		self.analogPins = apins
+		self.analogChannels = [livedata.AnalogChannel('A%i'%i, 'V', 0.0, 5.0, showGraph=n<=1) for n, i in enumerate(apins)]
 		
 		so = ['input', 'output', 'pullup']
-		self.digitalPins = range(2, 9)
+		self.digitalPins = dpins
 		self.digitalChannels = [
-			livedata.DigitalChannel('D%i'%i, showGraph=i<4, stateOptions=so, onSet=self.digitalSet) 
-			for i in self.digitalPins]
+			livedata.DigitalChannel('D%i'%i, showGraph=n<2, stateOptions=so, onSet=self.digitalSet) 
+			for n, i in enumerate(self.digitalPins)]
 			
 		self.channels = self.analogChannels + self.digitalChannels
 		self.port = port
@@ -122,8 +124,54 @@ class FirmataDevice(livedata.Device):
 		self.serial.write(chr(DIGITAL_MESSAGE | port) 
 		                + chr(self.digitalOut[port] & 0x7f) 
 		                + chr(self.digitalOut[port] >> 7))
+
+def parse_pin_spec(s, dpins=[], apins=[]):
+        """ Parse pin specifications such as a0 (analog 0), d4 (digital 4), D3, d2-5 """
+	if s[0].lower() == 'd':
+		l = dpins
+		nmin = 2
+		nmax = 8
+	elif s[0].lower() == 'a':
+		l = apins
+		nmin = 0
+		nmax = 5
+	
+	if '-' in s:
+	    p = s[1:].split('-')
+	    if not len(p) == 2:
+	        raise ValueError("Invalid range")
+	    lo = int(p[0])
+	    hi = int(p[1])
+	    if nmin<=lo<= nmax and nmin<=hi<=nmax:
+	        l.extend(range(lo, hi+1))
+	    else:
+	        raise ValueError("Specification %s out of range %i <= n <= %i"%(s, nmin, nmax))
+	else:
+	    n = int(s[1:])
+	    if nmin <= n <= nmax:
+	        l.append(s)
+	    else:
+	        raise ValueError("Pin %s out of range %i <= n <= %i"%(s, nmin, nmax))
+	        
+	return dpins, apins
+	
 		
 if __name__ == '__main__':
-	dev = FirmataDevice()
+	op = OptionParser()
+	op.add_option("-p",  dest="port", help="Use Arduino attached to port PORT", metavar="PORT", default="auto")
+	options, args = op.parse_args()
+	port = tornado_serial.check_port(options.port)
+	
+	apins = []
+	dpins = []
+	for s in args:
+		parse_pin_spec(s, dpins, apins)
+		
+	if not apins and not dpins:
+		print "Using default pins D2-5 A0-3"
+		dpins = range(2, 5+1)
+		apins = range(3+1)
+	
+	dev = FirmataDevice(port, dpins, apins)
 	server = livedata.DataServer(dev)
 	server.start()

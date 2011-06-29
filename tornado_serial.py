@@ -49,3 +49,16 @@ def default_port():
 	for i in range(10):
 		p = '/dev/ttyUSB%i'%i
 		if os.path.exists(p): return p
+		
+def check_port(p):
+	if p == 'auto':
+		p = default_port()
+		if not p:
+			print "No serial port found. Use -p PORT to specify"
+			exit(1)
+		else:
+			print "Using port", p
+	elif not os.path.exists(p):
+		print "Serial port %s not found"%p
+		exit(1)
+	return p
