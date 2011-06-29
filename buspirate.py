@@ -1,7 +1,7 @@
 from optparse import OptionParser
 import time
 import tornado_serial
-import livedata
+import pixelpulse
 
 channel_masks = {
 	'CS':   (1<<0),
@@ -11,14 +11,14 @@ channel_masks = {
 	'AUX':  (1<<4),
 }
 
-class BusPirateDevice(livedata.Device):
+class BusPirateDevice(pixelpulse.Device):
 	def __init__(self, port='/dev/ttyUSB0', colors=None, pullups=True):
 		opts = dict(
 			onSet=self.onSet, stateOptions=['input','output']
 		)
 		
 		self.digitalChannels = [
-			livedata.DigitalChannel(name, showGraph=True, color=colors[name], **opts)
+			pixelpulse.DigitalChannel(name, showGraph=True, color=colors[name], **opts)
 			for name in ['AUX','MOSI', 'CLK', 'MISO', 'CS']]
 			
 		self.channels = self.digitalChannels
@@ -113,5 +113,5 @@ if __name__ == '__main__':
 	port = tornado_serial.check_port(options.port)
 	
 	dev = BusPirateDevice(port, COLORS[options.colors], not options.nopullups)
-	server = livedata.DataServer(dev)
+	server = pixelpulse.DataServer(dev)
 	server.start()

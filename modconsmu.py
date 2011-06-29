@@ -4,11 +4,11 @@
 import sys
 import usb.core
 import atexit
-import livedata
+import pixelpulse
 from optparse import OptionParser
 import random, time
 
-class ModconSMU(livedata.Device):
+class ModconSMU(pixelpulse.Device):
 	vReqs = {'UPDATE' : 1, 
 	        'SET_DIGOUT' : 2, 
 	        'GET_DAC_VALS' : 3,
@@ -21,13 +21,13 @@ class ModconSMU(livedata.Device):
 	
 	def __init__(self, vlimit):
 		stateOpts = ['source', 'measure']
-		self.voltageChan =    livedata.AnalogChannel('Voltage',     'V',  vlimit[0],  vlimit[1],   'source',  
+		self.voltageChan =    pixelpulse.AnalogChannel('Voltage',     'V',  vlimit[0],  vlimit[1],   'source',  
 		                            stateOptions=stateOpts, showGraph=True, onSet=self.setVoltage)
-		self.currentChan =    livedata.AnalogChannel('Current',     'mA', -200, 200,  'measure',
+		self.currentChan =    pixelpulse.AnalogChannel('Current',     'mA', -200, 200,  'measure',
 		                            stateOptions=stateOpts, showGraph=True, onSet=self.setCurrent)
-		self.resistanceChan = livedata.AnalogChannel('Resistance',  u'Ω', 0,    2000, 'computed')
-		self.powerChan =      livedata.AnalogChannel('Power',        'W', 0,    2,    'computed')
-		#self.aiChan =         livedata.AnalogChannel('Voltage(AI0)', 'V', 0,    4.096, 'input')
+		self.resistanceChan = pixelpulse.AnalogChannel('Resistance',  u'Ω', 0,    2000, 'computed')
+		self.powerChan =      pixelpulse.AnalogChannel('Power',        'W', 0,    2,    'computed')
+		#self.aiChan =         pixelpulse.AnalogChannel('Voltage(AI0)', 'V', 0,    4.096, 'input')
 		self.channels = [self.voltageChan, self.currentChan, self.resistanceChan,
 		                 self.powerChan]
 		                 
@@ -150,5 +150,5 @@ if __name__ == '__main__':
 	else:
 		vlimit = (-10, 10)
 	dev = ModconSMU(vlimit)
-	server = livedata.DataServer(dev)
+	server = pixelpulse.DataServer(dev)
 	server.start()

@@ -1,17 +1,20 @@
 import math, time
-import livedata
+import pixelpulse
 
-class SineDevice(livedata.Device):
+class SineDevice(pixelpulse.Device):
 	def __init__(self):
-		self.cos = livedata.AnalogChannel(
+	
+		# Define the channels
+		self.cos = pixelpulse.AnalogChannel(
 			name='Cosine',
 			unit='V',
 			min=-1.0,
 			max=1.0,
+			# Graph is initially shown. If False, the channel will be on the bottom bar
 			showGraph=True,
 		)
 
-		self.sin = livedata.AnalogChannel(
+		self.sin = pixelpulse.AnalogChannel(
 			name='Sine',
 			unit='A',
 			min=-1.0,
@@ -19,12 +22,15 @@ class SineDevice(livedata.Device):
 			showGraph=True,
 		)
 		
+		# pixelpulse reads this property to determine which channels to show
 		self.channels = [self.sin, self.cos]
 		
 	def start(self, server):
-		server.poll(self.update)
+		""" This method is called by Pixelpulse once the server is started """
+		server.poll(self.update) # ask the server to poll our update() method at its default sample rate
 		
 	def update(self):
+		""" Polled to update the data as configured in start(). Returns a list of (channel. value) pairs """
 		return [
 			(self.cos, math.cos(time.time())),
 			(self.sin, math.sin(time.time())),
@@ -32,5 +38,5 @@ class SineDevice(livedata.Device):
 		
 if __name__ == '__main__':
 	dev = SineDevice()
-	server = livedata.DataServer(dev)
+	server = pixelpulse.DataServer(dev)
 	server.start()

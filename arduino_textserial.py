@@ -1,9 +1,9 @@
-import livedata
+import pixelpulse
 import tornado_serial
 
-class ArduinoDevice(livedata.Device):
+class ArduinoDevice(pixelpulse.Device):
 	def __init__(self, port='/dev/ttyUSB0'):
-		self.analogChannels = [livedata.AnalogChannel('A%i'%i, 'V', 0.0, 5.0, showGraph=i<=3) for i in range(6)]
+		self.analogChannels = [pixelpulse.AnalogChannel('A%i'%i, 'V', 0.0, 5.0, showGraph=i<=3) for i in range(6)]
 		self.channels = self.analogChannels
 		self.port = port
 		
@@ -16,5 +16,5 @@ class ArduinoDevice(livedata.Device):
 		
 if __name__ == '__main__':
 	dev = ArduinoDevice()
-	server = livedata.DataServer(dev)
+	server = pixelpulse.DataServer(dev)
 	server.start()

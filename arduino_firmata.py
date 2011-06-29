@@ -1,7 +1,7 @@
 from optparse import OptionParser
 import time
 import tornado_serial
-import livedata
+import pixelpulse
 
 ANALOG_MESSAGE = 0xE0
 DIGITAL_MESSAGE = 0x90
@@ -16,18 +16,18 @@ CMD_VERSION = 0xF9
 
 sample_interval_ms = 50
 
-class FirmataDevice(livedata.Device):
+class FirmataDevice(pixelpulse.Device):
 	def __init__(self, port='/dev/ttyUSB0', dpins=[], apins=[]):
 		self.analogChannels = {}
 		for n, pin in enumerate(apins):
-			ch = livedata.AnalogChannel('A%i'%pin, 'V', 0.0, 5.0, showGraph=(n<=1))
+			ch = pixelpulse.AnalogChannel('A%i'%pin, 'V', 0.0, 5.0, showGraph=(n<=1))
 			ch.pin = pin
 			ch.value = 0.0
 			self.analogChannels[pin] = ch
 			
 		self.digitalChannels = {}
 		for n, pin in enumerate(dpins):
-			ch = livedata.DigitalChannel('D%i'%pin, 
+			ch = pixelpulse.DigitalChannel('D%i'%pin, 
 			                             showGraph=(n<=1),
 			                             stateOptions=['input', 'output', 'pullup'], 
 			                             onSet=self.digitalSet) 
@@ -199,5 +199,5 @@ if __name__ == '__main__':
 		apins = range(3+1)
 	
 	dev = FirmataDevice(port, dpins, apins)
-	server = livedata.DataServer(dev)
+	server = pixelpulse.DataServer(dev)
 	server.start()

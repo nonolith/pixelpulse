@@ -73,7 +73,7 @@ class DataServer(object):
 		"""Send a new datapoint to connected clients.
 		
 		Arguments:
-		data -- list of (livedata.Channel instance, float value) pairs
+		data -- list of (pixelpulse.Channel instance, float value) pairs
 		
 		If a channel called "time" exists, it will be used as the time axis.
 		If not, a time axis will be created automatically.
