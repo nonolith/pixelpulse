@@ -1,6 +1,7 @@
-import livedata
-import tornado_serial
+from optparse import OptionParser
 import time
+import tornado_serial
+import livedata
 
 channel_masks = {
 	'CS':   (1<<0),
@@ -10,18 +11,8 @@ channel_masks = {
 	'AUX':  (1<<4),
 }
 
-channel_colors_sparkfun = {
-	'CS':   'red',
-	'MISO': 'brown',
-	'CLK':  '#eeee00',
-	'MOSI': 'orange',
-	'AUX':  '#00ff00',
-}
-
 class BusPirateDevice(livedata.Device):
-	def __init__(self, port='/dev/ttyUSB0'):
-		colors = channel_colors_sparkfun
-		
+	def __init__(self, port='/dev/ttyUSB0', colors=None, pullups=True):
 		opts = dict(
 			onSet=self.onSet, stateOptions=['input','output']
 		)
@@ -34,7 +25,9 @@ class BusPirateDevice(livedata.Device):
 		self.port = port
 		self.recv_mode = 'init'
 		
-		self.output_state = (1<<7)|(1<<6)|(1<<5)
+		self.output_state = (1<<7)|(1<<6)
+		if pullups:
+			self.output_state |= (1<<5)
 		self.output_mode = 0x5f # all pins input
 		self.initData = ''
 		
@@ -92,9 +85,38 @@ class BusPirateDevice(livedata.Device):
 			else:
 				self.output_state &= ~mask
 	
-		
+COLORS = {
+	'sparkfun': {
+		'CS':   'red',
+		'MISO': 'brown',
+		'CLK':  '#eeee00',
+		'MOSI': 'orange',
+		'AUX':  '#00ff00',
+	},
+	'seeed': {
+		'CS':   '#bbb',
+		'MISO': 'black',
+		'CLK':  '#ff00ff',
+		'MOSI': '#888',
+		'AUX':  'blue',
+	}
+}		
 		
 if __name__ == '__main__':
-	dev = BusPirateDevice()
+	op = OptionParser()
+	op.add_option("-p",  dest="port", help="Use BusPirate attached to port PORT", metavar="PORT", default="auto")
+	op.add_option("-c", dest="colors", type="choice", choices=COLORS.keys(), default="seeed",
+		help="Wire colors - 'seeed' or 'sparkfun'", metavar="MODEL")
+	op.add_option("-d", dest="nopullups", action="store_true", help="Disable pullups",)
+	(options, args) = op.parse_args()
+	if options.port == 'auto':
+		options.port = tornado_serial.default_port()
+		if not options.port:
+			print "No serial port found. Use -p PORT to specify"
+			exit()
+		else:
+			print "Using port", options.port
+	
+	dev = BusPirateDevice(options.port, COLORS[options.colors], not options.nopullups)
 	server = livedata.DataServer(dev)
 	server.start()

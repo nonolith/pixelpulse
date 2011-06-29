@@ -1,5 +1,6 @@
 import serial
 from tornado.ioloop import IOLoop
+import os
 
 class TornadoSerial(object):
 	def __init__(self, port=None, baud=9600, on_receive=None, on_error=None, *args):
@@ -43,3 +44,8 @@ class TornadoLineSerial(TornadoSerial):
 			line = self.buffer[:i]
 			self.buffer = self.buffer[i+len(self.line_sep):]
 			self._on_receive(line)
+			
+def default_port():
+	for i in range(10):
+		p = '/dev/ttyUSB%i'%i
+		if os.path.exists(p): return p
