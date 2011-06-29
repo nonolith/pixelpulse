@@ -105,7 +105,7 @@ COLORS = {
 if __name__ == '__main__':
 	op = OptionParser()
 	op.add_option("-p",  dest="port", help="Use BusPirate attached to port PORT", metavar="PORT", default="auto")
-	op.add_option("-c", dest="colors", type="choice", choices=COLORS.keys(), default="seeed",
+	op.add_option("-c", dest="colors", type="choice", choices=COLORS.keys(), default="sparkfun",
 		help="Wire colors - 'seeed' or 'sparkfun'", metavar="MODEL")
 	op.add_option("-d", dest="nopullups", action="store_true", help="Disable pullups",)
 	(options, args) = op.parse_args()
