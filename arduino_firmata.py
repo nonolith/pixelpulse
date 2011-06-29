@@ -12,6 +12,7 @@ SYSEX_END = 0xF7
 SET_PIN_MODE = 0xF4
 CMD_RESET = 0xff
 SAMPLING_INTERVAL = 0x7A
+CMD_VERSION = 0xF9
 
 sample_interval_ms = 50
 
@@ -40,13 +41,20 @@ class FirmataDevice(livedata.Device):
 		# store incoming commands until they are complete and can be process
 		self.buf_cmd = None
 		self.buf_low = None
+		self.sysex = False
 		
 		self.digitalOut = [0,0]
 		
 	def start(self, server):
 		def onData(d):
 			for c in d:
-				if ord(c) & 0x80:
+				if self.sysex:
+					if ord(c) == SYSEX_END:
+						self.sysex = False
+					continue
+				if ord(c) and ord(c) == SYSEX_START:
+					self.sysex = True
+				elif ord(c) & 0x80:
 					# New command byte
 					self.buf_cmd = ord(c)
 					self.buf_low = None
@@ -67,8 +75,11 @@ class FirmataDevice(livedata.Device):
 						for ch in self.digitalChannels.values():
 							if ch.pin//8 == chan and ch.state!='output':
 								ch.value = bool(data & 1<<(ch.pin%8))
+					elif self.buf_cmd == CMD_VERSION:
+						print "Detected Firmata V%i.%i"%(self.buf_low,hi)
+						self.setup_report()
 					else:
-						print 'Received unknowm message', hex(self.buf_cmd), hex(self.buf_low), hex(hi)
+						print 'Received unknown message', hex(self.buf_cmd), hex(self.buf_low), hex(hi)
 					self.buf_cmd = self.buf_low = None
 					
 		self.serial = tornado_serial.TornadoSerial(self.port, 57600, onData, on_error=server.quit)
@@ -83,9 +94,6 @@ class FirmataDevice(livedata.Device):
 		""" Configure Firmata to report values for selected pins """
 		self.serial.write(chr(CMD_RESET))
 		self.serial.flush()
-		
-		for i in self.digitalChannels.keys():
-			self.setMode(i, False)
 			
 		self.serial.write(chr(SYSEX_START) + chr(SAMPLING_INTERVAL) + chr(sample_interval_ms) + chr(0) + chr(SYSEX_END))
 		
@@ -93,6 +101,9 @@ class FirmataDevice(livedata.Device):
 			self.serial.write(chr(DIGITAL_REPORT|i) + chr(1))
 		for i in self.analogChannels.keys():
 			self.serial.write(chr(ANALOG_REPORT|i) + chr(1))
+			
+		for i in self.digitalChannels.keys():
+			self.setMode(i, False)
 			
 	def setMode(self, pin, isOutput):
 		""" Set a digital pin as an input or output """
