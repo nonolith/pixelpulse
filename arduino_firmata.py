@@ -17,23 +17,28 @@ sample_interval_ms = 50
 
 class FirmataDevice(livedata.Device):
 	def __init__(self, port='/dev/ttyUSB0', dpins=[], apins=[]):
-		self.analogPins = apins
-		self.analogChannels = [livedata.AnalogChannel('A%i'%i, 'V', 0.0, 5.0, showGraph=n<=1) for n, i in enumerate(apins)]
-		
-		so = ['input', 'output', 'pullup']
-		self.digitalPins = dpins
-		self.digitalChannels = [
-			livedata.DigitalChannel('D%i'%i, showGraph=n<2, stateOptions=so, onSet=self.digitalSet) 
-			for n, i in enumerate(self.digitalPins)]
+		self.analogChannels = {}
+		for n, i in enumerate(apins):
+			ch = livedata.AnalogChannel('A%i'%i, 'V', 0.0, 5.0, showGraph=n<=1)
+			ch.pin = i
+			ch.value = 0.0
+			self.analogChannels[i] = ch
 			
-		self.channels = self.analogChannels + self.digitalChannels
+		self.digitalChannels = {}
+		for n, i in enumerate(dpins):
+			ch = livedata.DigitalChannel('D%i'%i, 
+			                             showGraph=n<2,
+			                             stateOptions=['input', 'output', 'pullup'], 
+			                             onSet=self.digitalSet) 
+			ch.pin = i
+			ch.value = 0.0
+			self.digitalChannels[i] = ch
+			
+		self.channels = self.analogChannels.values() + self.digitalChannels.values()
 		self.port = port
 		
 		self.buf_cmd = None
 		self.buf_low = None
-		
-		self.digitalValues = [0] * len(self.digitalChannels)
-		self.analogValues = [0] * len(self.analogChannels)
 		
 		self.digitalOut = [0,0]
 		
@@ -55,15 +60,14 @@ class FirmataDevice(livedata.Device):
 					chan = self.buf_cmd & 0x0f
 					data = (hi<<7)|(self.buf_low&0x7f)
 					if self.buf_cmd & 0xf0 == ANALOG_MESSAGE:
-						self.analogValues[chan] =  5.0 * data/1024.0
+						self.analogChannels[chan].value =  5.0 * data/1024.0
 					elif self.buf_cmd & 0xf0 == DIGITAL_MESSAGE:
-						print 'digital', chan, data
 						if chan == 0:
-							for i, pin in enumerate(self.digitalPins):
-								if i<8 and self.digitalChannels[i].state!='output':
-									self.digitalValues[i] = bool(data & 1<<pin)
+							for ch in self.digitalChannels.values():
+								if ch.pin<8 and ch.state!='output':
+									ch.value = bool(data & 1<<ch.pin)
 					else:
-						print 'unknown', hex(self.buf_cmd), hex(self.buf_low), hex(hi)
+						print 'Received unknowm message', hex(self.buf_cmd), hex(self.buf_low), hex(hi)
 					self.buf_cmd = self.buf_low = None
 					
 		self.serial = tornado_serial.TornadoSerial(self.port, 57600, onData, on_error=server.quit)
@@ -71,55 +75,62 @@ class FirmataDevice(livedata.Device):
 		server.poll(self.onPoll)
 		
 	def onPoll(self):
-		return zip(self.digitalChannels, self.digitalValues) + zip(self.analogChannels, self.analogValues)
+		return   [(ch, ch.value) for ch in self.digitalChannels.values()] \
+		       + [(ch, ch.value) for ch in self.analogChannels.values()]
 		
 	def setup_report(self):
+		""" Configure Firmata to report values for selected pins """
 		self.serial.write(chr(CMD_RESET))
 		
-		for i in self.digitalPins:
+		for i in self.digitalChannels.keys():
 			self.setMode(i, False)
 			
 		self.serial.write(chr(SYSEX_START) + chr(SAMPLING_INTERVAL) + chr(sample_interval_ms) + chr(0) + chr(SYSEX_END))
 		
 		for i in range(2):
 			self.serial.write(chr(DIGITAL_REPORT|i) + chr(1))
-		for i in range(6):
+		for i in self.analogChannels.keys():
 			self.serial.write(chr(ANALOG_REPORT|i) + chr(1))
 			
 	def setMode(self, pin, isOutput):
+		""" Set a digital pin as an input or output """
 		self.serial.write(chr(SET_PIN_MODE) + chr(pin) + chr(isOutput))
-		print 'setMode', pin, isOutput
+		#print 'setMode', pin, isOutput
 		
 	def digitalSet(self, channel, val, state):
-		index = self.digitalChannels.index(channel)
-		i = self.digitalPins[index]
-		if channel.state != state:
-			channel.setState(state)
-			self.setMode(i, state=='output')
-			
-		if state == 'output' and val is not None:
-			v = bool(val)
-			self.digitalValues[index] = v
+		""" Handle a state or value change from the UI """
+		if state == 'output':
+			if val is not None:
+				v = bool(val)
+				channel.value = v
+			else:
+				# write input value to output to maintain current level
+				v = channel.value
 		elif state == 'input':
 			v = False
 		elif state == 'pullup':
 			v = True
 		else:
+			print "invalid state '%s'"%state
 			return
 			
-		
-		if i < 8:
+		if channel.state != state:
+			channel.setState(state)
+			self.setMode(channel.pin, state=='output')
+			
+		if channel.pin < 8:
 			port = 0
+			i = channel.pin
 		else:
 			port = 1
-			i-=8
-			
-		print 'setOut', port, i, v
+			i = channel.pin - 8
 			
 		if v is True:
 			self.digitalOut[port] |= (1<<i)
 		elif v is False:
 			self.digitalOut[port] &= ~(1<<i)
+			
+		#print 'setOut', port, i, v, hex(self.digitalOut[port])
 			
 		self.serial.write(chr(DIGITAL_MESSAGE | port) 
 		                + chr(self.digitalOut[port] & 0x7f) 
