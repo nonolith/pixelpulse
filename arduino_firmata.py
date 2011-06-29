@@ -62,10 +62,9 @@ class FirmataDevice(livedata.Device):
 					if self.buf_cmd & 0xf0 == ANALOG_MESSAGE:
 						self.analogChannels[chan].value =  5.0 * data/1024.0
 					elif self.buf_cmd & 0xf0 == DIGITAL_MESSAGE:
-						if chan == 0:
-							for ch in self.digitalChannels.values():
-								if ch.pin<8 and ch.state!='output':
-									ch.value = bool(data & 1<<ch.pin)
+						for ch in self.digitalChannels.values():
+							if ch.pin//8 == chan and ch.state!='output':
+								ch.value = bool(data & 1<<(ch.pin%8))
 					else:
 						print 'Received unknowm message', hex(self.buf_cmd), hex(self.buf_low), hex(hi)
 					self.buf_cmd = self.buf_low = None
@@ -81,6 +80,7 @@ class FirmataDevice(livedata.Device):
 	def setup_report(self):
 		""" Configure Firmata to report values for selected pins """
 		self.serial.write(chr(CMD_RESET))
+		self.serial.flush()
 		
 		for i in self.digitalChannels.keys():
 			self.setMode(i, False)
@@ -141,11 +141,13 @@ def parse_pin_spec(s, dpins=[], apins=[]):
 	if s[0].lower() == 'd':
 		l = dpins
 		nmin = 2
-		nmax = 8
+		nmax = 13
 	elif s[0].lower() == 'a':
 		l = apins
 		nmin = 0
 		nmax = 5
+	else:
+		raise ValueError("Invalid pin specification %s"%s)
 	
 	if '-' in s:
 	    p = s[1:].split('-')
@@ -160,7 +162,7 @@ def parse_pin_spec(s, dpins=[], apins=[]):
 	else:
 	    n = int(s[1:])
 	    if nmin <= n <= nmax:
-	        l.append(s)
+	        l.append(n)
 	    else:
 	        raise ValueError("Pin %s out of range %i <= n <= %i"%(s, nmin, nmax))
 	        
@@ -179,8 +181,8 @@ if __name__ == '__main__':
 		parse_pin_spec(s, dpins, apins)
 		
 	if not apins and not dpins:
-		print "Using default pins D2-5 A0-3"
-		dpins = range(2, 5+1)
+		print "Using default pins D2-4 D13 A0-3"
+		dpins = range(2, 4+1) + [13]
 		apins = range(3+1)
 	
 	dev = FirmataDevice(port, dpins, apins)
