@@ -18,25 +18,26 @@ sample_interval_ms = 50
 class FirmataDevice(livedata.Device):
 	def __init__(self, port='/dev/ttyUSB0', dpins=[], apins=[]):
 		self.analogChannels = {}
-		for n, i in enumerate(apins):
-			ch = livedata.AnalogChannel('A%i'%i, 'V', 0.0, 5.0, showGraph=n<=1)
-			ch.pin = i
+		for n, pin in enumerate(apins):
+			ch = livedata.AnalogChannel('A%i'%pin, 'V', 0.0, 5.0, showGraph=(n<=1))
+			ch.pin = pin
 			ch.value = 0.0
-			self.analogChannels[i] = ch
+			self.analogChannels[pin] = ch
 			
 		self.digitalChannels = {}
-		for n, i in enumerate(dpins):
-			ch = livedata.DigitalChannel('D%i'%i, 
-			                             showGraph=n<2,
+		for n, pin in enumerate(dpins):
+			ch = livedata.DigitalChannel('D%i'%pin, 
+			                             showGraph=(n<=1),
 			                             stateOptions=['input', 'output', 'pullup'], 
 			                             onSet=self.digitalSet) 
-			ch.pin = i
+			ch.pin = pin
 			ch.value = 0.0
-			self.digitalChannels[i] = ch
+			self.digitalChannels[pin] = ch
 			
 		self.channels = self.analogChannels.values() + self.digitalChannels.values()
 		self.port = port
 		
+		# store incoming commands until they are complete and can be process
 		self.buf_cmd = None
 		self.buf_low = None
 		
@@ -46,10 +47,11 @@ class FirmataDevice(livedata.Device):
 		def onData(d):
 			for c in d:
 				if ord(c) & 0x80:
-					#New command byte
+					# New command byte
 					self.buf_cmd = ord(c)
 					self.buf_low = None
 				elif not self.buf_cmd:
+					# We started in the middle of a commmand. Ignore until re-sync
 					continue
 				elif self.buf_low is None:
 					# 2nd byte of report. save it
