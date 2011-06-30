@@ -1,3 +1,7 @@
+# PySerial wrapper for the Tornado IOLoop
+# Distributed under the terms of the BSD License
+# (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
+
 import serial
 from tornado.ioloop import IOLoop
 import os

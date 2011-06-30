@@ -1,3 +1,7 @@
+# Real-time canvas plotting library
+# Distributed under the terms of the BSD License
+# (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
+
 PADDING = 10
 AXIS_SPACING = 25
 

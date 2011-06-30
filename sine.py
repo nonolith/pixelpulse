@@ -1,3 +1,8 @@
+#!/usr/bin/env python2
+# Example driver for Pixelpulse
+# Distributed under the terms of the BSD License
+# (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
+
 import math, time
 import pixelpulse
 

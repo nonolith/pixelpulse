@@ -1,5 +1,8 @@
+#!/usr/bin/env python2
 # -*- coding: utf8 -*-
-#Ian Daniher - Mar11-17 2011
+# Olin ModCon SMU driver for Pixelpulse
+# Distributed under the terms of the BSD License
+# (C) 2011 Ian Daniher  (Nonolith Labs) <ian@nonolithlabs.com>
 
 import sys
 import usb.core

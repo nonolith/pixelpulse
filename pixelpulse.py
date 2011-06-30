@@ -1,5 +1,10 @@
 #coding: utf-8
 
+# Pixelpulse - framework to visualize and control signals in a browser-based interface
+# Distributed under the terms of the BSD License
+# (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
+# (C) 2011 Ian Daniher  (Nonolith Labs) <ian@nonolithlabs.com>
+
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.web import Application, RequestHandler, StaticFileHandler

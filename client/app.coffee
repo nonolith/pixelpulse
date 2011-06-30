@@ -1,31 +1,104 @@
+# Pixelpulse browser UI
+# Distributed under the terms of the BSD License
+# (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
 
-dropdownButton = (options, callback) ->
-	r = $("<div class='dropdownButton'>").delegate 'a', 'click', (e) ->
-			if not $(this).siblings().length then return
-			if not $(this).is(':first-child')
-				$(this).detach().prependTo(d)
-				callback($(this).text())
-			else if not r.hasClass('opened')
-				r.addClass('opened')
-				$(document.body).one 'click', ->
-					r.removeClass('opened')
-				e.stopPropagation()
-	d = $('<div>').appendTo(r)
-
-	for i in options
-		$("<a>").text(i).appendTo(d)
+class PixelpulseApp
+	constructor: ->
+		@channels = {}
+		@data = []
+		
+		ts = $("#timeseries").get(0)
+		
+		@perfstat_count = 0
+		@perfstat_acc = 0
+		
+		handleDragOver = (self, e, draggedElem, draggableMatch, posFunc) ->
+			if $(e.target).hasClass('insertion-cursor')
+				return e.preventDefault()
 				
-	r.set = (option) ->
-		d.children().each ->
-			if $(this).text() == option
-				$(this).remove()
-		d.prepend($("<a>").text(option))
-		
-	return r
+			tgt = $(e.target).closest(draggableMatch)
 			
+			getCursor = ->
+				$(".insertion-cursor").remove()
+				return $("<div class='insertion-cursor'>").addClass(window.draggedChannel.cssClass)
 			
+			if tgt.length
+				if draggedElem == tgt.get(0)
+					tgt.addClass('dnd-oldpos').hide().after(getCursor())
+				if tgt.is('#timesection')
+					if not tgt.parent().children('.insertion-cursor:last-child').length
+						tgt.parent().append(getCursor())
+				else if posFunc(tgt)
+					if not tgt.prev().hasClass('insertion-cursor')
+						tgt.before(getCursor())
+				else
+					if not tgt.next().hasClass('insertion-cursor')
+						tgt.after(getCursor())
+			else
+				$(self).prepend(getCursor())
+						
+			e.preventDefault()
 		
-
+		ts.ondragover = (e) ->
+			draggedElem = window.draggedChannel.showGraph and window.draggedChannel.tsRow.get(0)
+			handleDragOver(this, e, draggedElem, 'section', (tgt) -> e.offsetY < tgt.get(0).offsetHeight/2)
+			
+		ts.ondrop = (e) ->
+			cur = $(this).find(".insertion-cursor")
+			if cur.length
+				cur.replaceWith(window.draggedChannel.showTimeseries())
+				ts = $("#timeseries").get(0)
+		
+		
+		mp = $('#meters').get(0)
+		
+		mp.ondragover = (e) ->
+			draggedElem = window.draggedChannel.tile.get(0)
+			handleDragOver(this, e, draggedElem, '.meter', (tgt) -> e.offsetX < tgt.get(0).offsetWidth/2)
+			
+		mp.ondrop = (e) ->
+			cur = $(this).find(".insertion-cursor")
+			if cur.length
+				window.draggedChannel.hideTimeseries()
+				cur.replaceWith(window.draggedChannel.tile)
+				
+		mp.ondragend = ts.ondragend = (e) ->
+			$('.insertion-cursor').remove()
+			$('.dnd-oldpos').show().removeClass('dnd-oldpos')
+		
+	onConfig: (o) ->
+		$('#meters, #meters-side').empty()
+		@channels = {}
+		self = this
+		for c in o
+			if c.id == 'time'
+				n = new TimeChannel(c)
+			else if c.type == 'digital'
+				n = new DigitalChannel(c)
+			else
+				n = new AnalogChannel(c)
+			@channels[n.id] = n
+			n._setValue = (v, s) -> self.setChannel(this.id, v, s)
+			
+	onData: (data) ->
+		if params.perfstat
+			t1 = new Date()
+		@data.push(data)
+		for name, c of @channels
+        	if data[name]? then c.onValue(data.time, data[name])
+		if params.perfstat
+			t2 = new Date()
+			@perfstat_acc += t2-t1
+			if (@perfstat_count += 1) == 25
+				$('#perfstat').text(@perfstat_acc / 25 + "ms/render")
+				@perfstat_acc = @perfstat_count = 0
+		
+	onState: (channel, state) ->
+		@channels[channel].onState(state)
+		
+	setChannel: (name, value, state) -> 
+		console.error("setChannel should be overridden by transport")
+		
 class Channel
 	constructor: (o) ->
 		@name = o.name
@@ -205,111 +278,37 @@ relMousePos = (elem, event) ->
 	o = $(elem).offset()
 	return [event.pageX-o.left, event.pageY-o.top]
 
-class PixelpulseApp
-	constructor: ->
-		@channels = {}
-		@data = []
-		
-		ts = $("#timeseries").get(0)
-		
-		@perfstat_count = 0
-		@perfstat_acc = 0
-		
-		handleDragOver = (self, e, draggedElem, draggableMatch, posFunc) ->
-			if $(e.target).hasClass('insertion-cursor')
-				return e.preventDefault()
+dropdownButton = (options, callback) ->
+	r = $("<div class='dropdownButton'>").delegate 'a', 'click', (e) ->
+			if not $(this).siblings().length then return
+			if not $(this).is(':first-child')
+				$(this).detach().prependTo(d)
+				callback($(this).text())
+			else if not r.hasClass('opened')
+				r.addClass('opened')
+				$(document.body).one 'click', ->
+					r.removeClass('opened')
+				e.stopPropagation()
+	d = $('<div>').appendTo(r)
+
+	for i in options
+		$("<a>").text(i).appendTo(d)
 				
-			tgt = $(e.target).closest(draggableMatch)
-			
-			getCursor = ->
-				$(".insertion-cursor").remove()
-				return $("<div class='insertion-cursor'>").addClass(window.draggedChannel.cssClass)
-			
-			if tgt.length
-				if draggedElem == tgt.get(0)
-					tgt.addClass('dnd-oldpos').hide().after(getCursor())
-				if tgt.is('#timesection')
-					if not tgt.parent().children('.insertion-cursor:last-child').length
-						tgt.parent().append(getCursor())
-				else if posFunc(tgt)
-					if not tgt.prev().hasClass('insertion-cursor')
-						tgt.before(getCursor())
-				else
-					if not tgt.next().hasClass('insertion-cursor')
-						tgt.after(getCursor())
-			else
-				$(self).prepend(getCursor())
-						
-			e.preventDefault()
+	r.set = (option) ->
+		d.children().each ->
+			if $(this).text() == option
+				$(this).remove()
+		d.prepend($("<a>").text(option))
 		
-		ts.ondragover = (e) ->
-			draggedElem = window.draggedChannel.showGraph and window.draggedChannel.tsRow.get(0)
-			handleDragOver(this, e, draggedElem, 'section', (tgt) -> e.offsetY < tgt.get(0).offsetHeight/2)
-			
-		ts.ondrop = (e) ->
-			cur = $(this).find(".insertion-cursor")
-			if cur.length
-				cur.replaceWith(window.draggedChannel.showTimeseries())
-				ts = $("#timeseries").get(0)
-		
-		
-		mp = $('#meters').get(0)
-		
-		mp.ondragover = (e) ->
-			draggedElem = window.draggedChannel.tile.get(0)
-			handleDragOver(this, e, draggedElem, '.meter', (tgt) -> e.offsetX < tgt.get(0).offsetWidth/2)
-			
-		mp.ondrop = (e) ->
-			cur = $(this).find(".insertion-cursor")
-			if cur.length
-				window.draggedChannel.hideTimeseries()
-				cur.replaceWith(window.draggedChannel.tile)
-				
-		mp.ondragend = ts.ondragend = (e) ->
-			$('.insertion-cursor').remove()
-			$('.dnd-oldpos').show().removeClass('dnd-oldpos')
-		
-	onConfig: (o) ->
-		$('#meters, #meters-side').empty()
-		@channels = {}
-		self = this
-		for c in o
-			if c.id == 'time'
-				n = new TimeChannel(c)
-			else if c.type == 'digital'
-				n = new DigitalChannel(c)
-			else
-				n = new AnalogChannel(c)
-			@channels[n.id] = n
-			n._setValue = (v, s) -> self.setChannel(this.id, v, s)
-			
-	onData: (data) ->
-		if params.perfstat
-			t1 = new Date()
-		@data.push(data)
-		for name, c of @channels
-        	if data[name]? then c.onValue(data.time, data[name])
-		if params.perfstat
-			t2 = new Date()
-			@perfstat_acc += t2-t1
-			if (@perfstat_count += 1) == 25
-				$('#perfstat').text(@perfstat_acc / 25 + "ms/render")
-				@perfstat_acc = @perfstat_count = 0
-		
-	onState: (channel, state) ->
-		@channels[channel].onState(state)
-		
-	setChannel: (name, value, state) -> 
-		console.error("setChannel should be overridden by transport")
+	return r
+
 		
 setup = false
 
 #URL params
 params = {}
-
 for pair in document.location.search.slice(1).split('&')
 	[key,params[key]] = pair.split('=')
-
 
 hostname = params.server || document.location.host
 window.graphmode = params.graphmode || 'canvas'
