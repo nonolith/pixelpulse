@@ -45,5 +45,5 @@ class SineDevice(pixelpulse.Device):
 if __name__ == '__main__':
 	dev = SineDevice()
 	server = pixelpulse.DataServer(dev)
-	webbrowser.open("http://localhost:8888")
+	webbrowser.open("http://localhost:8888/?server=virtualrc")
 	server.start()
