@@ -10,7 +10,7 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.web import Application, RequestHandler, StaticFileHandler
 from tornado.websocket import WebSocketHandler
 
-import sys, os, glob, imp, time, json
+import sys, os, glob, imp, time, json, webbrowser
 
 class Device(object):
 	"""Base class for device drivers
@@ -143,11 +143,14 @@ class DataServer(object):
 	def _onStateChange(self, channel):
 		self._sendToAll(self._formJSON('state', {'channel':channel.id,'state':channel.state}))
 			
-	def start(self):
+	def start(self, openWebBrowser=False):
 		"""Start the server and all associated devices. Gives control to the
 		Tornado IO loop and does not return until the server terminates"""
 		self.startT = time.time()
 		
+		if openWebBrowser:
+			webbrowser.open("http://127.0.0.1:%i"%self.port)
+
 		for dev in self.devices:
 			dev.start(self)
 		
