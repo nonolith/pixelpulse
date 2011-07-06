@@ -3,7 +3,7 @@
 # (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
 
 import serial
-from tornado.ioloop import IOLoop
+from tornado.ioloop import IOLoop, PeriodicCallback
 import os
 
 class TornadoSerial(object):
@@ -12,11 +12,16 @@ class TornadoSerial(object):
 		self.on_error = on_error
 		self.serial = serial.Serial(port, baud, timeout=0, *args)
 		self.io_loop = IOLoop.instance()
-		self.io_loop.add_handler(
-						self.serial.fileno(), self._serial_event,
-						IOLoop.READ)
+		try:
+                        fileno = self.serial.fileno()
+                        self.io_loop.add_handler(fileno, self._serial_event, IOLoop.READ)
+                except:
+                        print "Using polled serial IO"
+                        # Fall back to polling if we can't set up a Tornado handler (Windows)
+                        self.poll = PeriodicCallback(self._serial_event, 10)
+                        self.poll.start()
 	
-	def _serial_event(self, fd, events):
+	def _serial_event(self, *ignore):
 		try:
 			data = self.serial.read(self.serial.inWaiting())
 		except IOError, e:
@@ -62,7 +67,4 @@ def check_port(p):
 			exit(1)
 		else:
 			print "Using port", p
-	elif not os.path.exists(p):
-		print "Serial port %s not found"%p
-		exit(1)
 	return p
