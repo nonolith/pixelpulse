@@ -5,6 +5,7 @@
 
 import math, time
 import pixelpulse
+import webbrowser
 
 class SineDevice(pixelpulse.Device):
 	def __init__(self):
@@ -44,4 +45,5 @@ class SineDevice(pixelpulse.Device):
 if __name__ == '__main__':
 	dev = SineDevice()
 	server = pixelpulse.DataServer(dev)
+	webbrowser.open("http://localhost:8888")
 	server.start()
