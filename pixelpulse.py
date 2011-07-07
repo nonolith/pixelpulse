@@ -128,14 +128,16 @@ class DataServer(object):
 			
 		def on_close(self):
 			self.server._onDisconnect(self)
-		
+
 	def _onConnect(self, client):
 		self.clients.append(client)
 		client.write_message(self._formJSON('config', self.getConfigMessage()))
 		
 	def _onDisconnect(self, client):
 		self.clients.remove(client)
-		
+		if self.openWebBrowser:
+			self.mainLoop.stop()
+	
 	def _onSet(self, message):
 		chan = self.channels[message['channel']]
 		chan.onSet(chan, message['value'], message['state'])
@@ -146,7 +148,9 @@ class DataServer(object):
 	def start(self, openWebBrowser=False):
 		"""Start the server and all associated devices. Gives control to the
 		Tornado IO loop and does not return until the server terminates"""
+
 		self.startT = time.time()
+		self.openWebBrowser = openWebBrowser
 		
 		if openWebBrowser:
 			webbrowser.open("http://127.0.0.1:%i"%self.port)
