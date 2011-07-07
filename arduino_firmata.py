@@ -231,6 +231,10 @@ if __name__ == '__main__':
 		print "Using default pins D2-4 D13 A0-3"
 		dpins = range(2, 4+1) + [13]
 		apins = range(3+1)
+		
+	overlap = set(dpins).intersection(set(spins))
+	if len(overlap):
+		raise ValueError("Pins %s are assigned to both digital and servo!"%list(overlap))
 	
 	dev = FirmataDevice(port, dpins, apins, spins)
 	server = pixelpulse.DataServer(dev)
