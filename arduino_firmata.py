@@ -75,7 +75,7 @@ class FirmataDevice(pixelpulse.Device):
 					chan = self.buf_cmd & 0x0f
 					data = (hi<<7)|(self.buf_low&0x7f)
 					if self.buf_cmd & 0xf0 == ANALOG_MESSAGE:
-						self.analogChannels[chan].value =  5.0 * data/1024.0
+						self.analogChannels[chan].value =  5.0 * data/1023.0
 					elif self.buf_cmd & 0xf0 == DIGITAL_MESSAGE:
 						for ch in self.digitalChannels.values():
 							if ch.pin//8 == chan and ch.state!='output':
