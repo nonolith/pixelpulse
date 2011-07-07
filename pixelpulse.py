@@ -135,8 +135,9 @@ class DataServer(object):
 		
 	def _onDisconnect(self, client):
 		self.clients.remove(client)
-		if self.openWebBrowser:
-			self.mainLoop.stop()
+		
+		if self.openWebBrowser and len(self.clients)==0:
+			self.quit()
 	
 	def _onSet(self, message):
 		chan = self.channels[message['channel']]
