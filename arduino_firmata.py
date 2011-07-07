@@ -175,8 +175,10 @@ class FirmataDevice(pixelpulse.Device):
 		                
 	def servoSet(self, channel, val, state):
 		if val is not None:
-			channel.value = min(max(val,0),180)
-			self.serial.write(chr(ANALOG_MESSAGE | channel.pin) + chr(int(channel.value)) + chr(0))
+			channel.value = int(min(max(val,0),180))
+			self.serial.write(chr(ANALOG_MESSAGE | channel.pin)
+			                 + chr(channel.value&0x7f)
+			                 + chr(channel.value >> 7))
 
 def parse_pin_spec(s, dpins=[], apins=[], spins=[]):
 	""" Parse pin specifications such as a0 (analog 0), d4 (digital 4), D3, d2-5 """
