@@ -238,4 +238,4 @@ if __name__ == '__main__':
 	
 	dev = FirmataDevice(port, dpins, apins, spins)
 	server = pixelpulse.DataServer(dev)
-	server.start()
+	server.start(openWebBrowser=True)

@@ -154,4 +154,4 @@ if __name__ == '__main__':
 		vlimit = (-10, 10)
 	dev = ModconSMU(vlimit)
 	server = pixelpulse.DataServer(dev)
-	server.start()
+	server.start(openWebBrowser=True)
