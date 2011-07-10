@@ -213,7 +213,18 @@ class LiveGraph_canvas extends LiveGraph
 			
 			if series.grabDot
 				@ctxg.beginPath()
-				@ctxg.arc(@xaxis.xtransform(x, @geom), @yaxis.ytransform(y, @geom), 5, 0, Math.PI*2, true);
+				if y<=@yaxis.min
+					@ctxg.moveTo(@xaxis.xtransform(x, @geom)-5,@yaxis.ytransform(y, @geom))
+					@ctxg.lineTo(@xaxis.xtransform(x, @geom),@yaxis.ytransform(y, @geom)+10)
+					@ctxg.lineTo(@xaxis.xtransform(x, @geom)+5,@yaxis.ytransform(y, @geom))
+					@ctxg.lineTo(@xaxis.xtransform(x, @geom)-5,@yaxis.ytransform(y, @geom))
+				else if y>=@yaxis.max
+					@ctxg.moveTo(@xaxis.xtransform(x, @geom)-5,@yaxis.ytransform(y, @geom))
+					@ctxg.lineTo(@xaxis.xtransform(x, @geom),@yaxis.ytransform(y, @geom)-10)
+					@ctxg.lineTo(@xaxis.xtransform(x, @geom)+5,@yaxis.ytransform(y, @geom))
+					@ctxg.lineTo(@xaxis.xtransform(x, @geom)-5,@yaxis.ytransform(y, @geom))
+				else
+					@ctxg.arc(@xaxis.xtransform(x, @geom), @yaxis.ytransform(y, @geom), 5, 0, Math.PI*2, true);
 				if series.grabDot == 'fill'
 					@ctxg.fillStyle = series.color
 				else
