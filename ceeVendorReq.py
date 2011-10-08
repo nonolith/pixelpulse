@@ -12,6 +12,9 @@ MODE_DISABLED=0
 MODE_SVMI=1
 MODE_SIMV=2
 
+def unpackSign(n):
+	return n - (1<<12) if n>2048 else n
+
 class CEE(object):
 	def __init__(self):
 		self.init()
@@ -27,9 +30,17 @@ class CEE(object):
 		"Turn a 3-byte string containing 2 12-bit values into two ints"
 		return s[0]|((s[1]&0x0f)<<8), ((s[1]&0xf0) >> 4)|(s[2]<<4)
 		
-	def readADC(self,wValue=0, wIndex=0):
-		data = self.dev.ctrl_transfer(0x40|0x80, 0xA0, wValue, wIndex, 6)
-		return self.b12unpack(data[0:3]) + self.b12unpack(data[3:6])
+	def readADC(self):
+		data = self.dev.ctrl_transfer(0x40|0x80, 0xA0, 0, 0, 6)
+		l = self.b12unpack(data[0:3]) + self.b12unpack(data[3:6])
+		print l
+		vals = map(unpackSign, l)
+		return {
+			'a_v': vals[0]/2048.0*2.5,
+			'a_i': ((vals[1]/2048.0*2.5)-1.25)/45/.07,
+			'b_v': vals[2]/2048.0*2.5,
+			'b_i': ((vals[3]/2048.0*2.5)-1.25)/45/.07,
+		}
 
 	def set(self, chan, v=None, i=None):
 		cmd = 0xAA+chan
@@ -70,6 +81,7 @@ class CEEChannel(object):
 
 		self.channels = [self.voltageChan, self.currentChan]
 		self.index = index
+		self.name = name
 
 	def setDriving(self, driving):
 		if self.driving != driving:
@@ -98,11 +110,8 @@ class CEEChannel(object):
 			self.cee.set(self.index, i=self.i/1000.0)
 
 	def getChanData(self, replypkt):
-		return [(self.voltageChan, self.v),
-				(self.currentChan, self.i)]
-
-	def getConfigByte(self):
-		return 0
+		return [(self.voltageChan, replypkt[self.name.lower()+'_v']),
+				(self.currentChan, replypkt[self.name.lower()+'_i']*1000)]
 		
 
 class CEE_vendor_req(pixelpulse.Device):
@@ -126,6 +135,7 @@ class CEE_vendor_req(pixelpulse.Device):
 		
 	def poll(self):
 		data = self.cee.readADC()
+		#print data
 		return sum([x.getChanData(data) for x in self.ceechannels], [])
 
 if __name__ == '__main__':
