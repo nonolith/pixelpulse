@@ -74,7 +74,7 @@ class CEEChannel(object):
 		self.v=0
 		self.driving='v'
 		stateOpts = ['source', 'measure']
-		self.voltageChan = pixelpulse.AnalogChannel('Voltage '+name,     'V',  0,  5,   'source',  
+		self.voltageChan = pixelpulse.AnalogChannel('Voltage '+name,     'V',  0,  2.5,   'source',  
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setVoltage)
 		self.currentChan = pixelpulse.AnalogChannel('Current '+name,     'mA', -200, 200,  'measure',
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setCurrent)
@@ -99,7 +99,7 @@ class CEEChannel(object):
 		if state is not None:
 			self.setDriving('v' if state=='source' else 'i')
 		if volts is not None:
-			self.v = clip(volts, 0, 5)
+			self.v = clip(volts, 0, 2.5)
 			self.cee.set(self.index, v=self.v)
 				
 	def setCurrent(self, chan, ma, state=None):
