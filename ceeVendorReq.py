@@ -37,9 +37,9 @@ class CEE(object):
 		vals = map(unpackSign, l)
 		return {
 			'a_v': vals[0]/2048.0*2.5,
-			'a_i': ((vals[1]/2048.0*2.5)-1.25)/45/.07,
+			'a_i': ((vals[1]/2048.0*2.5))/45/.07,
 			'b_v': vals[2]/2048.0*2.5,
-			'b_i': ((vals[3]/2048.0*2.5)-1.25)/45/.07,
+			'b_i': ((vals[3]/2048.0*2.5))/45/.07,
 		}
 
 	def set(self, chan, v=None, i=None):
@@ -76,7 +76,7 @@ class CEEChannel(object):
 		stateOpts = ['source', 'measure']
 		self.voltageChan = pixelpulse.AnalogChannel('Voltage '+name,     'V',  0,  2.5,   'source',  
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setVoltage)
-		self.currentChan = pixelpulse.AnalogChannel('Current '+name,     'mA', -200, 200,  'measure',
+		self.currentChan = pixelpulse.AnalogChannel('Current '+name,     'mA', -400, 400,  'measure',
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setCurrent)
 
 		self.channels = [self.voltageChan, self.currentChan]
@@ -106,7 +106,7 @@ class CEEChannel(object):
 		if state is not None:
 			self.setDriving('i' if state=='source' else 'v')
 		if ma is not None:
-			self.i = clip(ma, -200, 200)
+			self.i = clip(ma, -400, 400)
 			self.cee.set(self.index, i=self.i/1000.0)
 
 	def getChanData(self, replypkt):
