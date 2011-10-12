@@ -13,6 +13,25 @@ class LiveGraph
 #		if @xaxis.autoScroll
 #			@xaxis.max = @data[@data.length-1][@series[0].xvar]
 #			@xaxis.min = @xaxis.max + @xaxis.autoScroll
+	
+	perfStat_enable: (div)->
+		@psDiv = div
+		@psCount = 0
+		@psSum = 0
+		@psRunningSum = 0
+		@psRunningCount = 0
+
+		setInterval((=> 
+			@psRunningSum += @psSum
+			@psRunningCount += @psCount
+			@psDiv.innerHTML = "#{@psCount}fps; #{@psSum}ms draw time; Avg: #{@psRunningSum/@psRunningCount}"
+			@psCount = 0
+			@psSum = 0
+		), 1000)
+
+	perfStat: (time) ->
+		@psCount += 1
+		@psSum += time
 			
 class Axis
 	constructor: (@min, @max) ->	
@@ -189,6 +208,8 @@ class LiveGraph_canvas extends LiveGraph
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
 
+		startTime = new Date()
+
 		@redrawRequested = false
 		
 		@ctxg.clearRect(0,0,@width, @height)
@@ -237,6 +258,8 @@ class LiveGraph_canvas extends LiveGraph
 					@ctxg.fillStyle = 'white'
 				@ctxg.fill()
 				@ctxg.stroke()
+		
+		@perfStat(new Date()-startTime)
 		return null
 			
 arange = (lo, hi, step) ->
@@ -281,6 +304,8 @@ window.livegraph.demo = ->
 		updateData()
 		lg.needsRedraw()
 	), 10)
+
+	lg.perfStat_enable(document.getElementById('statDiv'))
 
 	window.lg = lg
 
