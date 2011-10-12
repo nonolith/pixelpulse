@@ -6,13 +6,13 @@ PADDING = 10
 AXIS_SPACING = 25
 
 class LiveGraph
-	constructor: (@div, @xaxis, @yaxis, @data, @series) ->		
+	constructor: (@div, @xaxis, @yaxis, @series) ->		
 		@div.setAttribute('class', 'livegraph')
 		
-	autoscroll: ->
-		if @xaxis.autoScroll
-			@xaxis.max = @data[@data.length-1][@series[0].xvar]
-			@xaxis.min = @xaxis.max + @xaxis.autoScroll
+#	autoscroll: ->
+#		if @xaxis.autoScroll
+#			@xaxis.max = @data[@data.length-1][@series[0].xvar]
+#			@xaxis.min = @xaxis.max + @xaxis.autoScroll
 			
 class Axis
 	constructor: (@min, @max) ->	
@@ -57,22 +57,30 @@ class DigitalAxis
 digitalAxis = new DigitalAxis()
 
 class Series
-	constructor: (@xvar, @yvar, @color, @style) ->
+	constructor: (@xdata, @ydata, @color, @style) ->
+
+
+window.requestAnimFrame = 
+		 window.requestAnimationFrame ||
+         window.webkitRequestAnimationFrame ||
+         window.mozRequestAnimationFrame ||
+         window.oRequestAnimationFrame ||
+         window.msRequestAnimationFrame ||
+         (callback, element) -> window.setTimeout(callback, 1000/60)
 					
 class LiveGraph_canvas extends LiveGraph
-	constructor: (div, xaxis, yaxis, data, series) ->
-		super(div, xaxis, yaxis, data, series)
+	constructor: (div, xaxis, yaxis, series) ->
+		super(div, xaxis, yaxis, series)
 		
 		@axisCanvas = document.createElement('canvas')
 		@graphCanvas = document.createElement('canvas')
-		@tmpCanvas = document.createElement('canvas')
 		@div.appendChild(@axisCanvas)
 		@div.appendChild(@graphCanvas)
 		
-		@showXbottom = window.xbottom
+		@showXbottom = window.xbottom || true
 		@showYleft = true
 		@showYright = true
-		@showYgrid = window.ygrid
+		@showYgrid = window.ygrid || true
 		
 		@height = 0
 		
@@ -87,11 +95,8 @@ class LiveGraph_canvas extends LiveGraph
 		@axisCanvas.height = @height
 		@graphCanvas.width = @width
 		@graphCanvas.height = @height
-		@tmpCanvas.width = @width
-		@tmpCanvas.height = @height
 		
 		@ctxg = @graphCanvas.getContext('2d')
-		@ctxt = @tmpCanvas.getContext('2d')
 		@ctxg.lineWidth = 2
 		
 		@geom = 
@@ -174,23 +179,22 @@ class LiveGraph_canvas extends LiveGraph
 			@ctxa.moveTo(@geom.xleft, yp)
 			@ctxa.lineTo(@geom.xright, yp)
 			@ctxa.stroke()
-			
-					
-			
-	redrawGraph: ->
-		if @data.length<2 then return
 		
+	needsRedraw: ->
+		if not @redrawRequested
+			@redrawRequested = true
+			requestAnimFrame(@redrawGraph, @graphCanvas)
+
+	redrawGraph: =>
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
+
+		@redrawRequested = false
 		
-		if window.canvas_clear_width
-			@graphCanvas.width = 1
-			@graphCanvas.width = @width
-		else
-			@ctxg.clearRect(0,0,@width, @height)
+		@ctxg.clearRect(0,0,@width, @height)
 		@ctxg.lineWidth = 2
 		
-		@autoscroll()
+		#@autoscroll()
 		
 		xmin = @xaxis.min
 		xmax = @xaxis.max
@@ -198,9 +202,11 @@ class LiveGraph_canvas extends LiveGraph
 		for series in @series
 			@ctxg.strokeStyle = series.color	
 			@ctxg.beginPath()
-			for i in @data
-				x = i[series.xvar]
-				y = i[series.yvar]
+
+			datalen = Math.min(series.xdata.length, series.ydata.length)
+			for i in [0...datalen]
+				x = series.xdata[i]
+				y = series.ydata[i]
 				
 				if not x? or not y? or x<xmin or x>xmax
 					continue
@@ -232,66 +238,11 @@ class LiveGraph_canvas extends LiveGraph
 				@ctxg.fill()
 				@ctxg.stroke()
 		return null
-		
-	
-	pushData: (pt) ->
-		prevPt = @data[@data.length-1]
-		@data.push(pt)
-		
-		if @data.length < 2
-			return
-		
-		if window.graphmode != 'blit'
-			return @redrawGraph()
-		
-		if @axes.xbottom.autoScroll
-			xaxis = @axes.xbottom
-			
-			drawWidth = @width - PADDING*2
-			drawHeight = @height - PADDING*2
-			drawLeft = PADDING
-			drawTop = PADDING
-			
-			@autoscroll()
-			
-			xmax = xaxis.max
-			xmin = xaxis.min
-			
-			prevX = @transformPoint(xaxis, prevPt[xaxis.property])
-			move = 1
-			
-			@tmpCanvas.width=0
-			@tmpCanvas.width=@width
-			
-			@ctxt.drawImage(@graphCanvas,
-				drawLeft+move, drawTop, drawWidth, drawHeight,
-				drawLeft,      drawTop, drawWidth, drawHeight)
-				
-			@graphCanvas.width=0
-			@graphCanvas.width=@width
-				
-			@ctxg.drawImage(@tmpCanvas,
-				drawLeft, drawTop, drawWidth, drawHeight,
-				drawLeft, drawTop, drawWidth, drawHeight)
-				
-			@ctxg.lineWidth = 2
-			for yaxis in [@axes.yleft, @axes.yright]
-				@ctxg.strokeStyle = yaxis.color	
-				@ctxg.beginPath()
-				
-				prevY = @transformPoint(yaxis,prevPt[yaxis.property])
-				newY = @transformPoint(yaxis, pt[yaxis.property])
-				@ctxg.moveTo(@width-PADDING-move, prevY)
-				@ctxg.lineTo(@width-PADDING, newY)
-				@ctxg.stroke()
-		else
-			@redrawGraph()
 			
 arange = (lo, hi, step) ->
-	ret = []
-	while lo <= hi
-		ret.push(lo)
-		lo += step
+	ret = new Float32Array((hi-lo)/step+1)
+	for i in [0...ret.length]
+		ret[i] = lo + i*step
 	return ret
 
 window.livegraph =
@@ -299,10 +250,38 @@ window.livegraph =
 	Axis: Axis
 	digitalAxis: digitalAxis
 	Series: Series
-	canvas: LiveGraph_canvas	
+	canvas: LiveGraph_canvas
+	arange: arange	
 		
 		
-	
-	
+window.livegraph.demo = ->
+	xaxis = new Axis(-20, 20)
+	yaxis = new Axis(-1, 3)
 
-	
+	xdata = arange(-20, 20, 0.1)
+	ydata = new Float32Array(xdata.length)
+
+	updateData = ->
+		n = (Math.sin(+new Date()/600)+2)*1.5
+
+		for i in [0...ydata.length]
+			x = xdata[i]
+			if x != 0
+				ydata[i] = Math.sin(x*Math.PI/n)/x
+			else
+				ydata[i] = Math.PI/n
+
+	updateData()
+
+	series = new livegraph.Series(xdata, ydata, 'blue')
+	lg = new livegraph.canvas(document.getElementById('demoDiv'), xaxis, yaxis, [series])
+	lg.needsRedraw()
+
+	setInterval((->
+		updateData()
+		lg.needsRedraw()
+	), 10)
+
+	window.lg = lg
+
+
