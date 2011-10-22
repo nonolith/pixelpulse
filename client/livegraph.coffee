@@ -2,8 +2,64 @@
 # Distributed under the terms of the BSD License
 # (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
 
+livegraph = if exports? then exports else (this.livegraph = {})
+
 PADDING = 10
 AXIS_SPACING = 25
+			
+class livegraph.Axis
+	constructor: (@min, @max) ->	
+		if @max == 'auto'
+			@autoScroll = min
+			@max = 0
+		else
+			@autoscroll = false
+			
+		@span = @max - @min
+		
+	gridstep: ->
+		grid=Math.pow(10, Math.round(Math.log(@max-@min)/Math.LN10)-1)
+		if (@max-@min)/grid >= 10
+			grid *= 2
+		return grid/2
+		
+	grid: ->
+		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]
+		livegraph.arange(min, max, @gridstep())
+		
+	xtransform: (x, geom) ->
+		(x - @min) * geom.width / @span + geom.xleft
+		
+	ytransform: (y, geom) ->
+		geom.ybottom - (y - @min) * geom.height / @span
+		
+	invYtransform: (ypx, geom) ->
+		(geom.ybottom - ypx)/geom.height * @span + @min
+		
+class DigitalAxis
+	min = 0
+	max = 1
+	
+	gridstep: -> 1
+	grid: -> [0, 1]
+	
+	xtransform: (x, geom) -> if x then geom.xleft else geom.xright
+	ytransform: (y, geom) -> if y then geom.ytop else geom.ybottom
+	invYtransform: (ypx, geom) -> (geom.ybottom - ypx) > geom.height/2
+		
+livegraph.digitalAxis = new DigitalAxis()
+
+class livegraph.Series
+	constructor: (@xdata, @ydata, @color, @style) ->
+
+
+window.requestAnimFrame = 
+	window.requestAnimationFrame ||
+	window.webkitRequestAnimationFrame ||
+	window.mozRequestAnimationFrame ||
+	window.oRequestAnimationFrame ||
+	window.msRequestAnimationFrame ||
+	(callback, element) -> window.setTimeout(callback, 1000/60)
 
 class LiveGraph
 	constructor: (@div, @xaxis, @yaxis, @series) ->		
@@ -32,62 +88,8 @@ class LiveGraph
 	perfStat: (time) ->
 		@psCount += 1
 		@psSum += time
-			
-class Axis
-	constructor: (@min, @max) ->	
-		if @max == 'auto'
-			@autoScroll = min
-			@max = 0
-		else
-			@autoscroll = false
-			
-		@span = @max - @min
-		
-	gridstep: ->
-		grid=Math.pow(10, Math.round(Math.log(@max-@min)/Math.LN10)-1)
-		if (@max-@min)/grid >= 10
-			grid *= 2
-		return grid/2
-		
-	grid: ->
-		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]
-		arange(min, max, @gridstep())
-		
-	xtransform: (x, geom) ->
-		(x - @min) * geom.width / @span + geom.xleft
-		
-	ytransform: (y, geom) ->
-		geom.ybottom - (y - @min) * geom.height / @span
-		
-	invYtransform: (ypx, geom) ->
-		(geom.ybottom - ypx)/geom.height * @span + @min
-		
-class DigitalAxis
-	min = 0
-	max = 1
-	
-	gridstep: -> 1
-	grid: -> [0, 1]
-	
-	xtransform: (x, geom) -> if x then geom.xleft else geom.xright
-	ytransform: (y, geom) -> if y then geom.ytop else geom.ybottom
-	invYtransform: (ypx, geom) -> (geom.ybottom - ypx) > geom.height/2
-		
-digitalAxis = new DigitalAxis()
-
-class Series
-	constructor: (@xdata, @ydata, @color, @style) ->
-
-
-window.requestAnimFrame = 
-		 window.requestAnimationFrame ||
-         window.webkitRequestAnimationFrame ||
-         window.mozRequestAnimationFrame ||
-         window.oRequestAnimationFrame ||
-         window.msRequestAnimationFrame ||
-         (callback, element) -> window.setTimeout(callback, 1000/60)
 					
-class LiveGraph_canvas extends LiveGraph
+class livegraph.canvas extends LiveGraph
 	constructor: (div, xaxis, yaxis, series) ->
 		super(div, xaxis, yaxis, series)
 		
@@ -100,6 +102,12 @@ class LiveGraph_canvas extends LiveGraph
 		@showYleft = true
 		@showYright = true
 		@showYgrid = window.ygrid || true
+		
+		@ctxa = @axisCanvas.getContext('2d')
+		@ctxa.lineWidth = 2
+		
+		@ctxg = @graphCanvas.getContext('2d')
+		@ctxg.lineWidth = 2
 		
 		@height = 0
 		
@@ -115,9 +123,6 @@ class LiveGraph_canvas extends LiveGraph
 		@graphCanvas.width = @width
 		@graphCanvas.height = @height
 		
-		@ctxg = @graphCanvas.getContext('2d')
-		@ctxg.lineWidth = 2
-		
 		@geom = 
 			ytop: PADDING
 			ybottom: @height - (PADDING + @showXbottom * AXIS_SPACING)
@@ -130,11 +135,7 @@ class LiveGraph_canvas extends LiveGraph
 		@redrawGraph()
 			
 	redrawAxis: ->
-		@axisCanvas.width = 1
-		@axisCanvas.width = @width
-		
-		@ctxa = @axisCanvas.getContext('2d')
-		@ctxa.lineWidth = 2
+		@ctxa.clearRect(0,0,@width, @height)
 		
 		if @showXbottom then @drawXAxis(@geom.ybottom)	
 		if @showYgrid   then @drawYgrid()	
@@ -168,7 +169,7 @@ class LiveGraph_canvas extends LiveGraph
 			@ctxa.stroke()
 			@ctxa.fillText(Math.round(x*10)/10, xp ,y+textoffset)
 		
-	drawYAxis:  (x, align, textoffset) =>
+	drawYAxis: (x, align, textoffset) =>
 		grid = @yaxis.grid()
 		@ctxa.strokeStyle = 'black'
 		@ctxa.textAlign = align
@@ -262,26 +263,17 @@ class LiveGraph_canvas extends LiveGraph
 		@perfStat(new Date()-startTime)
 		return null
 			
-arange = (lo, hi, step) ->
+livegraph.arange = (lo, hi, step) ->
 	ret = new Float32Array((hi-lo)/step+1)
 	for i in [0...ret.length]
 		ret[i] = lo + i*step
 	return ret
-
-window.livegraph =
-	LiveGraph: LiveGraph
-	Axis: Axis
-	digitalAxis: digitalAxis
-	Series: Series
-	canvas: LiveGraph_canvas
-	arange: arange	
 		
-		
-window.livegraph.demo = ->
-	xaxis = new Axis(-20, 20)
-	yaxis = new Axis(-1, 3)
+livegraph.demo = ->
+	xaxis = new livegraph.Axis(-20, 20)
+	yaxis = new livegraph.Axis(-1, 3)
 
-	xdata = arange(-20, 20, 0.1)
+	xdata = livegraph.arange(-20, 20, 0.1)
 	ydata = new Float32Array(xdata.length)
 
 	updateData = ->
