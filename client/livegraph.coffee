@@ -288,18 +288,21 @@ class livegraph.canvas extends LiveGraph
 			@ctxg.save()
 			
 			@ctxg.beginPath()
-			@ctxg.moveTo(@geom.xleft, @geom.ytop)
-			@ctxg.lineTo(@geom.xright, @geom.ytop)
-			@ctxg.lineTo(@geom.xright, @geom.ybottom)
-			@ctxg.lineTo(@geom.xleft, @geom.ybottom)
+			@ctxg.rect(@geom.xleft, @geom.ytop, @geom.xright-@geom.xleft, @geom.ybottom-@geom.ytop)
 			@ctxg.clip()
 			
 			@ctxg.beginPath()
 			datalen = Math.min(series.xdata.length, series.ydata.length)
 			for i in [0...datalen]
 				x = series.xdata[i]
-				y = series.ydata[i]
 				
+				if x < @xaxis.visibleMin
+					continue
+				if x > @xaxis.visibleMax
+					break
+					
+				y = series.ydata[i]
+					
 				@ctxg.lineTo(x*sx + dx, y*sy+dy)
 			@ctxg.stroke()
 			@ctxg.restore()
