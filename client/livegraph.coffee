@@ -150,15 +150,10 @@ class livegraph.canvas extends LiveGraph
 			@onRelease(pos, origPos)
 			$(window).unbind('mousemove', mousemove)
 			                .unbind('mouseup', mouseup)
-			                .unbind('mouseout', mouseout)
 			                .css('cursor', 'auto')
-		mouseout = (e) =>
-			if e.relatedTarget.nodeName == 'HTML'
-				mouseup()
 				
 		$(window).mousemove(mousemove)
 				        .mouseup(mouseup)
-		#		        .mouseout(mouseout)
 		
 	onClick: (pos) ->
 		if @dragAction then @dragAction.cancel()
@@ -293,17 +288,21 @@ class livegraph.canvas extends LiveGraph
 			
 			@ctxg.beginPath()
 			datalen = Math.min(series.xdata.length, series.ydata.length)
+			
+			cull = true
+			
 			for i in [0...datalen]
-				x = series.xdata[i]
-				
-				if x < @xaxis.visibleMin
+				if cull and series.xdata[i-1] < @xaxis.visibleMin
 					continue
-				if x > @xaxis.visibleMax
-					break
-					
+				
+				x = series.xdata[i]
 				y = series.ydata[i]
 					
 				@ctxg.lineTo(x*sx + dx, y*sy+dy)
+				
+				if cull and x > @xaxis.visibleMax
+					break
+					
 			@ctxg.stroke()
 			@ctxg.restore()
 			
@@ -333,7 +332,7 @@ class livegraph.canvas extends LiveGraph
 				@ctxg.stroke()
 		
 		@perfStat(new Date()-startTime)
-		return null
+		return
 		
 class DragScrollAction
 	constructor: (@lg, @origPos) ->
@@ -379,7 +378,6 @@ class DragScrollAction
 			@velocity = dx/dt
 			overshoot = Math.max(minOvershoot, maxOvershoot)
 			if overshoot > 0
-				console.log('overshoot', overshoot)
 				@velocity *= (1-overshoot)/200
 		else
 			if minOvershoot > 0
