@@ -292,7 +292,7 @@ class livegraph.canvas extends LiveGraph
 			cull = true
 			
 			for i in [0...datalen]
-				if cull and series.xdata[i-1] < @xaxis.visibleMin
+				if cull and series.xdata[i+1] < @xaxis.visibleMin
 					continue
 				
 				x = series.xdata[i]
@@ -383,12 +383,12 @@ class DragScrollAction
 			if overshoot > 0
 				@velocity *= (1-overshoot)/200
 		else
-			if minOvershoot > 0
+			if minOvershoot > 0.0001
 				if @velocity <= 0
 					@velocity = -1*minOvershoot
 				else
 					@velocity -= 0.1*dt
-			else if maxOvershoot > 0
+			else if maxOvershoot > 0.0001
 				if @velocity >= 0
 					@velocity = 1*maxOvershoot
 				else
@@ -396,14 +396,15 @@ class DragScrollAction
 			else
 				vstep = (if @velocity > 0 then 1 else -1) * 0.05
 				@velocity -= vstep
+				
+				if (Math.abs(@velocity)) < Math.abs(vstep)
+					@stop = true
+					return
 			
 			@x = @x + @velocity*dt
 			@scrollTo(@x)
 			
-			if (Math.abs(@velocity)) > 0.01
-				@lg.needsRedraw()
-			else
-				@stop = true
+			@lg.needsRedraw()
 		
 	cancel: ->
 		@stop = true
