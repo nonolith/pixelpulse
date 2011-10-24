@@ -8,7 +8,7 @@ PADDING = 10
 AXIS_SPACING = 25
 			
 class livegraph.Axis
-	constructor: (@min, @max) ->	
+	constructor: (@min, @max) ->
 		if @max == 'auto'
 			@autoScroll = min
 			@max = 0
@@ -109,7 +109,10 @@ transform = (x, y, [sx, sy, dx, dy]) ->
 # Use a transformation from makeTransform to go from pixel to unit space
 invTransform = (x, y, [sx, sy, dx, dy]) ->
 	return [(x-dx)/sx, (y-dy)/sy]
-
+	
+relMousePos = (elem, event) ->
+	o = $(elem).offset()
+	return [event.pageX-o.left, event.pageY-o.top]
 		
 class livegraph.canvas extends LiveGraph
 	constructor: (div, xaxis, yaxis, series) ->
@@ -120,20 +123,49 @@ class livegraph.canvas extends LiveGraph
 		@div.appendChild(@axisCanvas)
 		@div.appendChild(@graphCanvas)
 		
+		$(@div).mousedown(@mousedown)
+		
 		@showXbottom = window.xbottom || true
 		@showYleft = true
 		@showYright = true
 		@showYgrid = window.ygrid || true
 		
 		@ctxa = @axisCanvas.getContext('2d')
-		@ctxa.lineWidth = 2
-		
 		@ctxg = @graphCanvas.getContext('2d')
-		@ctxg.lineWidth = 2
-		
-		@height = 0
 		
 		@resized()
+		
+	mousedown: (e) =>
+		pos = origPos = relMousePos(@div, e)
+		@onClick(origPos)
+		
+		mousemove = (e) =>
+			pos = relMousePos(@div, e)
+			@onDrag(pos, origPos)
+			
+		mouseup = =>
+			@onRelease(pos, origPos)
+			$(document.body).unbind('mousemove', mousemove)
+			                .unbind('mouseup', mouseup)
+			                .unbind('mouseout', mouseout)
+			                .css('cursor', 'auto')
+		mouseout = (e) =>
+			if e.relatedTarget.nodeName == 'HTML'
+				mouseup()
+				
+		$(document.body).mousemove(mousemove)
+				        .mouseup(mouseup)
+				        .mouseout(mouseout)
+		
+	onClick: (pos) ->
+		if @dragAction then @dragAction.cancel()
+		@dragAction = new DragScrollAction(this, pos)
+		
+	onDrag: (pos, opos) ->
+		@dragAction.onDrag(pos, opos)
+		
+	onRelease: () ->
+		@dragAction.onRelease()
 	
 	resized: () ->
 		if @div.offsetWidth == 0 or @div.offsetHeight == 0 then return
@@ -167,6 +199,7 @@ class livegraph.canvas extends LiveGraph
 	drawXAxis: (y) ->
 		xgrid = @xaxis.grid()
 		@ctxa.strokeStyle = 'black'
+		@ctxa.lineWidth = 2
 		@ctxa.beginPath()
 		@ctxa.moveTo(@geom.xleft, y)
 		@ctxa.lineTo(@geom.xright, y)
@@ -194,6 +227,7 @@ class livegraph.canvas extends LiveGraph
 	drawYAxis: (x, align, textoffset) =>
 		grid = @yaxis.grid()
 		@ctxa.strokeStyle = 'black'
+		@ctxa.lineWidth = 2
 		@ctxa.textAlign = align
 		@ctxa.textBaseline = 'middle'
 		
@@ -291,6 +325,45 @@ class livegraph.canvas extends LiveGraph
 		
 		@perfStat(new Date()-startTime)
 		return null
+		
+class DragScrollAction
+	constructor: (@lg, @origPos) ->
+		@origMin = @lg.xaxis.min
+		@origMax = @lg.xaxis.span
+		@scale = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)[0]
+		@velocity = 0
+		@lastTime = +new Date()
+		@lastX = @origPos[0]
+		@t = false
+	
+	onDrag: ([x, y]) ->
+		time = +new Date()
+		@scrollTo(x)
+		@velocity = (x - @lastX)/(time - @lastTime)
+		@lastTime = time
+		@lastX = x
+		
+	scrollTo: (x) ->
+		scrollby = (x-@origPos[0])/@scale
+		@lg.xaxis.min = @origMin - scrollby
+		@lg.xaxis.max = @origMax - scrollby
+		
+	onRelease: ->
+		setTimeout(@animate, 10)
+	
+	animate: =>
+		@lastX = @lastX + @velocity*10
+		@scrollTo(@lastX)
+		vstep = (if @velocity > 0 then 1 else -1) * 0.05
+		@velocity -= vstep
+		if (Math.abs(@velocity) > 0.01)
+			@t = setTimeout(@animate, 10)
+		else
+			@t = false
+		
+	cancel: ->
+		clearTimeout(@t)
+	
 			
 livegraph.arange = (lo, hi, step) ->
 	ret = new Float32Array((hi-lo)/step+1)
