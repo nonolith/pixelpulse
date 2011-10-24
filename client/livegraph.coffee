@@ -262,13 +262,13 @@ class livegraph.canvas extends LiveGraph
 	redrawGraph: =>
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
-
+		
+		@redrawRequested = false
+		
 		if @dragAction
 			@dragAction.onAnim()
 			
 		startTime = new Date()
-
-		@redrawRequested = false
 		
 		@ctxg.clearRect(0,0,@width, @height)
 		@ctxg.lineWidth = 2
@@ -349,6 +349,7 @@ class DragScrollAction
 		time = +new Date()
 		@scrollTo(x)
 		@x = x
+		@lg.needsRedraw()
 		
 	scrollTo: (x) ->
 		scrollby = (x-@origPos[0])/@scale
@@ -358,12 +359,14 @@ class DragScrollAction
 		
 	onRelease: ->
 		@pressed = false
+		@lg.needsRedraw()
+		@t = +new Date()-1
 		
 	onAnim: ->
 		if @stop then return
 		
 		t = +new Date()
-		dt = t - @t
+		dt = Math.min(t - @t, 100)
 		@t = t
 		
 		if dt == 0 then return
@@ -436,13 +439,20 @@ livegraph.demo = ->
 	series = new livegraph.Series(xdata, ydata, 'blue')
 	lg = new livegraph.canvas(document.getElementById('demoDiv'), xaxis, yaxis, [series])
 	lg.needsRedraw()
-
-	setInterval((->
-		updateData()
-		lg.needsRedraw()
-	), 10)
+	
+	lg.start = ->
+		@iv = setInterval((->
+			updateData()
+			lg.needsRedraw()
+		), 10)
+		
+	lg.pause = -> 
+		clearInterval(@iv)
+		
 
 	lg.perfStat_enable(document.getElementById('statDiv'))
+	
+	lg.start()
 
 	window.lg = lg
 
