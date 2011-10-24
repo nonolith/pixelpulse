@@ -145,7 +145,7 @@ class livegraph.canvas extends LiveGraph
 			
 		mouseup = =>
 			@onRelease(pos, origPos)
-			$(document.body).unbind('mousemove', mousemove)
+			$(window).unbind('mousemove', mousemove)
 			                .unbind('mouseup', mouseup)
 			                .unbind('mouseout', mouseout)
 			                .css('cursor', 'auto')
@@ -153,9 +153,9 @@ class livegraph.canvas extends LiveGraph
 			if e.relatedTarget.nodeName == 'HTML'
 				mouseup()
 				
-		$(document.body).mousemove(mousemove)
+		$(window).mousemove(mousemove)
 				        .mouseup(mouseup)
-				        .mouseout(mouseout)
+		#		        .mouseout(mouseout)
 		
 	onClick: (pos) ->
 		if @dragAction then @dragAction.cancel()
