@@ -83,7 +83,7 @@ class LiveGraph
 		setInterval((=> 
 			@psRunningSum += @psSum
 			@psRunningCount += @psCount
-			@psDiv.innerHTML = "#{@psCount}fps; #{@psSum}ms draw time; Avg: #{@psRunningSum/@psRunningCount}"
+			@psDiv.innerHTML = "#{@renderer}: #{@psCount}fps; #{@psSum}ms draw time; Avg: #{@psRunningSum/@psRunningCount}"
 			@psCount = 0
 			@psSum = 0
 		), 1000)
@@ -98,7 +98,7 @@ class LiveGraph
 # based off of the geometry (view) and axis settings such that
 # A * vector(x, y, 1) in unit space = the point in pixel space
 # or, alternatively, x'=x*sx+dx; y'=y*sy+dy
-makeTransform = (geom, xaxis, yaxis) ->
+makeTransform = (geom, xaxis, yaxis, w, h) ->
 	sx = geom.width / xaxis.span()
 	sy = -geom.height / yaxis.span()
 	dx = geom.xleft - xaxis.visibleMin*sx
@@ -134,10 +134,87 @@ class livegraph.canvas extends LiveGraph
 		@showYgrid = window.ygrid || true
 		
 		@ctxa = @axisCanvas.getContext('2d')
-		@ctxg = @graphCanvas.getContext('2d')
-		@redrawGraph = @redrawGraph_canvas2d
+		
+		if not @init_webgl() then @init_canvas2d()
 		
 		@resized()
+		
+	init_canvas2d: ->
+		@ctxg = @graphCanvas.getContext('2d')
+		@redrawGraph = @redrawGraph_canvas2d
+		@renderer = 'canvas2d'
+		return true
+		
+	init_webgl: ->
+	
+		shader_vs = """
+			attribute float x;
+			attribute float y;
+
+			uniform vec4 transform; // sx, sy, dx, dy
+
+			void main(void) {
+				gl_Position = vec4((x*transform[0] + transform[2])/1440.0*2.0 - 1.0, (y*transform[1] + transform[3])/400.0*-2.0+1.0, -1.0, 1.0);
+			}
+		"""
+		
+		shader_fs = """
+			#ifdef GL_ES
+			precision highp float;
+			#endif
+
+			void main(void) {
+				gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+			}
+		"""
+		
+		@gl = gl = @graphCanvas.getContext("experimental-webgl")
+		if not @gl then return false
+		
+		compile_shader = (type, source) ->
+			s = gl.createShader(type)
+			gl.shaderSource(s, source)
+			gl.compileShader(s)
+			if !gl.getShaderParameter(s, gl.COMPILE_STATUS)
+				console.error(gl.getShaderInfoLog(s))
+				return null
+			return s
+			
+		fs = compile_shader(gl.FRAGMENT_SHADER, shader_fs)
+		vs = compile_shader(gl.VERTEX_SHADER, shader_vs)
+		
+		if not fs and vs then return false
+		
+		gl.shaderProgram = gl.createProgram()
+		gl.attachShader(gl.shaderProgram, fs)
+		gl.attachShader(gl.shaderProgram, vs)
+		gl.linkProgram(gl.shaderProgram)
+		
+		if (!gl.getProgramParameter(gl.shaderProgram, gl.LINK_STATUS))
+			console.error "Could not initialize shaders"
+			return false
+			
+		gl.useProgram(gl.shaderProgram)
+		gl.shaderProgram.attrib =
+			x: gl.getAttribLocation(gl.shaderProgram, "x")
+			y: gl.getAttribLocation(gl.shaderProgram, "y")
+		gl.shaderProgram.uniform =
+			transform: gl.getUniformLocation(gl.shaderProgram, "transform")
+			
+		gl.enableVertexAttribArray(gl.shaderProgram.attrib.x)
+		gl.enableVertexAttribArray(gl.shaderProgram.attrib.y)
+		
+		gl.enable(gl.GL_LINE_SMOOTH)
+		gl.hint(gl.GL_LINE_SMOOTH_HINT, gl.GL_NICEST)
+		gl.enable(gl.GL_BLEND)
+		gl.blendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+			
+		gl.xBuffer = gl.createBuffer()
+		gl.yBuffer = gl.createBuffer()
+
+		@renderer = 'webgl'
+		@redrawGraph = @redrawGraph_webgl
+		return true
 		
 	mousedown: (e) =>
 		pos = origPos = relMousePos(@div, e)
@@ -255,7 +332,7 @@ class livegraph.canvas extends LiveGraph
 			@ctxa.stroke()
 		
 	needsRedraw: (fullRedraw=false) ->
-		@axisRedrawRequested |= fullRedraw
+		@axisRedrawRequested ||= fullRedraw
 		if not @redrawRequested
 			@redrawRequested = true
 			requestAnimFrame(@redraw, @graphCanvas)
@@ -270,7 +347,7 @@ class livegraph.canvas extends LiveGraph
 		#@autoscroll()
 		
 		if @dragAction
-			keepAnimating |= @dragAction.onAnim()
+			keepAnimating ||= @dragAction.onAnim()
 			
 		if @axisRedrawRequested
 			@redrawAxis()
@@ -345,6 +422,27 @@ class livegraph.canvas extends LiveGraph
 				@ctxg.stroke()
 				
 		return
+		
+	redrawGraph_webgl: ->
+		gl = @gl
+		
+		gl.clearColor(0.0, 0.0, 0.0, 0.0)
+		gl.enable(gl.DEPTH_TEST)
+		gl.viewport(0, 0, @width, @height)
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		gl.lineWidth(2)
+		
+		gl.uniform4fv(gl.shaderProgram.uniform.transform, makeTransform(@geom, @xaxis, @yaxis))
+		
+		for series in @series
+			gl.bindBuffer(gl.ARRAY_BUFFER, gl.xBuffer)
+			gl.bufferData(gl.ARRAY_BUFFER, series.xdata, gl.STREAM_DRAW)
+			gl.vertexAttribPointer(gl.shaderProgram.attrib.x, 1, gl.FLOAT, false, 0, 0)
+			gl.bindBuffer(gl.ARRAY_BUFFER, gl.yBuffer)
+			gl.bufferData(gl.ARRAY_BUFFER, series.ydata, gl.STREAM_DRAW)
+			gl.vertexAttribPointer(gl.shaderProgram.attrib.y, 1, gl.FLOAT, false, 0, 0)
+			gl.drawArrays(gl.LINE_STRIP, 0, series.xdata.length)
+		
 		
 class DragScrollAction
 	constructor: (@lg, @origPos) ->
