@@ -135,6 +135,7 @@ class livegraph.canvas extends LiveGraph
 		
 		@ctxa = @axisCanvas.getContext('2d')
 		@ctxg = @graphCanvas.getContext('2d')
+		@redrawGraph = @redrawGraph_canvas2d
 		
 		@resized()
 		
@@ -183,8 +184,7 @@ class livegraph.canvas extends LiveGraph
 			width: @width - 2*PADDING - (@showYleft+@showYright) * AXIS_SPACING
 			height: @height - 2*PADDING - @showXbottom  * AXIS_SPACING
 		
-		@redrawAxis()
-		@redrawGraph()
+		@needsRedraw(true)
 			
 	redrawAxis: ->
 		@ctxa.clearRect(0,0,@width, @height)
@@ -254,26 +254,39 @@ class livegraph.canvas extends LiveGraph
 			@ctxa.lineTo(@geom.xright, yp)
 			@ctxa.stroke()
 		
-	needsRedraw: ->
+	needsRedraw: (fullRedraw=false) ->
+		@axisRedrawRequested |= fullRedraw
 		if not @redrawRequested
 			@redrawRequested = true
-			requestAnimFrame(@redrawGraph, @graphCanvas)
+			requestAnimFrame(@redraw, @graphCanvas)
 
-	redrawGraph: =>
+	redraw: =>
+		startTime = new Date()
+		keepAnimating = false
+		
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
-		
-		@redrawRequested = false
+			
+		#@autoscroll()
 		
 		if @dragAction
-			@dragAction.onAnim()
+			keepAnimating |= @dragAction.onAnim()
 			
-		startTime = new Date()
+		if @axisRedrawRequested
+			@redrawAxis()
+			@axisRedrawRequested = false
+			
+		@redrawGraph()
+		@redrawRequested = false
 		
+		if keepAnimating then @needsRedraw()
+		@perfStat(new Date()-startTime)
+		return
+		
+			
+	redrawGraph_canvas2d: ->
 		@ctxg.clearRect(0,0,@width, @height)
 		@ctxg.lineWidth = 2
-		
-		#@autoscroll()
 		
 		[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
 		
@@ -330,8 +343,7 @@ class livegraph.canvas extends LiveGraph
 					@ctxg.fillStyle = 'white'
 				@ctxg.fill()
 				@ctxg.stroke()
-		
-		@perfStat(new Date()-startTime)
+				
 		return
 		
 class DragScrollAction
@@ -349,13 +361,12 @@ class DragScrollAction
 		time = +new Date()
 		@scrollTo(x)
 		@x = x
-		@lg.needsRedraw()
 		
 	scrollTo: (x) ->
 		scrollby = (x-@origPos[0])/@scale
 		@lg.xaxis.visibleMin = @origMin - scrollby
 		@lg.xaxis.visibleMax = @origMax - scrollby
-		@lg.redrawAxis()
+		@lg.needsRedraw(true)
 		
 	onRelease: ->
 		@pressed = false
@@ -399,12 +410,12 @@ class DragScrollAction
 				
 				if (Math.abs(@velocity)) < Math.abs(vstep)
 					@stop = true
-					return
+					return false
 			
 			@x = @x + @velocity*dt
 			@scrollTo(@x)
 			
-			@lg.needsRedraw()
+			return true # keep animating
 		
 	cancel: ->
 		@stop = true
