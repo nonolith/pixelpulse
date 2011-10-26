@@ -151,10 +151,12 @@ class livegraph.canvas extends LiveGraph
 			attribute float x;
 			attribute float y;
 
-			uniform vec4 transform; // sx, sy, dx, dy
+			uniform mat4 transform;
 
 			void main(void) {
-				gl_Position = vec4((x*transform[0] + transform[2])/1440.0*2.0 - 1.0, (y*transform[1] + transform[3])/400.0*-2.0+1.0, -1.0, 1.0);
+				gl_Position = transform * vec4(x, y, 1.0, 1.0);
+				gl_Position.z = -1.0;
+				gl_Position.w = 1.0;
 			}
 		"""
 		
@@ -427,12 +429,22 @@ class livegraph.canvas extends LiveGraph
 		gl = @gl
 		
 		gl.clearColor(0.0, 0.0, 0.0, 0.0)
-		gl.enable(gl.DEPTH_TEST)
+		gl.enable(gl.SCISSOR_TEST)
 		gl.viewport(0, 0, @width, @height)
+		gl.scissor(@geom.xleft, @height-@geom.ybottom, @geom.width, @geom.height)
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		gl.lineWidth(2)
 		
-		gl.uniform4fv(gl.shaderProgram.uniform.transform, makeTransform(@geom, @xaxis, @yaxis))
+		[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
+		w = 2.0/@width
+		h = -2.0/@height
+
+		# column-major order!
+		tmatrix = [sx*w, 0, 0, 0,   0, sy*h, 0, 0,   dx*w, dy*h, 0, 0,   -1, 1, -1, 1]
+		           
+		window.tmatrix = tmatrix
+		
+		gl.uniformMatrix4fv(gl.shaderProgram.uniform.transform, false, new Float32Array(tmatrix))
 		
 		for series in @series
 			gl.bindBuffer(gl.ARRAY_BUFFER, gl.xBuffer)
@@ -529,13 +541,13 @@ livegraph.demo = ->
 	xaxis = new livegraph.Axis(-20, 20)
 	xaxis.visibleMin = -5
 	xaxis.visibleMax = 5
-	yaxis = new livegraph.Axis(-1, 3.14)
+	yaxis = new livegraph.Axis(-1, 3)
 
-	xdata = livegraph.arange(-20, 20, 0.05)
+	xdata = livegraph.arange(-20, 20, 0.005)
 	ydata = new Float32Array(xdata.length)
 
 	updateData = ->
-		n = (Math.sin(+new Date()/600)+2)*0.5
+		n = (Math.sin(+new Date()/1000)+2)*0.5
 
 		for i in [0...ydata.length]
 			x = xdata[i]
