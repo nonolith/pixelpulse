@@ -19,13 +19,15 @@ class CEEChannel(object):
 		self.cee = cee
 		self.i=0
 		self.v=0
+		self.voltageGain = 1
+		self.currentGain = 1
 		self.driving='v'
 		stateOpts = ['source', 'measure']
 		self.voltageChan = pixelpulse.AnalogChannel('Voltage '+name,     'V',  0,  5,   'source',  
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setVoltage)
 		self.currentChan = pixelpulse.AnalogChannel('Current '+name,     'mA', -400, 400,  'measure',
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setCurrent)
-		self.gainChan = pixelpulse.AnalogChannel("Gain "+name, 'x', 1, 64, state="voltage", stateOptions=['voltage', 'current'], color='red', showGraph=False, onSet=self.setGain)
+		self.gainChan = pixelpulse.AnalogChannel("Gain "+name, 'x', 1, 64, 'output', showGraph=False, onSet=self.setGain)
 		self.channels = [self.voltageChan, self.currentChan, self.gainChan]
 		self.index = index
 		self.name = name
@@ -59,12 +61,22 @@ class CEEChannel(object):
 	def getChanData(self, replypkt):
 		return [(self.voltageChan, replypkt[self.name.lower()+'_v']),
 				(self.currentChan, replypkt[self.name.lower()+'_i']*1000),
-				(self.gainChan, self.getGain())]
-	def getGain(self):
-		return 10
+				(self.gainChan, self.getGain(self.name.lower()))]
 
-	def setGain(self, channel, value, state):
-		print channel, state, value		
+	def getGain(self, name):
+		if self.name.lower() == 'a':
+			return self.cee.gains[1]
+		elif self.name.lower() == 'b':
+			return self.cee.gains[2]
+
+	def setGain(self, chan, gain, state=None):
+		if self.name.lower() == 'a':
+			chan = 1 
+		elif self.name.lower() == 'b':
+			chan = 2
+		print (chan, gain)
+		self.cee.set(0, x=(chan, gain))
+
 
 class CEE_vendor_req(pixelpulse.Device):
 	def __init__(self):
