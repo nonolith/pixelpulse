@@ -64,16 +64,16 @@ class CEEChannel(object):
 				(self.gainChan, self.getGain(self.name.lower()))]
 
 	def getGain(self, name):
-		if self.name.lower() == 'a':
-			return self.cee.gains[1]
-		elif self.name.lower() == 'b':
-			return self.cee.gains[2]
+		name = self.name.lower()
+		driving = self.driving
+		mapping = {'a':{'v':1, 'i':0}, 'b':{'v':2,'i':3}}
+		return self.cee.gains[mapping[name][driving]]
 
 	def setGain(self, chan, gain, state=None):
-		if self.name.lower() == 'a':
-			chan = 1 
-		elif self.name.lower() == 'b':
-			chan = 2
+		name = self.name.lower()
+		driving = self.driving
+		mapping = {'a':{'v':1, 'i':0}, 'b':{'v':2,'i':3}}
+		chan = mapping[name][driving]
 		print (chan, gain)
 		self.cee.set(0, x=(chan, gain))
 

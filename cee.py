@@ -27,9 +27,9 @@ class CEE(object):
 		vals = map(unpackSign, l)
 		return {
 			'a_v': vals[0]/2048.0*5/self.gains[1],
-			'a_i': ((vals[1]/2048.0*2.5))/45/.07,
+			'a_i': ((vals[1]/2048.0*2.5))/45/.07/self.gains[0],
 			'b_v': vals[2]/2048.0*5/self.gains[2],
-			'b_i': ((vals[3]/2048.0*2.5))/45/.07,
+			'b_i': ((vals[3]/2048.0*2.5))/45/.07/self.gains[3],
 		}
 
 	def set(self, chan, v=None, i=None, x=None):
