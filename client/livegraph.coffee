@@ -31,8 +31,9 @@ class Axis
 		return grid/2
 		
 	grid: ->
-		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]
-		arange(min, max, @gridstep())
+#		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]
+#		arange(min, max, @gridstep())
+		[@min, @max]
 		
 	xtransform: (x, geom) ->
 		(x - @min) * geom.width / @span + geom.xleft
