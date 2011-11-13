@@ -1,6 +1,7 @@
 # Pixelpulse browser UI
 # Distributed under the terms of the BSD License
 # (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
+# (C) 2011 Ian Daniher (Nonolith Labs) <ian@nonolithlabs.com>
 
 class PixelpulseApp
 	constructor: ->
@@ -67,6 +68,7 @@ class PixelpulseApp
 			$('.dnd-oldpos').show().removeClass('dnd-oldpos')
 		
 	onConfig: (o) ->
+		$('.analog').remove()
 		$('#meters, #meters-side').empty()
 		@channels = {}
 		self = this

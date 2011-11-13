@@ -19,8 +19,6 @@ class CEE(object):
 		"Turn a 3-byte string containing 2 12-bit values into two ints"
 		return s[0]|((s[1]&0x0f)<<8), ((s[1]&0xf0) >> 4)|(s[2]<<4)
 
-	closest=lambda self,a,l:min(l,key=lambda x:abs(x-a))
-
 	def readADC(self):
 		data = self.dev.ctrl_transfer(0x40|0x80, 0xA0, 0, 0, 6)
 		l = self.b12unpack(data[0:3]) + self.b12unpack(data[3:6])
@@ -42,10 +40,8 @@ class CEE(object):
 			dacval = int((2**12*(1.25+(45*.07*i)))/2.5)
 			self.dev.ctrl_transfer(0x40|0x80, cmd, dacval, MODE_SIMV, 0)
 		elif x is not None:
-			gain = self.closest(x[1], gainMapping.keys())
-			gainval = gainMapping[gain]
-			self.gains[x[0]] =  gain
-			self.dev.ctrl_transfer(0x40|0x80, 0x65, gainval, x[0], 0)
+			self.gains[x[0]] = x[1]
+			self.dev.ctrl_transfer(0x40|0x80, 0x65, gainMapping[x[1]], x[0], 0)
 		else:
 			self.dev.ctrl_transfer(0x40|0x80, cmd, 0, MODE_DISABLED, 0)	
 

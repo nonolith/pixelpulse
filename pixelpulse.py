@@ -74,6 +74,9 @@ class DataServer(object):
 		message = json.dumps(message)+'\n'
 		return message
 
+	def updateConfig(self):
+		self._sendToAll(self._formJSON('config', self.getConfigMessage()))
+
 	def data(self, data):
 		"""Send a new datapoint to connected clients.
 		

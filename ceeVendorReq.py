@@ -63,6 +63,8 @@ class CEEChannel(object):
 				(self.currentChan, replypkt[self.name.lower()+'_i']*1000),
 				(self.gainChan, self.getGain(self.name.lower()))]
 
+	closest=lambda self,a,l:min(l,key=lambda x:abs(x-a))
+
 	def getGain(self, name):
 		name = self.name.lower()
 		driving = self.driving
@@ -70,13 +72,19 @@ class CEEChannel(object):
 		return self.cee.gains[mapping[name][driving]]
 
 	def setGain(self, chan, gain, state=None):
+		gains = [16, 1, 2, 4, 0.5, 32, 8, 64]
+		gain = self.closest(gain, gains)
 		name = self.name.lower()
 		driving = self.driving
 		mapping = {'a':{'v':1, 'i':0}, 'b':{'v':2,'i':3}}
 		chan = mapping[name][driving]
-		print (chan, gain)
+		oldGain = self.cee.gains[mapping[name][driving]]
+		if driving == 'v':
+			self.voltageChan.max = float(self.voltageChan.max) * oldGain / gain
+		elif driving == 'i':
+			self.currentChan.max = float(self.currentChan.max) * oldGain / gain
 		self.cee.set(0, x=(chan, gain))
-
+		server.updateConfig()
 
 class CEE_vendor_req(pixelpulse.Device):
 	def __init__(self):
