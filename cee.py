@@ -10,8 +10,12 @@ def unpackSign(n):
 
 class CEE(object):
 	def __init__(self):
-		self.gains = 4*[1]
 		self.dev = usb.core.find(idVendor=0x9999, idProduct=0xffff)
+		self.gains = 4*[0]
+		self.set(0, x=(0, 1)) # set all gains to 1 
+		self.set(0, x=(1, 1))
+		self.set(1, x=(2, 1))
+		self.set(1, x=(3, 1))
 		if not self.dev:
 			raise IOError("device not found")
 			
