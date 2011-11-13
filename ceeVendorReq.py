@@ -83,6 +83,7 @@ class CEEChannel(object):
 			self.voltageChan.max = float(self.voltageChan.max) * oldGain / gain
 		elif driving == 'i':
 			self.currentChan.max = float(self.currentChan.max) * oldGain / gain
+			self.currentChan.min = float(self.currentChan.min) * oldGain / gain
 		self.cee.set(0, x=(chan, gain))
 		server.updateConfig()
 
