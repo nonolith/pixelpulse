@@ -84,7 +84,7 @@ class CEEChannel(object):
 		elif driving == 'i':
 			self.currentChan.max = float(self.currentChan.max) * oldGain / gain
 			self.currentChan.min = float(self.currentChan.min) * oldGain / gain
-		self.cee.set(0, x=(chan, gain))
+		self.cee.setGain(chan, gain)
 		server.updateConfig()
 
 class CEE_vendor_req(pixelpulse.Device):
