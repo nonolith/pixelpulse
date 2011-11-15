@@ -99,9 +99,6 @@ class CEE_vendor_req(pixelpulse.Device):
 			
 		self.channels = sum([x.channels for x in self.ceechannels], [])
 		
-		self.dev = usb.core.find(idVendor=0x9999, idProduct=0xFFFF)
-		if self.dev is None:
-			raise IOError("CEE not found")
 	def start(self, server):
 		server.poll(self.poll)
 		
