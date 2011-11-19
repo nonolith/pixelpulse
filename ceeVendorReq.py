@@ -17,6 +17,8 @@ def clip(v, min, max):
 class CEEChannel(object):
 	def __init__(self, cee, index, name, show):
 		self.cee = cee
+		cee.setA()
+		cee.setB()
 		self.i=0
 		self.v=0
 		self.voltageGain = 1
@@ -25,7 +27,7 @@ class CEEChannel(object):
 		stateOpts = ['source', 'measure']
 		self.voltageChan = pixelpulse.AnalogChannel('Voltage '+name,     'V',  0,  5,   'source',  
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setVoltage)
-		self.currentChan = pixelpulse.AnalogChannel('Current '+name,     'mA', -400, 400,  'measure',
+		self.currentChan = pixelpulse.AnalogChannel('Current '+name,     'mA', -200, 200,  'measure',
 		                            stateOptions=stateOpts, showGraph=show, onSet=self.setCurrent)
 		self.gainChan = pixelpulse.AnalogChannel("Gain "+name, 'x', 1, 64, 'output', showGraph=False, onSet=self.setGain)
 		self.channels = [self.voltageChan, self.currentChan, self.gainChan]
@@ -55,7 +57,7 @@ class CEEChannel(object):
 		if state is not None:
 			self.setDriving('i' if state=='source' else 'v')
 		if ma is not None:
-			self.i = clip(ma, -400, 400)
+			self.i = clip(ma, -200, 200)
 			self.cee.set(self.index, i=self.i/1000.0)
 
 	def getChanData(self, replypkt):
