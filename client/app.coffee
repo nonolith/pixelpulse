@@ -6,8 +6,8 @@
 pixelpulse = (window.pixelpulse ?= {})
 
 pixelpulse.init = (server, params) ->
-	ts = $("#timeseries")
-	meters = $("#meters")
+	ts = $("#timeseries").get(0)
+	meters = $("#meters").get(0)
 
 	if !window.WebSocket
 		document.getElementById('loading').innerHTML = "Pixelpulse requires WebSockets and currently only works in Chrome and Safari"
@@ -33,6 +33,57 @@ pixelpulse.init = (server, params) ->
 				console.info "stream added"
 				s = new pixelpulse.TileView(s)
 				$(meters).append(s.el)
+		
+	# Init drag-and-drop
+	handleDragOver = (self, e, draggedElem, draggableMatch, posFunc) ->
+		if $(e.target).hasClass('insertion-cursor')
+			# No need to do anything if dragging over the existing insertion highlight
+			return e.preventDefault()
+			
+		tgt = $(e.target).closest(draggableMatch)
+		
+		getCursor = ->
+			$(".insertion-cursor").remove()
+			return $("<div class='insertion-cursor'>").addClass(window.draggedChannel.cssClass)
+		
+		if tgt.length
+			if draggedElem == tgt.get(0)
+				tgt.addClass('dnd-oldpos').hide().after(getCursor())
+			if tgt.is('#timesection')
+				if not tgt.parent().children('.insertion-cursor:last-child').length
+					tgt.parent().append(getCursor())
+			else if posFunc(tgt)
+				if not tgt.prev().hasClass('insertion-cursor')
+					tgt.before(getCursor())
+			else
+				if not tgt.next().hasClass('insertion-cursor')
+					tgt.after(getCursor())
+		else
+			$(self).prepend(getCursor())
+					
+		e.preventDefault()
+	
+	ts.ondragover = (e) ->
+		draggedElem = window.draggedChannel.showGraph and window.draggedChannel.tsRow.get(0)
+		handleDragOver(this, e, draggedElem, 'section', (tgt) -> e.offsetY < tgt.get(0).offsetHeight/2)
+		
+	ts.ondrop = (e) ->
+		cur = $(this).find(".insertion-cursor")
+		if cur.length
+			cur.replaceWith(window.draggedChannel.showTimeseries())
+
+	meters.ondragover = (e) ->
+		draggedElem = window.draggedChannel.tile.get(0)
+		handleDragOver(this, e, draggedElem, '.meter', (tgt) -> e.offsetX < tgt.get(0).offsetWidth/2)
+		
+	meters.ondrop = (e) ->
+		cur = $(this).find(".insertion-cursor")
+		if cur.length
+			cur.replaceWith(window.draggedChannel.hideTimeseries())
+			
+	meters.ondragend = ts.ondragend = (e) ->
+		$('.insertion-cursor').remove()
+		$('.dnd-oldpos').show().removeClass('dnd-oldpos')
 			
 		
 #URL params

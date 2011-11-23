@@ -12,6 +12,7 @@ class pixelpulse.TileView
 		@h2 = $("<h2>").appendTo(@tile)
 		@el = @tile.get(0)
 		@el.view = this
+		@timeseries = false
 
 		@addReadingUI(@tile)
 		
@@ -57,4 +58,57 @@ class pixelpulse.TileView
 				@input.addClass('negative')
 			else
 				@input.removeClass('negative')
+
+	showTimeseries: ->
+		if @timeseries
+			return $(@timeseries.el).detach()
+		
+		@timeseries = new pixelpulse.TimeSeriesView(@stream, this)
+
+		return @timeseries.el
+
+	hideTimeseries: ->
+		if @timeseries
+			@timeseries.destroy()
+			@timeseries = false
+		
+		return $(@el).detach()
+		
+
+class pixelpulse.TimeSeriesView
+	constructor: (@stream, @tile) ->
+		@tsRow = $("<section>")
+				.addClass(@cssClass)
+				.append(@graphDiv = $("<div class='livegraph'>"))
+				.append(@tsAside = $("<aside>"))
+		@el = @tsRow.get(0)
+
+		$(@tile.el).detach().attr('style', '').appendTo(@tsAside)
+
+		server.captureStateChanged.listen (state) =>
+			if state == 'ready' or (state != 'inactive' and not @watch)
+				@watch = @stream.getWatch()
+				@watch.start(0, 100, 1)
+				@series.ydata = @watch.data
+				@lg.needsRedraw()
+
+				@watch.updated.listen =>
+					console.info('graph upd', @lg, @xdata, @watch.data)
+					@lg.needsRedraw()
+
+		@xaxis = new livegraph.Axis(0, 10) 
+		@yaxis = new livegraph.Axis(-2, 2) #TODO: get from @stream
+
+		@xdata = livegraph.arange(0, 9.99, 0.1)
+		
+		@series =  new livegraph.Series(@xdata, [], 'blue')
+
+		@lg = new livegraph.canvas(@graphDiv.get(0), @xaxis, @yaxis, [@series])
+		@lg.needsRedraw()
+
+	destroy: ->
+		@tsRow.remove()
+		# TODO: clean up watch
+
+
 
