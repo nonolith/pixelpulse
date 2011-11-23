@@ -28,10 +28,14 @@ class pixelpulse.TileView
 		@stream.tile = this
 		@update()
 
-		@watch = @stream.getWatch()
-		@watch.updated.listen =>
-			@onValue(@watch.lastData())
-		@watch.start(0, 100000, 10)
+		server.captureStateChanged.listen (state) =>
+			console.log 'captureStateChanged'
+			if state == 'ready' or (state != 'inactive' and not @watch)
+				@watch = @stream.getWatch()
+				@watch.updated.listen =>
+					@onValue(@watch.lastData())
+				@watch.start(0, 100000, 10)
+				console.log('started watch')
 
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")

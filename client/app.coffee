@@ -27,13 +27,16 @@ pixelpulse.init = (server, params) ->
 
 	server.deviceAdded.listen (d) ->
 		console.info "device added", d
-		d.channelHandler (c) ->
-			console.info "channel added"
-			c.inputStreamHandler (s) ->
-				console.info "stream added"
-				s = new pixelpulse.TileView(s)
-				$(meters).append(s.el)
-		
+		if not server.device
+			server.selectDevice(d)
+
+			server.device.channelHandler (c) ->
+				console.info "channel added"
+				c.inputStreamHandler (s) ->
+					console.info "stream added"
+					s = new pixelpulse.TileView(s)
+					$(meters).append(s.el)			
+	
 	# Init drag-and-drop
 	handleDragOver = (self, e, draggedElem, draggableMatch, posFunc) ->
 		if $(e.target).hasClass('insertion-cursor')

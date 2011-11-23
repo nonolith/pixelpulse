@@ -10,6 +10,11 @@ class Event
 	listen: (func) ->
 		@listeners.push(func)
 
+	unListen: (func) ->
+		i = @listeners.indexOf(func)
+		if i!=-1
+			@listeners.splice(i, 1)
+
 	notify: (args...) ->
 		func(args...) for func in @listeners
 		return
@@ -40,8 +45,7 @@ class Dataserver
 		@connected = new Event('connected')
 		@disconnected = new Event('disconnected')
 		@deviceAdded = new Event('deviceAdded')
-		@streamingStarted = new Event('stoppedStreaming')
-		@streamingStopped = new Event('stoppedStreaming')
+		@captureStateChanged = new Event('captureStateChanged')
 
 		@devices = {}
 		@watchesById = {}
@@ -61,41 +65,68 @@ class Dataserver
 			switch m._action
 				when "devices"
 					@devices = updateCollection(@devices, m.devices, Device, @deviceAdded, this)
-				when "streamstate"
-					@isStreaming = m.streaming
-					if m.streaming
-						@streamingStart.notify()
-					else
-						@streamingStopped.notify()
+				when "deviceInfo"
+					@device.onInfo(m.device)
+				when "capture_state"
+					@captureState = m.state
+					if @captureState == 'ready'
+						for wId, watch of @watchesById then watch.onDone()
+					@captureStateChanged.notify(@captureState)
 				when "update"
+					console.info "watch #{m.id} message"
 					@watchesById[m.id].onMessage(m)
 	
 	send: (cmd, m={})->
 		m._cmd = cmd
 		@ws.send(JSON.stringify m)
 
-	startStreaming: ->
-		@send 'startStreaming'		
+	selectDevice: (device) ->
+		@send 'selectDevice',
+			id: device.id
+		if @device
+			@device.onRemove()
+		@device = new ActiveDevice(this)
 
-	stopStreaming: ->
-		@send 'stopStreaming'
+	prepareCapture: (t) ->
+		@send 'prepareCapture',
+			length: t	
+
+	startCapture: ->
+		@send 'startCapture'
+
+	stopCapture: ->
+		@send 'stopCapture'
 		
 
 class Device
 	constructor: (info) ->
 		@infoChanged = new Event('infoChanged')
 		@removed = new Event('removed')
-		@channelAdded = new Event('channelAdded')
-		@channels = {}
 		@onInfo(info)
 
 	onInfo: (info) ->
 		for i in ['id', 'model', 'hwversion', 'fwversion', 'serial']
 			this[i] = info[i]
 		
-		@channels = updateCollection(@channels, info.channels, Channel, @channelAdded, this)
 		@infoChanged.notify(this)
 	
+	onRemoved: ->
+		@removed.notify(this)
+
+class ActiveDevice
+	constructor: (@parent) ->
+		@infoChanged = new Event('infoChanged')
+		@removed = new Event('removed')
+		@channelAdded = new Event('channelAdded')
+		@channels = {}
+
+	onInfo: (info) ->
+		for i in ['id', 'model', 'hwversion', 'fwversion', 'serial']
+			this[i] = info[i]
+
+		@channels = updateCollection(@channels, info.channels, Channel, @channelAdded, this)
+		@infoChanged.notify(this)
+
 	onRemoved: ->
 		for cId, channel of @channels
 			channel.onRemoved()
@@ -161,7 +192,7 @@ class Watch
 	constructor: (@server, @device, @channel, @stream) ->
 		@active = no
 		@id = 'w'+(nextWatchId++)
-		@data = []
+		@data = false
 		@dataFill = 0
 		@updated = new Event('updated')
 
@@ -178,6 +209,7 @@ class Watch
 			startIndex: start
 			endIndex: end
 			decimateFactor: decimateFactor
+		console.info "watch #{@id} submitted"
 		@active = yes
 
 	onMessage: (m) ->
@@ -192,5 +224,6 @@ class Watch
 	onDone: ->
 		@active = no
 		delete @server.watchesById[@id]
+		console.info "watch #{@id} done"
 
 window.server = new Dataserver('localhost:9003')	
