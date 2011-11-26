@@ -163,6 +163,13 @@ class Channel
 		for sId, stream of @inputStreams then h(stream)
 		@inputStreamAdded.listen(h)
 
+	setConstant: (mode, val) ->
+		server.send 'set' #TODO: don't use global?
+			source: 'constant'
+			channel: @id
+			mode: mode
+			value: val
+
 class InputStream
 	constructor: (info) ->
 		@infoChanged = new Event('infoChanged')
