@@ -92,8 +92,8 @@ class Dataserver
 	startCapture: ->
 		@send 'startCapture'
 
-	stopCapture: ->
-		@send 'stopCapture'
+	pauseCapture: ->
+		@send 'pauseCapture'
 		
 
 class Device
