@@ -34,7 +34,7 @@ class pixelpulse.TileView
 				@watch = @stream.getWatch()
 				@watch.updated.listen =>
 					@onValue(@watch.lastData())
-				@watch.start(0, 100000, 10)
+				@watch.start(0, 1000000, 1000)
 				console.log('started watch')
 
 	addReadingUI: (tile) ->

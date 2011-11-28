@@ -61,7 +61,6 @@ class Dataserver
 
 		@ws.onmessage = (evt) =>
 			m = JSON.parse(evt.data)
-			console.log 'message', m
 			switch m._action
 				when "devices"
 					@devices = updateCollection(@devices, m.devices, Device, @deviceAdded, this)
@@ -73,7 +72,6 @@ class Dataserver
 						for wId, watch of @watchesById then watch.onDone()
 					@captureStateChanged.notify(@captureState)
 				when "update"
-					console.info "watch #{m.id} message"
 					@watchesById[m.id].onMessage(m)
 	
 	send: (cmd, m={})->
