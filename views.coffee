@@ -40,7 +40,7 @@ class pixelpulse.TileView
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
 			.append(@input = $("<input>"))
-			.append($("<span class='unit'>").text(@unit)))
+			.append($("<span class='unit'>").text(@stream.units)))
 		
 		if not @settable
 			$(@input).attr('disabled', true)
@@ -101,7 +101,7 @@ class pixelpulse.TimeSeriesView
 					@lg.needsRedraw()
 
 		@xaxis = new livegraph.Axis(0, 10) 
-		@yaxis = new livegraph.Axis(-2, 2) #TODO: get from @stream
+		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
 
 		@xdata = livegraph.arange(0, 9.99, 0.1)
 		

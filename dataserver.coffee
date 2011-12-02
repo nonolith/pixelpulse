@@ -175,7 +175,7 @@ class InputStream
 		@onInfo(info)
 
 	onInfo: (info) ->
-		for i in ['id', 'displayName', 'units']
+		for i in ['id', 'displayName', 'units', 'min', 'max', 'sampleTime']
 			this[i] = info[i]
 
 		@infoChanged.notify(this)
