@@ -92,20 +92,17 @@ class pixelpulse.TimeSeriesView
 			if state == 'ready' or (state != 'inactive' and not @watch)
 				@watch = @stream.getWatch()
 				pixel_time = @xaxis.span()/@lg.width
-				@watch.start(@xaxis.visibleMin, @xaxis.visibleMax, pixel_time)
-				@series.ydata = @watch.data
+				[@series.xdata, @series.ydata] = @watch.start(@xaxis.visibleMin, @xaxis.visibleMax, pixel_time)
 				@lg.needsRedraw()
 
 				@watch.updated.listen =>
+					console.log(@series, 'redraw')
 					window.redrawCnt+=1
 					@lg.needsRedraw()
 
-		@xaxis = new livegraph.Axis(0, 10) 
+		@xaxis = new livegraph.Axis(0, 10)
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
-
-		@xdata = livegraph.arange(0, 9.99, 0.01)
-		
-		@series =  new livegraph.Series(@xdata, [], 'blue')
+		@series =  new livegraph.Series([], [], 'blue')
 
 		@lg = new livegraph.canvas(@graphDiv.get(0), @xaxis, @yaxis, [@series])
 		@lg.needsRedraw()

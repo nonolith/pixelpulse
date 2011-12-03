@@ -203,14 +203,19 @@ class Watch
 		@updated = new Event('updated')
 		@lastData = NaN
 
-	start: (startTime, endTime, sampleTime) ->
-		len = @submit(startTime/@stream.sampleTime, endTime/@stream.sampleTime, sampleTime)
-		@data = new Float32Array(len)
+	start: (startTime, endTime, requestedSampleTime) ->
+		[sampleTime, len] = @submit(startTime/@stream.sampleTime, endTime/@stream.sampleTime, requestedSampleTime)
+		@xdata = new Float32Array(len)
+		for i in [0...len]
+			@xdata[i] = startTime + i*sampleTime
+		@ydata = new Float32Array(len)
+		return [@xdata, @ydata]
 
-	submit: (startSample, endSample, sampleTime) ->
+	submit: (startSample, endSample, requestedSampleTime) ->
 		@dataFill = 0
 		@server.watchesById[@id] = this
-		decimateFactor = Math.max(1, Math.floor(sampleTime/@stream.sampleTime))
+		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/@stream.sampleTime))
+		console.log 'df', decimateFactor
 		@server.send 'watch'
 			id: @id
 			device: @device.id
@@ -220,7 +225,10 @@ class Watch
 			endIndex: endSample
 			decimateFactor: decimateFactor
 		@active = yes
-		return Math.ceil((endSample-startSample)/decimateFactor)
+
+		numOutSamples = Math.ceil((endSample-startSample)/decimateFactor)
+		sampleTime = @stream.sampleTime * decimateFactor
+		return [sampleTime, numOutSamples]
 
 	continuous: (sampleTime) ->
 		@data = false
@@ -228,9 +236,9 @@ class Watch
 
 	onMessage: (m) ->
 		@dataFill = m.idx
-		if @data?
+		if @ydata?
 			for i in m.data
-				@data[@dataFill++] = i
+				@ydata[@dataFill++] = i
 		@lastData = m.data[m.data.length-1]
 		if m.end then @onDone()
 		@updated.notify()
