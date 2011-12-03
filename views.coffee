@@ -92,7 +92,7 @@ class pixelpulse.TimeSeriesView
 			if state == 'ready' or (state != 'inactive' and not @watch)
 				@watch = @stream.getWatch()
 				pixel_time = @xaxis.span()/@lg.width
-				@watch.start(0, 1000, pixel_time)
+				@watch.start(@xaxis.visibleMin, @xaxis.visibleMax, pixel_time)
 				@series.ydata = @watch.data
 				@lg.needsRedraw()
 
