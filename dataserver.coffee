@@ -215,7 +215,6 @@ class Watch
 		@dataFill = 0
 		@server.watchesById[@id] = this
 		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/@stream.sampleTime))
-		console.log 'df', decimateFactor
 		@server.send 'watch'
 			id: @id
 			device: @device.id
@@ -246,6 +245,5 @@ class Watch
 	onDone: ->
 		@active = no
 		delete @server.watchesById[@id]
-		console.info "watch #{@id} done"
 
 window.server = new Dataserver('localhost:9003')	

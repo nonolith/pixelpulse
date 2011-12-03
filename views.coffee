@@ -96,7 +96,6 @@ class pixelpulse.TimeSeriesView
 				@lg.needsRedraw()
 
 				@watch.updated.listen =>
-					console.log(@series, 'redraw')
 					window.redrawCnt+=1
 					@lg.needsRedraw()
 
