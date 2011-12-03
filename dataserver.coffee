@@ -60,6 +60,7 @@ class Dataserver
 			@disconnected.notify()
 
 		@ws.onmessage = (evt) =>
+			#console.log 'm', evt.data
 			m = JSON.parse(evt.data)
 			switch m._action
 				when "devices"
@@ -200,12 +201,17 @@ class Watch
 		@data = false
 		@dataFill = 0
 		@updated = new Event('updated')
+		@lastData = NaN
 
-	start: (start, end, decimateFactor) ->
-		@server.watchesById[@id] = this
-		len = Math.ceil((end-start)/decimateFactor)
-		dataFill = 0
+	start: (start, end, sampleTime) ->
+		len = @submit(start, end, sampleTime)
 		@data = new Float32Array(len)
+
+	submit: (start, end, sampleTime) ->
+		@dataFill = 0
+		@server.watchesById[@id] = this
+		decimateFactor = Math.max(1, Math.floor(sampleTime/@stream.sampleTime))
+		console.log 'df', decimateFactor
 		@server.send 'watch'
 			id: @id
 			device: @device.id
@@ -214,17 +220,21 @@ class Watch
 			startIndex: start
 			endIndex: end
 			decimateFactor: decimateFactor
-		console.info "watch #{@id} submitted"
 		@active = yes
+		return Math.ceil((end-start)/decimateFactor)
+
+	continuous: (sampleTime) ->
+		@data = false
+		@submit(-1, -1, sampleTime)
 
 	onMessage: (m) ->
 		@dataFill = m.idx
-		for i in m.data
-			@data[@dataFill++] = i
+		if @data?
+			for i in m.data
+				@data[@dataFill++] = i
+		@lastData = m.data[m.data.length-1]
 		if m.end then @onDone()
 		@updated.notify()
-	
-	lastData: -> @data[@dataFill-1]
 
 	onDone: ->
 		@active = no

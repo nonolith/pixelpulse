@@ -33,9 +33,8 @@ class pixelpulse.TileView
 			if state == 'ready' or (state != 'inactive' and not @watch)
 				@watch = @stream.getWatch()
 				@watch.updated.listen =>
-					@onValue(@watch.lastData())
-				@watch.start(0, 1000000, 1000)
-				console.log('started watch')
+					@onValue(@watch.lastData)
+				@watch.continuous(0.1)
 
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
@@ -92,18 +91,19 @@ class pixelpulse.TimeSeriesView
 		server.captureStateChanged.listen (state) =>
 			if state == 'ready' or (state != 'inactive' and not @watch)
 				@watch = @stream.getWatch()
-				@watch.start(0, 100, 1)
+				pixel_time = @xaxis.span()/@lg.width
+				@watch.start(0, 1000, pixel_time)
 				@series.ydata = @watch.data
 				@lg.needsRedraw()
 
 				@watch.updated.listen =>
-					console.info('graph upd', @lg, @xdata, @watch.data)
+					window.redrawCnt+=1
 					@lg.needsRedraw()
 
 		@xaxis = new livegraph.Axis(0, 10) 
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
 
-		@xdata = livegraph.arange(0, 9.99, 0.1)
+		@xdata = livegraph.arange(0, 9.99, 0.01)
 		
 		@series =  new livegraph.Series(@xdata, [], 'blue')
 
