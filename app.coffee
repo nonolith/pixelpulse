@@ -32,7 +32,7 @@ pixelpulse.init = (server, params) ->
 
 			server.device.channelHandler (c) ->
 				console.info "channel added"
-				c.inputStreamHandler (s) ->
+				c.streamHandler (s) ->
 					console.info "stream added"
 					s = new pixelpulse.TileView(s)
 					$(meters).append(s.el)			

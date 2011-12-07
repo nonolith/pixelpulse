@@ -104,7 +104,7 @@ class Device
 		@onInfo(info)
 
 	onInfo: (info) ->
-		for i in ['id', 'model', 'hwversion', 'fwversion', 'serial']
+		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial']
 			this[i] = info[i]
 		
 		@infoChanged.notify(this)
@@ -120,7 +120,7 @@ class ActiveDevice
 		@channels = {}
 
 	onInfo: (info) ->
-		for i in ['id', 'model', 'hwversion', 'fwversion', 'serial']
+		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial']
 			this[i] = info[i]
 
 		@channels = updateCollection(@channels, info.channels, Channel, @channelAdded, this)
@@ -137,11 +137,10 @@ class ActiveDevice
 
 class Channel
 	constructor: (info) ->
-		@inputStreams = {}
-		@outputStreams = {}
+		@streams = {}
 
 		@infoChanged = new Event('infoChanged')
-		@inputStreamAdded = new Event('inputStreamAdded')
+		@streamAdded = new Event('streamAdded')
 		@removed = new Event('removed')
 
 		@onInfo(info)
@@ -150,17 +149,17 @@ class Channel
 		for i in ['id', 'displayName']
 			this[i] = info[i]
 
-		@inputStreams = updateCollection(@inputStreams, info.inputs, InputStream, @inputStreamAdded, this)
+		@streams = updateCollection(@streams, info.streams, Stream, @streamAdded, this)
 		@infoChanged.notify(this)
 	
 	onRemoved: ->
-		for sId, stream of @inputStreams
+		for sId, stream of @streams
 			stream.onRemoved()
 		@removed.notify(this)
 
-	inputStreamHandler: (h) ->
-		for sId, stream of @inputStreams then h(stream)
-		@inputStreamAdded.listen(h)
+	streamHandler: (h) ->
+		for sId, stream of @streams then h(stream)
+		@streamAdded.listen(h)
 
 	setConstant: (mode, val) ->
 		server.send 'set' #TODO: don't use global?
@@ -169,7 +168,7 @@ class Channel
 			mode: mode
 			value: val
 
-class InputStream
+class Stream
 	constructor: (info) ->
 		@infoChanged = new Event('infoChanged')
 		@onRemoved = new Event('removed')
