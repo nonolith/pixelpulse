@@ -67,7 +67,7 @@ class Dataserver
 					@devices = updateCollection(@devices, m.devices, Device, @deviceAdded, this)
 				when "deviceInfo"
 					@device.onInfo(m.device)
-				when "capture_state"
+				when "captureState"
 					@captureState = m.state
 					if @captureState == 'ready'
 						for wId, watch of @watchesById then watch.onDone()
