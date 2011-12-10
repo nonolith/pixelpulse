@@ -98,7 +98,7 @@ class pixelpulse.TimeSeriesView
 
 	destroy: ->
 		@tsRow.remove()
-		# TODO: clean up watch
+		@series.destroy()
 
 
 

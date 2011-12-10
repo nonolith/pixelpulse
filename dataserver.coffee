@@ -279,4 +279,7 @@ class TimeDataSeries
 	
 	configure: (@xmin, @xmax, @requestedPoints) -> @submit()
 
+	destroy: ->
+		@listener.cancel()
+
 window.server = new Dataserver('localhost:9003')	
