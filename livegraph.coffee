@@ -128,10 +128,10 @@ class livegraph.canvas extends LiveGraph
 		
 		$(@div).mousedown(@mousedown)
 		
-		@showXbottom = window.xbottom || true
+		@showXbottom = false
 		@showYleft = true
 		@showYright = true
-		@showYgrid = window.ygrid || true
+		@showYgrid = false
 		
 		@ctxa = @axisCanvas.getContext('2d')
 		
