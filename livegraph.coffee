@@ -262,6 +262,9 @@ class livegraph.canvas extends LiveGraph
 			xright: @width - (PADDING + @showYright * AXIS_SPACING)
 			width: @width - 2*PADDING - (@showYleft+@showYright) * AXIS_SPACING
 			height: @height - 2*PADDING - @showXbottom  * AXIS_SPACING
+
+		if @onResized
+			@onResized()
 		
 		@needsRedraw(true)
 			

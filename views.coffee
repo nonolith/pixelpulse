@@ -28,13 +28,8 @@ class pixelpulse.TileView
 		@stream.tile = this
 		@update()
 
-		server.captureStateChanged.listen (state) =>
-			console.log 'captureStateChanged'
-			if state == 'ready' or (state != 'inactive' and not @watch)
-				@watch = @stream.getWatch()
-				@watch.updated.listen =>
-					@onValue(@watch.lastData)
-				@watch.continuous(0.1)
+		@listener = @stream.listen =>
+			@onValue(@listener.lastData)
 
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
@@ -88,22 +83,17 @@ class pixelpulse.TimeSeriesView
 
 		$(@tile.el).detach().attr('style', '').appendTo(@tsAside)
 
-		server.captureStateChanged.listen (state) =>
-			if state == 'ready' or (state != 'inactive' and not @watch)
-				@watch = @stream.getWatch()
-				pixel_time = @xaxis.span()/@lg.width
-				[@series.xdata, @series.ydata] = @watch.start(@xaxis.visibleMin, @xaxis.visibleMax, pixel_time)
-				@lg.needsRedraw()
-
-				@watch.updated.listen =>
-					window.redrawCnt+=1
-					@lg.needsRedraw()
-
 		@xaxis = new livegraph.Axis(0, 10)
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
-		@series =  new livegraph.Series([], [], 'blue')
-
+		@series =  @stream.series()
+		
 		@lg = new livegraph.canvas(@graphDiv.get(0), @xaxis, @yaxis, [@series])
+
+		@lg.onResized = =>
+			if @series.requestedPoints != @lg.width
+				@series.configure(@xaxis.visibleMin, @xaxis.visibleMax, @lg.width)
+
+		@series.updated.listen => @lg.needsRedraw()
 		@lg.needsRedraw()
 
 	destroy: ->

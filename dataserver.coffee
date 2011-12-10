@@ -46,9 +46,10 @@ class Dataserver
 		@disconnected = new Event('disconnected')
 		@deviceAdded = new Event('deviceAdded')
 		@captureStateChanged = new Event('captureStateChanged')
+		@samplesReset = new Event('samplesReset')
 
 		@devices = {}
-		@watchesById = {}
+		@listenersById = {}
 
 	connect: ->
 		@ws = new WebSocket("ws://" + @host + "/ws/v0")
@@ -69,11 +70,14 @@ class Dataserver
 					@device.onInfo(m.device)
 				when "captureState"
 					@captureState = m.state
-					if @captureState == 'ready'
-						for wId, watch of @watchesById then watch.onDone()
 					@captureStateChanged.notify(@captureState)
+					if @captureState == 'ready'
+						@samplesReset.notify()
+						for id, i of @listenersById
+							i.onReset()
 				when "update"
-					@watchesById[m.id].onMessage(m)
+					for d in m.listeners
+						@listenersById[d.id].onMessage(d)
 	
 	send: (cmd, m={})->
 		m._cmd = cmd
@@ -183,66 +187,96 @@ class Stream
 	onRemoved: ->
 		@removed.notify()
 
-	getWatch: ->
+	calcDecimate: (requestedSampleTime) ->
+		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/@sampleTime))
+		sampleTime = @sampleTime * decimateFactor
+		return [decimateFactor, sampleTime]
+
+	listen: (fn, sampleTime=0.1) ->
 		channel = @parent
 		device = channel.parent
 		server = device.parent
+		l = new Listener(server, device, channel, this, sampleTime)
+		if fn
+			l.updated.listen(fn)
+			l.submit()
+		return l
 
-		return new Watch(server, device, channel, this)
+	series: -> new TimeDataSeries(this)
 		
 
-nextWatchId = 100
+nextListenerId = 100
 
-class Watch
-	constructor: (@server, @device, @channel, @stream) ->
-		@active = no
-		@id = 'w'+(nextWatchId++)
-		@data = false
-		@dataFill = 0
+class Listener
+	constructor: (@server, @device, @channel, @stream, @requestedSampleTime) ->
+		@id ='w'+(nextListenerId++)
 		@updated = new Event('updated')
 		@lastData = NaN
 
-	start: (startTime, endTime, requestedSampleTime) ->
-		[sampleTime, len] = @submit(startTime/@stream.sampleTime, endTime/@stream.sampleTime, requestedSampleTime)
-		@xdata = new Float32Array(len)
-		for i in [0...len]
-			@xdata[i] = startTime + i*sampleTime
-		@ydata = new Float32Array(len)
-		return [@xdata, @ydata]
-
-	submit: (startSample, endSample, requestedSampleTime) ->
-		@dataFill = 0
-		@server.watchesById[@id] = this
-		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/@stream.sampleTime))
-		@server.send 'watch'
+	submit: (startTime=false) ->
+		@server.listenersById[@id] = this
+		[@decimateFactor, @sampleTime] = @stream.calcDecimate(@requestedSampleTime)
+		if startTime?
+			startSample = startTime/@stream.sampleTime
+			console.log 'startSample', startSample
+		else
+			startSample = -1
+		@server.send 'listen'
 			id: @id
 			device: @device.id
 			channel: @channel.id
 			stream: @stream.id
-			startIndex: startSample
-			endIndex: endSample
-			decimateFactor: decimateFactor
-		@active = yes
+			decimateFactor: @decimateFactor
+			start: startSample
 
-		numOutSamples = Math.ceil((endSample-startSample)/decimateFactor)
-		sampleTime = @stream.sampleTime * decimateFactor
-		return [sampleTime, numOutSamples]
-
-	continuous: (sampleTime) ->
-		@data = false
-		@submit(-1, -1, sampleTime)
-
+	onReset: ->
+		console.log 'onReset'
+		@lastData = NaN
+		@updated.notify([], 0)
+		
 	onMessage: (m) ->
-		@dataFill = m.idx
-		if @ydata?
-			for i in m.data
-				@ydata[@dataFill++] = i
 		@lastData = m.data[m.data.length-1]
-		if m.end then @onDone()
+		@updated.notify(m.data, m.idx)
+
+	cancel: ->
+		@server.send 'cancelListen'
+			id: @id
+		if @server.watchesById[@id]
+			delete @server.listenersById[@id]
+
+class TimeDataSeries
+	constructor: (@series) ->
+		@listener = @series.listen()
+		@listener.updated.listen(@onData)
+		@updated = new Event('updated')
+		@xdata = []
+		@ydata = []
+		@requestedPoints = 0
+	
+	submit: ->
+		time = @xmax - @xmin
+		requestedSampleTime = time/@requestedPoints
+		[decimateFactor, sampleTime] = @series.calcDecimate(requestedSampleTime)
+		len = time/sampleTime
+		console.log 'buf', time, sampleTime, len, @requestedPoints
+
+		@ydata = new Float32Array(len)
+		@xdata = new Float32Array(len)
+		for i in [0...len]
+			@xdata[i] = @xmin + i*sampleTime
+		
+		@listener.requestedSampleTime = requestedSampleTime
+		@listener.submit(@xmin)
+		return
+	
+	onData: (d, idx) =>
+		if idx == 0
+			@ydata = new Float32Array(@xdata.length)
+		for i in d
+			@ydata[idx++] = i
 		@updated.notify()
 
-	onDone: ->
-		@active = no
-		delete @server.watchesById[@id]
+	
+	configure: (@xmin, @xmax, @requestedPoints) -> @submit()
 
 window.server = new Dataserver('localhost:9003')	
