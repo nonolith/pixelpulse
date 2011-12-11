@@ -186,7 +186,7 @@ class Stream
 		@onInfo(info)
 
 	onInfo: (info) ->
-		for i in ['id', 'displayName', 'units', 'min', 'max', 'sampleTime']
+		for i in ['id', 'displayName', 'units', 'min', 'max', 'sampleTime', 'outputMode']
 			this[i] = info[i]
 
 		@infoChanged.notify(this)
@@ -220,7 +220,7 @@ class Listener
 		@updated = new Event('updated')
 		@lastData = NaN
 
-	submit: (startTime=false) ->
+	submit: (startTime=null) ->
 		@server.listenersById[@id] = this
 		[@decimateFactor, @sampleTime] = @stream.calcDecimate(@requestedSampleTime)
 		if startTime?

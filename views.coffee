@@ -71,7 +71,7 @@ class pixelpulse.TileView
 			@timeseries = false
 		
 		return $(@el).detach()
-		
+	
 
 class pixelpulse.TimeSeriesView
 	constructor: (@stream, @tile) ->
@@ -91,9 +91,26 @@ class pixelpulse.TimeSeriesView
 
 		@lg.onResized = =>
 			if @series.requestedPoints != @lg.width
-				@series.configure(@xaxis.visibleMin, @xaxis.visibleMax, @lg.width)
-
-		@series.updated.listen => @lg.needsRedraw()
+				@series.configure(@xaxis.visibleMin, @xaxis.visibleMax, @lg.width/2)
+				
+		@lg.onClick = (pos) =>
+			[x,y] = pos
+			if x < @lg.width - 45
+				return new livegraph.DragScrollAction(@lg, pos)
+			else
+				return new DragToSetAction(this, pos)
+				
+		if @stream.outputMode
+			@dot = @lg.addDot('white', 'blue')
+			@dot.count = 0
+			
+		@series.updated.listen =>
+			@lg.needsRedraw()
+			if @dot and (@dot.count > 10)
+				@dot.position(@series.listener.lastData)
+				@dot.count = 0
+			@dot.count++
+			
 		@lg.needsRedraw()
 
 	destroy: ->
@@ -101,4 +118,17 @@ class pixelpulse.TimeSeriesView
 		@series.destroy()
 
 
+class DragToSetAction
+	constructor: (@view, pos) ->
+		@transform = livegraph.makeTransform(@view.lg.geom, @view.lg.xaxis, @view.lg.yaxis)
+		@onDrag(pos)
+	
+	onDrag: ([x, y]) ->
+		[x, y] = livegraph.invTransform(x,y,@transform)
+		@view.stream.parent.setConstant(@view.stream.outputMode, y)
+	
+	onAnim: ->
+	onRelease: ->
+	cancel: ->
+	
 
