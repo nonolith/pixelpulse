@@ -90,9 +90,10 @@ class Dataserver
 			@device.onRemove()
 		@device = new ActiveDevice(this)
 
-	prepareCapture: (t) ->
+	prepareCapture: (t, continuous=false) ->
 		@send 'prepareCapture',
-			length: t	
+			length: t
+			continuous: continuous
 
 	startCapture: ->
 		@send 'startCapture'
