@@ -83,7 +83,7 @@ class pixelpulse.TimeSeriesView
 
 		$(@tile.el).detach().attr('style', '').appendTo(@tsAside)
 
-		@xaxis = new livegraph.Axis(0, 10)
+		@xaxis = new livegraph.Axis(-10, 0)
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
 		@series =  @stream.series()
 		

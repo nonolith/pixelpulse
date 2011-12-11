@@ -48,6 +48,10 @@ class Dataserver
 		@captureStateChanged = new Event('captureStateChanged')
 		@samplesReset = new Event('samplesReset')
 
+		@captureState = 'inactive'
+		@captureLength = 0
+		@captureContinuous = false
+
 		@devices = {}
 		@listenersById = {}
 
@@ -70,6 +74,8 @@ class Dataserver
 					@device.onInfo(m.device)
 				when "captureState"
 					@captureState = m.state
+					@captureLength = m.length
+					@captureContinuous = m.continuous
 					@captureStateChanged.notify(@captureState)
 					if @captureState == 'ready'
 						@samplesReset.notify()
@@ -249,6 +255,7 @@ class TimeDataSeries
 	constructor: (@series) ->
 		@listener = @series.listen()
 		@listener.updated.listen(@onData)
+		@server = @listener.server
 		@updated = new Event('updated')
 		@xdata = []
 		@ydata = []
@@ -273,12 +280,20 @@ class TimeDataSeries
 	onData: (d, idx) =>
 		if idx == 0
 			@ydata = new Float32Array(@xdata.length)
+
+		if d.length and @xmin < 0
+			@ydata.set(@ydata.subarray(d.length)) #shift array element left
+			idx = @ydata.length-d.length
+
 		for i in d
 			@ydata[idx++] = i
+		
 		@updated.notify()
 
 	
-	configure: (@xmin, @xmax, @requestedPoints) -> @submit()
+	configure: (@xmin, @xmax, @requestedPoints) ->
+		# negative xmin, xmax==0 means to always show the last -xmin seconds
+		@submit()
 
 	destroy: ->
 		@listener.cancel()
