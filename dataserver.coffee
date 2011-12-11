@@ -248,7 +248,7 @@ class Listener
 	cancel: ->
 		@server.send 'cancelListen'
 			id: @id
-		if @server.watchesById[@id]
+		if @server.listenersById[@id]
 			delete @server.listenersById[@id]
 
 class TimeDataSeries
