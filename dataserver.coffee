@@ -224,7 +224,7 @@ class Listener
 		@server.listenersById[@id] = this
 		[@decimateFactor, @sampleTime] = @stream.calcDecimate(@requestedSampleTime)
 		if startTime?
-			startSample = startTime/@stream.sampleTime
+			startSample = Math.round(startTime/@stream.sampleTime)
 			console.log 'startSample', startSample
 		else
 			startSample = -1
