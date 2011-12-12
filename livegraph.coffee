@@ -584,20 +584,15 @@ livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
 		ctx.strokeStyle = c.stroke
 		ctx.lineWidth = 2
 		
-		console.log 'dot render', c.width, c.height, c.shape
-		
 		switch c.shape
 			when 'circle'
-				console.log 'circ'
 				ctx.arc(center, center, radius, 0, Math.PI*2, true);
 			when 'down'
-				console.log 'down'
 				ctx.moveTo(center,             center+radius)
 				ctx.lineTo(center+radius*0.86, center-radius*0.5)
 				ctx.lineTo(center-radius*0.86, center-radius*0.5)
 				ctx.lineTo(center,             center+radius)
 			when 'up'
-				console.log 'up'
 				ctx.moveTo(center,             center-radius)
 				ctx.lineTo(center+radius*0.86, center+radius*0.5)
 				ctx.lineTo(center-radius*0.86, center+radius*0.5)
