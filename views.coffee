@@ -105,7 +105,7 @@ class pixelpulse.TimeSeriesView
 			
 		@series.updated.listen =>
 			@lg.needsRedraw()
-			@dot.position(@series.listener.lastData)
+			if @dot then @dot.position(@series.listener.lastData)
 			@canSetAgain = true
 			
 		@lg.needsRedraw()
