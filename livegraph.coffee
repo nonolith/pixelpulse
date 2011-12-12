@@ -268,6 +268,20 @@ class livegraph.canvas extends LiveGraph
 		dot = livegraph.makeDotCanvas(5, 'white', 'blue')
 		dot.position = (y) =>
 			[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
+			
+			if y > @yaxis.visibleMax
+				y = @yaxis.visibleMax
+				shape = 'up'
+			else if y < @yaxis.visibleMin
+				y = @yaxis.visibleMin
+				shape = 'down'
+			else
+				shape = 'circle'
+				
+			if dot.shape != shape
+				dot.shape = shape
+				dot.render()
+			
 			y = Math.round(dy+y*sy)
 			if dot.lastY != y
 				dot.positionRight(PADDING+AXIS_SPACING, y)
@@ -546,6 +560,9 @@ livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
 	c.width = 2*radius + 4
 	c.height = 2*radius + 4
 	center = radius+2
+	c.fill = fill
+	c.stroke = stroke
+	
 	$(c).css
 		position: 'absolute'
 		'margin-top':-center
@@ -561,16 +578,35 @@ livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
 		c.style.right = "#{x}px"
 		c.style.left = "auto"
 	
-	c.color = (fill, stroke) ->
-		ctx.fillStyle = fill
-		ctx.strokeStyle = stroke
+	c.render = ->
+		c.width = c.width
+		ctx.fillStyle = c.fill
+		ctx.strokeStyle = c.stroke
 		ctx.lineWidth = 2
-		ctx.clearRect(0, 0, c.width, c.height)
-		ctx.arc(center, center, radius, 0, Math.PI*2, true);
+		
+		console.log 'dot render', c.width, c.height, c.shape
+		
+		switch c.shape
+			when 'circle'
+				console.log 'circ'
+				ctx.arc(center, center, radius, 0, Math.PI*2, true);
+			when 'down'
+				console.log 'down'
+				ctx.moveTo(center,             center+radius)
+				ctx.lineTo(center+radius*0.86, center-radius*0.5)
+				ctx.lineTo(center-radius*0.86, center-radius*0.5)
+				ctx.lineTo(center,             center+radius)
+			when 'up'
+				console.log 'up'
+				ctx.moveTo(center,             center-radius)
+				ctx.lineTo(center+radius*0.86, center+radius*0.5)
+				ctx.lineTo(center-radius*0.86, center+radius*0.5)
+				ctx.lineTo(center,             center-radius)
+				
 		ctx.fill()
 		ctx.stroke()
 		
-	c.color(fill, stroke)
+	c.render()
 
 	return c
 	
