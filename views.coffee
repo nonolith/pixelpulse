@@ -106,7 +106,6 @@ class pixelpulse.TimeSeriesView
 		@series.updated.listen =>
 			@lg.needsRedraw()
 			if @dot then @dot.position(@series.listener.lastData)
-			@canSetAgain = true
 			
 		@lg.needsRedraw()
 
@@ -121,10 +120,9 @@ class DragToSetAction
 		@onDrag(pos)
 	
 	onDrag: ([x, y]) ->
-		if @view.canSetAgain
-			[x, y] = livegraph.invTransform(x,y,@transform)
-			@view.stream.parent.setConstant(@view.stream.outputMode, y)
-			@view.canSetAgain = no
+		[x, y] = livegraph.invTransform(x,y,@transform)
+		@view.stream.parent.setConstant(@view.stream.outputMode, y)
+
 	
 	onAnim: ->
 	onRelease: ->
