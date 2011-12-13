@@ -131,7 +131,7 @@ class ActiveDevice
 		@channels = {}
 
 	onInfo: (info) ->
-		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial']
+		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial', 'sampleTime']
 			this[i] = info[i]
 
 		@channels = updateCollection(@channels, info.channels, Channel, @channelAdded, this)
@@ -186,7 +186,7 @@ class Stream
 		@onInfo(info)
 
 	onInfo: (info) ->
-		for i in ['id', 'displayName', 'units', 'min', 'max', 'sampleTime', 'outputMode']
+		for i in ['id', 'displayName', 'units', 'min', 'max', 'outputMode']
 			this[i] = info[i]
 
 		@infoChanged.notify(this)
@@ -195,8 +195,9 @@ class Stream
 		@removed.notify()
 
 	calcDecimate: (requestedSampleTime) ->
-		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/@sampleTime))
-		sampleTime = @sampleTime * decimateFactor
+		devSampleTime = @parent.parent.sampleTime
+		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/devSampleTime))
+		sampleTime = devSampleTime * decimateFactor
 		return [decimateFactor, sampleTime]
 
 	listen: (fn, sampleTime=0.1) ->
@@ -224,7 +225,7 @@ class Listener
 		@server.listenersById[@id] = this
 		[@decimateFactor, @sampleTime] = @stream.calcDecimate(@requestedSampleTime)
 		if startTime?
-			startSample = Math.round(startTime/@stream.sampleTime)
+			startSample = Math.round(startTime/@device.sampleTime)
 			console.log 'startSample', startSample
 		else
 			startSample = -1
