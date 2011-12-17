@@ -90,13 +90,21 @@ class pixelpulse.TimeSeriesView
 				return new livegraph.DragScrollAction(@lg, pos)
 			else
 				return new DragToSetAction(this, pos)
-				
+		
+		@isSource = false
 		if @stream.outputMode
 			@dot = @lg.addDot('white', 'blue')
+			@stream.parent.outputChanged.listen (m) =>
+				@isSource = (m.mode == @stream.outputMode)
+				@dot.fill = if @isSource then 'blue' else 'white'
+				@dot.render()
+				
+				if @isSource
+					@dot.position(m.valueTarget)
 			
 		@series.updated.listen =>
 			@lg.needsRedraw()
-			if @dot then @dot.position(@series.listener.lastData)
+			if @dot and not @isSource then @dot.position(@series.listener.lastData)
 			
 		@lg.needsRedraw()
 

@@ -84,6 +84,11 @@ class Dataserver
 				when "update"
 					for d in m.listeners
 						@listenersById[d.id].onMessage(d)
+						
+				when "outputChanged"
+					channel = @device.channels[m.channel]
+					channel.onOutputChanged(m)
+					
 	
 	send: (cmd, m={})->
 		m._cmd = cmd
@@ -153,6 +158,8 @@ class Channel
 		@infoChanged = new Event('infoChanged')
 		@streamAdded = new Event('streamAdded')
 		@removed = new Event('removed')
+		
+		@outputChanged = new Event('outputChanged')
 
 		@onInfo(info)
 
@@ -178,6 +185,9 @@ class Channel
 			channel: @id
 			mode: mode
 			value: val
+			
+	onOutputChanged: (m) ->
+		@outputChanged.notify(m)
 
 class Stream
 	constructor: (info) ->
