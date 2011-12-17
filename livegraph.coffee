@@ -269,6 +269,8 @@ class livegraph.canvas extends LiveGraph
 		dot.position = (y) =>
 			[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
 			
+			dot.style.visibility = !isNaN(y) and y?
+			
 			if y > @yaxis.visibleMax
 				y = @yaxis.visibleMax
 				shape = 'up'
