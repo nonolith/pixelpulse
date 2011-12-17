@@ -1,5 +1,5 @@
 /*
-Distributed under the terms of the BSD License
+Distributed under the terms of the GNU GPLv3
 (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
 */
 
@@ -66,8 +66,8 @@ body{
   	-moz-box-orient: vertical;
 }
 
-#meters{
-	height: 85px;
+#toolbar{
+	height: 32px;
 	background: #444;
 	background: linear-gradient(270deg, #555 0%, #585858 25%, #333 100%);
 	background: -webkit-linear-gradient(270deg, #555 0%, #585858 25%, #333 100%);
@@ -88,10 +88,6 @@ body{
 	-moz-box-pack: end;
 }
 
-#meters > .meter{
-	padding: 3px 0 2px 0;
-	margin-left: 10px;
-}
 
 .meter{
 	width: 140px;
@@ -223,44 +219,6 @@ body{
 	left: 0px;
 }
 
-#timeseries > section#timesection{
-	height: 32px;
-	background: linear-gradient(270deg, #ccc 0%, #d4d4d4 20%, #c8c8c8 100%);
-	background: -webkit-linear-gradient(270deg, #ccc 0%, #d4d4d4 20%, #c8c8c8 100%);
-	background: -moz-linear-gradient(270deg, #ccc 0%, #d4d4d4 20%, #c8c8c8 100%);
-	box-flex: 0;
-	-webkit-box-flex: 0;
-	-moz-box-flex: 0;
-	box-ordinal-group: 10;
-	-webkit-box-ordinal-group: 10;
-	-moz-box-ordinal-group: 10;
-	text-align: center;
-}
-
-#timesection .meter{
-	display: inline-block;
-	vertical-align: middle;
-	color: black;
-	height: 100%;
-}
-
-#timesection h2{
-	display: inline-block;
-	margin-right: 10px;
-}
-
-#timesection h2:after{
-	content: ':';
-}
-
-#timesection small{
-	display: none;
-}
-
-#timesection .reading{
-	display: inline-block;
-}
-
 #timeseries > section > aside{
 	width: 128px;
 	
@@ -343,23 +301,6 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	margin-top: 2px;
 }
 
-/* DnD */
-
-.insertion-cursor{
-	box-flex: 1;
-	-webkit-box-flex: 1;
-	-moz-box-flex: 1;
-	background: rgba(255, 255, 0, 0.3);
-	min-height: 80px;
-}
-
-#meters .insertion-cursor{
-	box-flex: 0;
-	-webkit-box-flex: 0;
-	-moz-box-flex: 0;
-	width: 140px;
-	margin-left: 10px;
-}
 
 .dropdownButton{
 	margin-left: -0.5em;
@@ -412,13 +353,6 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	background: -moz-linear-gradient(270deg, rgba(80, 80, 160, 0.2) 0%, rgba(90, 90, 180, 0.4) 20%, rgba(80, 80, 160, 0.2) 100%);
 }
 
-#meters .dropdownButton.opened > div{
-	bottom: 0;
-	top: auto;
-	box-direction: reverse;
-	-webkit-box-direction: reverse;
-	-moz-box-direction: reverse;
-}
 
 #layout-sel{
 	position: absolute;

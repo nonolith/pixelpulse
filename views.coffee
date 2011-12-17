@@ -15,15 +15,6 @@ class pixelpulse.TileView
 		@timeseries = false
 
 		@addReadingUI(@tile)
-		
-		@tile.attr("title", "Drag and drop to rearrange")
-		@tile.get(0).draggable = true
-		@tile.get(0).ondragstart = (e) =>
-			window.draggedChannel = this
-			e.dataTransfer.setData('application/x-nonolith-channel-id', @id)
-			i = $("<div class='meter-drag'>").text(@id).appendTo('#hidden')
-			e.dataTransfer.setDragImage(i.get(0), 0, 0)
-			setTimeout((-> i.remove()), 0)
 				
 		@stream.tile = this
 		@update()
