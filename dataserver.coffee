@@ -70,17 +70,23 @@ class Dataserver
 			switch m._action
 				when "devices"
 					@devices = updateCollection(@devices, m.devices, Device, @deviceAdded, this)
+					
 				when "deviceInfo"
 					@device.onInfo(m.device)
+					
 				when "captureState"
 					@captureState = m.state
+					@captureStateChanged.notify(@captureState)
+					
+				when "captureConfig"
 					@captureLength = m.length
 					@captureContinuous = m.continuous
-					@captureStateChanged.notify(@captureState)
-					if @captureState == 'ready'
-						@samplesReset.notify()
-						for id, i of @listenersById
-							i.onReset()
+					
+				when "captureReset"
+					@samplesReset.notify()
+					for id, i of @listenersById
+						i.onReset()
+						
 				when "update"
 					for d in m.listeners
 						@listenersById[d.id].onMessage(d)

@@ -51,13 +51,13 @@ pixelpulse.init = (server, params) ->
 					$('#timeseries').append(s.showTimeseries())
 					
 	server.captureStateChanged.listen (s) ->
-		if s=='active'
+		if s
 			$('#startpause').removeClass('startbtn').addClass('stopbtn').attr('title', 'Pause')
 		else
 			$('#startpause').removeClass('stopbtn').addClass('startbtn').attr('title', 'Start')
 			
 	$('#startpause').click ->
-		if server.captureState == 'active'
+		if server.captureState
 			server.pauseCapture()
 		else
 			server.startCapture()

@@ -104,7 +104,6 @@ body{
 	font-size: 20px;
 	color: #444;
 	border: 1px solid #888;
-	-webkit-transition: box-shadow 0.2s, background 0.5s;
 }
 
 #startpause:hover{
