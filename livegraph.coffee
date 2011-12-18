@@ -468,8 +468,6 @@ class livegraph.canvas extends LiveGraph
 
 		# column-major order!
 		tmatrix = [sx*w, 0, 0, 0,   0, sy*h, 0, 0,   dx*w, dy*h, 0, 0,   -1, 1, -1, 1]
-		           
-		window.tmatrix = tmatrix
 		
 		gl.uniformMatrix4fv(gl.shaderProgram.uniform.transform, false, new Float32Array(tmatrix))
 		

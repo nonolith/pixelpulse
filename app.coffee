@@ -69,12 +69,6 @@ params = {}
 for pair in document.location.search.slice(1).split('&')
 	[key,params[key]] = pair.split('=')
 
-hostname = params.server || document.location.host
-window.graphmode = params.graphmode || 'canvas'
-window.ygrid = params.ygrid != '0'
-window.xbottom = params.xbottom ? false
-window.canvas_clear_width = params.clrw
-
 $(document).ready ->	
 	if not params.timebar
 		$('#timesection').hide()
