@@ -49,6 +49,19 @@ pixelpulse.init = (server, params) ->
 					console.info "stream added"
 					s = new pixelpulse.TileView(s)
 					$('#timeseries').append(s.showTimeseries())
+					
+	server.captureStateChanged.listen (s) ->
+		if s=='active'
+			$('#startpause').removeClass('startbtn').addClass('stopbtn').attr('title', 'Pause')
+		else
+			$('#startpause').removeClass('stopbtn').addClass('startbtn').attr('title', 'Start')
+			
+	$('#startpause').click ->
+		if server.captureState == 'active'
+			server.pauseCapture()
+		else
+			server.startCapture()
+				
 			
 		
 #URL params
