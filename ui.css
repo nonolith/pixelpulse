@@ -57,6 +57,7 @@ body{
 	font-family: 'Droid Sans', sans-serif;
 	overflow: hidden;
 	-webkit-user-select: none;
+	cursor: default;
 
 	display: box;
 	display: -webkit-box;
@@ -151,14 +152,35 @@ body{
 	-webkit-text-fill-color: inherit;
 }
 
-#loading{
-	position: absoute;
-	top: 200px;
-	text-align:center;
-	font-size: 30px;
-	width: 100%;
+#error-overlay{
+	display: box;
+	display: -webkit-box;
+	display: -moz-box;
+	position: absolute;
 	z-index: 100;
+	left:0;
+	right:0;
+	top:0;
+	bottom:0;
+	background:rgba(64,64,64,0.5);
+	
+	-webkit-box-pack: center;
+	-webkit-box-align: center;
+	-moz-box-pack: center;
+	-moz-box-align: center;
+	box-pack: center;
+	box-align: center;
 }
+
+#error-status{
+	display: box;
+	font-size: 40px;
+	background: rgba(255, 255, 255, 0.5);
+	padding: 20px;
+	border-radius: 20px;
+}
+
+
 
 
 /* defaults */

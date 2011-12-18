@@ -5,25 +5,38 @@
 
 pixelpulse = (window.pixelpulse ?= {})
 
+pixelpulse.overlay = (message) ->
+	if not message
+		$("#error-overlay").hide()
+	else
+		$("#error-overlay").fadeIn(300)
+		$("#error-status").text(message)
+
 pixelpulse.init = (server, params) ->
 	ts = $("#timeseries").get(0)
 	meters = $("#meters").get(0)
 
 	if !window.WebSocket
-		document.getElementById('loading').innerHTML = "Pixelpulse requires WebSockets and currently only works in Chrome and Safari"
+		pixelpulse.overlay "Pixelpulse requires WebSockets and currently only works in Chrome and Safari"
 		return
 
 	server.connect()
-	 
+	
+	hasConnected = no
+	
 	server.connected.listen ->
 		document.title = "Pixelpulse (Connected)"
 		document.body.className = "connected"
-		$('#loading').hide()
+		pixelpulse.overlay()
+		hasConnected = yes
 
 	server.disconnected.listen ->
 		document.title = "Pixelpulse (Disconnected)"
 		document.body.className = "disconnected"
-		$('#loading').text('Disconnected').show()
+		if not hasConnected
+			pixelpulse.overlay "Dataserver not detected"
+		else
+			pixelpulse.overlay "Connection lost"
 
 	server.deviceAdded.listen (d) ->
 		console.info "device added", d
