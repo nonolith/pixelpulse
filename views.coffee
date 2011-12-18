@@ -101,6 +101,8 @@ class pixelpulse.TimeSeriesView
 				
 				if @isSource
 					@dot.position(m.valueTarget)
+				else
+					@dot.position(@series.listener.lastData)
 			
 		@series.updated.listen =>
 			@lg.needsRedraw()

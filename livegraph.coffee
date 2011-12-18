@@ -269,7 +269,7 @@ class livegraph.canvas extends LiveGraph
 		dot.position = (y) =>
 			[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
 			
-			dot.style.visibility = !isNaN(y) and y?
+			dot.style.visibility = if !isNaN(y) and y? then 'visible' else 'hidden'
 			
 			if y > @yaxis.visibleMax
 				y = @yaxis.visibleMax
