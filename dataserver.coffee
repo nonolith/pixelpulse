@@ -237,21 +237,20 @@ class Listener
 		@updated = new Event('updated')
 		@lastData = NaN
 
-	submit: (startTime=null) ->
+	submit: (startTime=null, count=-1) ->
 		@server.listenersById[@id] = this
 		[@decimateFactor, @sampleTime] = @stream.calcDecimate(@requestedSampleTime)
 		if startTime?
 			startSample = Math.round(startTime/@device.sampleTime)
-			console.log 'startSample', startSample
 		else
 			startSample = -1
 		@server.send 'listen'
 			id: @id
-			device: @device.id
 			channel: @channel.id
 			stream: @stream.id
 			decimateFactor: @decimateFactor
 			start: startSample
+			count: count
 
 	onReset: ->
 		console.log 'onReset'
