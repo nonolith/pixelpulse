@@ -5,80 +5,58 @@
 
 pixelpulse = (window.pixelpulse ?= {})
 
-class pixelpulse.TileView
-	constructor: (@stream)->
-		@id = "#{@stream.parent.id} - #{@stream.id}"
-		@tile = $("<div class='meter'>")
-		@h2 = $("<h2>").appendTo(@tile)
-		@el = @tile.get(0)
-		@el.view = this
-		@timeseries = false
+class pixelpulse.ChannelView
+	constructor: (@channel) ->
+		@section = $("<section class='channel'>")
+		@el = @section.get(0)
+		
+		@header = $("<header>").appendTo(@section)
+		
+		@aside = $("<aside>").appendTo(@header)
+		
+		@h1 = $("<h1>").text(@channel.displayName).appendTo(@aside)
+		
+		@streamViews = for id, s of @channel.streams
+			v = new pixelpulse.StreamView(s)
+			@section.append(v.el)
+			v
+		
 
-		@addReadingUI(@tile)
-				
-		@stream.tile = this
-		@update()
+class pixelpulse.StreamView
+	constructor: (@stream)->
+		@section = $("<section class='stream'>")
+		@aside = $("<aside>").appendTo(@section)
+		@el = @section.get(0)
+		
+		@h1 = $("<h1>").text(@stream.displayName).appendTo(@aside)
+		
+		@timeseriesElem = $("<div class='livegraph'>").appendTo(@section)
+
+		@addReadingUI(@aside)
 
 		@listener = @stream.listen =>
 			@onValue(@listener.lastData)
+			
+		@initTimeseries()
 
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
-			.append(@input = $("<input>"))
+			.append(@value = $("<span class='value'>"))
 			.append($("<span class='unit'>").text(@stream.units)))
 		
-		if not @settable
-			$(@input).attr('disabled', true)
-		else
-			@input.change (e) =>
-				@setValue(parseFloat($(@input).val(), 10))
-				$(@input).blur()
-				
-			@input.click ->
-				this.select()
-
-	update: ->
-		@h2.text(@stream.displayName)
-		
 	onValue: (v) ->
-		if !@input.is(':focus')
-			@input.val(if Math.abs(v)>1 then v.toPrecision(4) else v.toFixed(3))
-			if (v < 0)
-				@input.addClass('negative')
-			else
-				@input.removeClass('negative')
+		@value.text(if Math.abs(v)>1 then v.toPrecision(4) else v.toFixed(3))
+		if (v < 0)
+			@value.addClass('negative')
+		else
+			@value.removeClass('negative')
 
-	showTimeseries: ->
-		if @timeseries
-			return $(@timeseries.el).detach()
-		
-		@timeseries = new pixelpulse.TimeSeriesView(@stream, this)
-
-		return @timeseries.el
-
-	hideTimeseries: ->
-		if @timeseries
-			@timeseries.destroy()
-			@timeseries = false
-		
-		return $(@el).detach()
-	
-
-class pixelpulse.TimeSeriesView
-	constructor: (@stream, @tile) ->
-		@tsRow = $("<section>")
-				.addClass(@cssClass)
-				.append(@graphDiv = $("<div class='livegraph'>"))
-				.append(@tsAside = $("<aside>"))
-		@el = @tsRow.get(0)
-
-		$(@tile.el).detach().attr('style', '').appendTo(@tsAside)
-
+	initTimeseries: ->
 		@xaxis = new livegraph.Axis(-10, 0)
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
 		@series =  @stream.series()
 		
-		@lg = new livegraph.canvas(@graphDiv.get(0), @xaxis, @yaxis, [@series])
+		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
 
 		@lg.onResized = =>
 			if @series.requestedPoints != @lg.width
@@ -99,6 +77,8 @@ class pixelpulse.TimeSeriesView
 				@dot.fill = if @isSource then 'blue' else 'white'
 				@dot.render()
 				
+				@section.toggleClass('sourcing', @isSource)
+				
 				if @isSource
 					@dot.position(m.valueTarget)
 				else
@@ -111,7 +91,6 @@ class pixelpulse.TimeSeriesView
 		@lg.needsRedraw()
 
 	destroy: ->
-		@tsRow.remove()
 		@series.destroy()
 
 

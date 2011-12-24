@@ -152,7 +152,6 @@ class ActiveDevice
 		for chanId, chanInfo of info.channels
 			@channels[chanId] = new Channel(chanInfo, this)
 
-		console.log 'onInfo', @changed
 		@changed.notify(this)
 
 	onRemoved: ->

@@ -49,11 +49,8 @@ pixelpulse.init = (server, params) ->
 		dev.changed.listen ->
 			console.info "device updated", dev
 			for chId, channel of dev.channels
-				console.info "Channel", chId
-				for stId, stream of channel.streams
-					console.info "Stream", stId
-					s = new pixelpulse.TileView(stream)
-					$('#streams').append(s.showTimeseries())
+				s = new pixelpulse.ChannelView(channel)
+				$('#streams').append(s.el)
 					
 	server.captureStateChanged.listen (s) ->
 		if s
