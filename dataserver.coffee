@@ -19,34 +19,14 @@ class Event
 		func(args...) for func in @listeners
 		return
 
-updateCollection = (collection, infos, type, addedEvent, parent) ->
-	newCollection = {}
-		
-	for id, info of infos
-		oldItem = collection[id]
-		if oldItem
-			console.log 'updated'
-			oldItem.onInfo(info)
-			newCollection[id] = oldItem
-		else
-			newCollection[id] = item = new type(info)
-			item.parent = parent
-			console.log 'added', item
-			addedEvent.notify(item)
-	
-	for id, item of collection
-		if not newCollection[id]
-			item.onRemoved()
-
-	return newCollection
-
 class Dataserver
 	constructor: (@host) ->
 		@connected = new Event('connected')
 		@disconnected = new Event('disconnected')
-		@deviceAdded = new Event('deviceAdded')
+		@devicesChanged = new Event('devicesChanged')
 		@captureStateChanged = new Event('captureStateChanged')
 		@samplesReset = new Event('samplesReset')
+		@deviceSelected = new Event('deviceSelected')
 
 		@captureState = 'inactive'
 		@captureLength = 0
@@ -70,7 +50,12 @@ class Dataserver
 			m = JSON.parse(evt.data)
 			switch m._action
 				when "devices"
-					@devices = updateCollection(@devices, m.devices, Device, @deviceAdded, this)
+					@devices = {}
+					# note that this only refreshes the device list, not
+					# the active device
+					for devId, devInfo of m.devices
+						@devices[devId] = new Device(devInfo, this)
+					@devicesChanged.notify(@devices)
 					
 				when "deviceInfo"
 					@device.onInfo(m.device)
@@ -79,7 +64,7 @@ class Dataserver
 					@captureState = m.state
 					@captureStateChanged.notify(@captureState)
 					
-				when "captureConfig"
+				when "configuration"
 					@captureLength = m.length
 					@captureContinuous = m.continuous
 					
@@ -110,9 +95,10 @@ class Dataserver
 		if @device
 			@device.onRemove()
 		@device = new ActiveDevice(this)
+		@deviceSelected.notify(@device)
 
-	prepareCapture: (t, continuous=false) ->
-		@send 'prepareCapture',
+	configure: (t, continuous=false) ->
+		@send 'configure',
 			length: t
 			continuous: continuous
 
@@ -154,17 +140,20 @@ class Device
 
 class ActiveDevice
 	constructor: (@parent) ->
-		@infoChanged = new Event('infoChanged')
+		@changed = new Event('changed')
 		@removed = new Event('removed')
-		@channelAdded = new Event('channelAdded')
 		@channels = {}
 
 	onInfo: (info) ->
 		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial', 'sampleTime']
 			this[i] = info[i]
+		
+		@channels = {}
+		for chanId, chanInfo of info.channels
+			@channels[chanId] = new Channel(chanInfo, this)
 
-		@channels = updateCollection(@channels, info.channels, Channel, @channelAdded, this)
-		@infoChanged.notify(this)
+		console.log 'onInfo', @changed
+		@changed.notify(this)
 
 	onRemoved: ->
 		for cId, channel of @channels
@@ -180,13 +169,9 @@ class ActiveDevice
 		server.send 'controlTransfer', {bmRequestType, bRequest, wValue, wIndex, data, wLength, id}
 
 class Channel
-	constructor: (info) ->
+	constructor: (info, @parent) ->
 		@streams = {}
-
-		@infoChanged = new Event('infoChanged')
-		@streamAdded = new Event('streamAdded')
 		@removed = new Event('removed')
-		
 		@outputChanged = new Event('outputChanged')
 
 		@onInfo(info)
@@ -195,8 +180,9 @@ class Channel
 		for i in ['id', 'displayName']
 			this[i] = info[i]
 
-		@streams = updateCollection(@streams, info.streams, Stream, @streamAdded, this)
-		@infoChanged.notify(this)
+		@streams = {}
+		for streamId, streamInfo of info.streams
+			@streams[streamId] = new Stream(streamInfo, this)
 	
 	onRemoved: ->
 		for sId, stream of @streams
@@ -218,16 +204,13 @@ class Channel
 		@outputChanged.notify(m)
 
 class Stream
-	constructor: (info) ->
-		@infoChanged = new Event('infoChanged')
+	constructor: (info, @parent) ->
 		@onRemoved = new Event('removed')
 		@onInfo(info)
 
 	onInfo: (info) ->
 		for i in ['id', 'displayName', 'units', 'min', 'max', 'outputMode']
 			this[i] = info[i]
-
-		@infoChanged.notify(this)
 
 	onRemoved: ->
 		@removed.notify()

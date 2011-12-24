@@ -38,17 +38,22 @@ pixelpulse.init = (server, params) ->
 		else
 			pixelpulse.overlay "Connection lost"
 
-	server.deviceAdded.listen (d) ->
-		console.info "device added", d
+	server.devicesChanged.listen (l) ->
+		console.info "Device list changed", l
 		if not server.device
-			server.selectDevice(d)
+			# select the "first" device if we don't have a device chosen
+			server.selectDevice(l[Object.keys(l)])
 
-			server.device.channelHandler (c) ->
-				console.info "channel added"
-				c.streamHandler (s) ->
-					console.info "stream added"
-					s = new pixelpulse.TileView(s)
-					$('#timeseries').append(s.showTimeseries())
+	server.deviceSelected.listen (dev) ->
+		console.info "Selected device", dev
+		dev.changed.listen ->
+			console.info "device updated", dev
+			for chId, channel of dev.channels
+				console.info "Channel", chId
+				for stId, stream of channel.streams
+					console.info "Stream", stId
+					s = new pixelpulse.TileView(stream)
+					$('#streams').append(s.showTimeseries())
 					
 	server.captureStateChanged.listen (s) ->
 		if s
