@@ -54,6 +54,7 @@ class Dataserver
 
 		@devices = {}
 		@listenersById = {}
+		@callbacks = {}
 
 	connect: ->
 		@ws = new WebSocket("ws://" + @host + "/ws/v0")
@@ -95,6 +96,9 @@ class Dataserver
 					channel = @device.channels[m.channel]
 					channel.onOutputChanged(m)
 					
+				when "controlTransferReturn"
+					@runCallback m.id, m
+					
 	
 	send: (cmd, m={})->
 		m._cmd = cmd
@@ -117,6 +121,20 @@ class Dataserver
 
 	pauseCapture: ->
 		@send 'pauseCapture'
+		
+	createCallback: (fn) ->
+		if fn
+			id = +new Date() + Math.round(Math.random()*100000)
+			@callbacks[id] = fn
+			return id
+		else
+			return ''
+		
+	runCallback: (id, data, remove=yes) ->
+		if @callbacks[id]
+			@callbacks[id](data)
+			if remove
+				delete @callbacks[id]
 		
 
 class Device
@@ -156,6 +174,10 @@ class ActiveDevice
 	channelHandler: (h) ->
 		for cId, channel of @channels then h(channel)
 		@channelAdded.listen(h)
+		
+	controlTransfer: (bmRequestType, bRequest, wValue, wIndex, data=[], wLength=64, callback) ->
+		id = server.createCallback callback
+		server.send 'controlTransfer', {bmRequestType, bRequest, wValue, wIndex, data, wLength, id}
 
 class Channel
 	constructor: (info) ->
