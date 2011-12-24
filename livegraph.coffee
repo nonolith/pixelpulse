@@ -24,7 +24,7 @@ class livegraph.Axis
 		grid=Math.pow(10, Math.round(Math.log(@max-@min)/Math.LN10)-1)
 		if (@max-@min)/grid >= 10
 			grid *= 2
-		return grid/2
+		return grid
 		
 	grid: ->
 		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]
@@ -131,7 +131,7 @@ class livegraph.canvas extends LiveGraph
 		@showXbottom = false
 		@showYleft = true
 		@showYright = true
-		@showYgrid = false
+		@showYgrid = true
 		
 		@ctxa = @axisCanvas.getContext('2d')
 		
@@ -331,7 +331,7 @@ class livegraph.canvas extends LiveGraph
 	drawYAxis: (x, align, textoffset) =>
 		grid = @yaxis.grid()
 		@ctxa.strokeStyle = 'black'
-		@ctxa.lineWidth = 2
+		@ctxa.lineWidth = 1
 		@ctxa.textAlign = align
 		@ctxa.textBaseline = 'middle'
 		
@@ -341,7 +341,7 @@ class livegraph.canvas extends LiveGraph
 		@ctxa.stroke()
 		
 		for y in grid
-			yp = @yaxis.ytransform(y, @geom)
+			yp = Math.round(@yaxis.ytransform(y, @geom)) + 0.5
 			
 			#draw side axis ticks and labels
 			@ctxa.beginPath()
@@ -352,9 +352,10 @@ class livegraph.canvas extends LiveGraph
 			
 	drawYgrid: ->
 		grid = @yaxis.grid()
-		@ctxa.strokeStyle = 'rgba(0,0,0,0.05)'
+		@ctxa.strokeStyle = 'rgba(0,0,0,0.08)'
+		@ctxa.lineWidth = 1
 		for y in grid
-			yp = @yaxis.ytransform(y, @geom)
+			yp = Math.round(@yaxis.ytransform(y, @geom)) + 0.5
 			@ctxa.beginPath()
 			@ctxa.moveTo(@geom.xleft, yp)
 			@ctxa.lineTo(@geom.xright, yp)
