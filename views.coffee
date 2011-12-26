@@ -20,6 +20,9 @@ class pixelpulse.ChannelView
 			v = new pixelpulse.StreamView(s)
 			@section.append(v.el)
 			v
+			
+	destroy: ->
+		s.destroy() for s in @streamViews
 		
 
 class pixelpulse.StreamView

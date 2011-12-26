@@ -47,9 +47,13 @@ pixelpulse.init = (server, params) ->
 	server.deviceSelected.listen (dev) ->
 		console.info "Selected device", dev
 		dev.changed.listen ->
+			i.destroy()	for i in pixelpulse.channelviews
+			$('#streams').empty()
+			pixelpulse.channelviews = []
 			console.info "device updated", dev
 			for chId, channel of dev.channels
 				s = new pixelpulse.ChannelView(channel)
+				pixelpulse.channelviews.push(s)
 				$('#streams').append(s.el)
 					
 	server.captureStateChanged.listen (s) ->
@@ -64,7 +68,7 @@ pixelpulse.init = (server, params) ->
 		else
 			server.startCapture()
 				
-			
+pixelpulse.channelviews = []			
 		
 #URL params
 params = {}

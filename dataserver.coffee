@@ -57,7 +57,7 @@ class Dataserver
 						@devices[devId] = new Device(devInfo, this)
 					@devicesChanged.notify(@devices)
 					
-				when "deviceInfo"
+				when "deviceConfig"
 					@device.onInfo(m.device)
 					
 				when "captureState"
@@ -97,11 +97,9 @@ class Dataserver
 		@device = new ActiveDevice(this)
 		@deviceSelected.notify(@device)
 
-	configure: (t, continuous=false) ->
-		@send 'configure',
-			length: t
-			continuous: continuous
-
+	configure: (mode=0, sampleTime=0.00004, samples=250000, continuous=false, raw=false) ->
+		@send 'configure', {mode, sampleTime, samples, continuous, raw}
+		
 	startCapture: ->
 		@send 'startCapture'
 
