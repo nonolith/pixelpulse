@@ -42,9 +42,10 @@ pixelpulse.init = (server, params) ->
 		console.info "Device list changed", l
 		if not server.device
 			# select the "first" device if we don't have a device chosen
-			server.selectDevice(l[Object.keys(l)])
+			dev = server.selectDevice(l[Object.keys(l)])
+			deviceSelected(dev)
 
-	server.deviceSelected.listen (dev) ->
+	deviceSelected = (dev) ->
 		console.info "Selected device", dev
 		dev.changed.listen ->
 			i.destroy()	for i in pixelpulse.channelviews

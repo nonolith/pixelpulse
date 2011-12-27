@@ -4,7 +4,7 @@
 # Distributed under the terms of the GNU LGPLv3
 
 class Event
-	constructor: (@name) ->
+	constructor: () ->
 		@listeners = []
 
 	listen: (func) ->
@@ -21,16 +21,13 @@ class Event
 
 class Dataserver
 	constructor: (@host) ->
-		@connected = new Event('connected')
-		@disconnected = new Event('disconnected')
-		@devicesChanged = new Event('devicesChanged')
-		@captureStateChanged = new Event('captureStateChanged')
-		@samplesReset = new Event('samplesReset')
-		@deviceSelected = new Event('deviceSelected')
+		@connected = new Event()
+		@disconnected = new Event()
+		@devicesChanged = new Event()
+		@captureStateChanged = new Event()
+		@samplesReset = new Event()
 
-		@captureState = 'inactive'
-		@captureLength = 0
-		@captureContinuous = false
+		@captureState = false
 
 		@devices = {}
 		@listenersById = {}
@@ -64,10 +61,6 @@ class Dataserver
 					@captureState = m.state
 					@captureStateChanged.notify(@captureState)
 					
-				when "configuration"
-					@captureLength = m.length
-					@captureContinuous = m.continuous
-					
 				when "captureReset"
 					@samplesReset.notify()
 					for id, i of @listenersById
@@ -95,7 +88,7 @@ class Dataserver
 		if @device
 			@device.onRemove()
 		@device = new ActiveDevice(this)
-		@deviceSelected.notify(@device)
+		return @device
 
 	configure: (mode=0, sampleTime=0.00004, samples=250000, continuous=false, raw=false) ->
 		@send 'configure', {mode, sampleTime, samples, continuous, raw}
@@ -123,23 +116,13 @@ class Dataserver
 
 class Device
 	constructor: (info) ->
-		@infoChanged = new Event('infoChanged')
-		@removed = new Event('removed')
-		@onInfo(info)
-
-	onInfo: (info) ->
 		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial']
 			this[i] = info[i]
-		
-		@infoChanged.notify(this)
-	
-	onRemoved: ->
-		@removed.notify(this)
 
 class ActiveDevice
 	constructor: (@parent) ->
-		@changed = new Event('changed')
-		@removed = new Event('removed')
+		@changed = new Event()
+		@removed = new Event()
 		@channels = {}
 
 	onInfo: (info) ->
@@ -156,10 +139,6 @@ class ActiveDevice
 		for cId, channel of @channels
 			channel.onRemoved()
 		@removed.notify(this)
-
-	channelHandler: (h) ->
-		for cId, channel of @channels then h(channel)
-		@channelAdded.listen(h)
 		
 	controlTransfer: (bmRequestType, bRequest, wValue, wIndex, data=[], wLength=64, callback) ->
 		id = server.createCallback callback
@@ -168,8 +147,8 @@ class ActiveDevice
 class Channel
 	constructor: (info, @parent) ->
 		@streams = {}
-		@removed = new Event('removed')
-		@outputChanged = new Event('outputChanged')
+		@removed = new Event()
+		@outputChanged = new Event()
 
 		@onInfo(info)
 
@@ -186,10 +165,6 @@ class Channel
 			stream.onRemoved()
 		@removed.notify(this)
 
-	streamHandler: (h) ->
-		for sId, stream of @streams then h(stream)
-		@streamAdded.listen(h)
-
 	setConstant: (mode, val) ->
 		server.send 'set' #TODO: don't use global?
 			source: 'constant'
@@ -202,7 +177,7 @@ class Channel
 
 class Stream
 	constructor: (info, @parent) ->
-		@onRemoved = new Event('removed')
+		@onRemoved = new Event()
 		@onInfo(info)
 
 	onInfo: (info) ->
@@ -236,7 +211,7 @@ nextListenerId = 100
 class Listener
 	constructor: (@server, @device, @channel, @stream, @requestedSampleTime) ->
 		@id ='w'+(nextListenerId++)
-		@updated = new Event('updated')
+		@updated = new Event()
 		@lastData = NaN
 
 	submit: (startTime=null, count=-1) ->
@@ -274,7 +249,7 @@ class TimeDataSeries
 		@listener = @series.listen()
 		@listener.updated.listen(@onData)
 		@server = @listener.server
-		@updated = new Event('updated')
+		@updated = new Event()
 		@xdata = []
 		@ydata = []
 		@requestedPoints = 0
