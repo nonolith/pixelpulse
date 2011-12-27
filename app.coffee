@@ -40,10 +40,13 @@ pixelpulse.init = (server, params) ->
 
 	server.devicesChanged.listen (l) ->
 		console.info "Device list changed", l
-		if not server.device
-			# select the "first" device if we don't have a device chosen
-			dev = server.selectDevice(l[Object.keys(l)])
-			deviceSelected(dev)
+		if Object.keys(l).length
+			if not server.device
+				# select the "first" device if we don't have a device chosen
+				dev = server.selectDevice(l[Object.keys(l)])
+				deviceSelected(dev)
+		else
+			pixelpulse.overlay "No devices found"
 
 	deviceSelected = (dev) ->
 		console.info "Selected device", dev
