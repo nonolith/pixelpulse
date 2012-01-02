@@ -60,6 +60,8 @@ class pixelpulse.StreamView
 		@series =  @stream.series()
 		
 		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
+		
+		$(window).resize => @lg.resized()
 
 		@lg.onResized = =>
 			if @series.requestedPoints != @lg.width

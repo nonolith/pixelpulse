@@ -373,8 +373,6 @@ class livegraph.canvas extends LiveGraph
 		
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
-			
-		#@autoscroll()
 		
 		if @dragAction
 			keepAnimating ||= @dragAction.onAnim()
