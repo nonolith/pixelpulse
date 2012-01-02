@@ -47,11 +47,10 @@ class Dataserver
 			m = JSON.parse(evt.data)
 			switch m._action
 				when "devices"
-					@devices = {}
 					# note that this only refreshes the device list, not
 					# the active device
-					for devId, devInfo of m.devices
-						@devices[devId] = new Device(devInfo, this)
+					@devices =  for devId, devInfo of m.devices
+						new Device(devInfo, this)
 					@devicesChanged.notify(@devices)
 					
 				when "deviceConfig"
@@ -76,6 +75,10 @@ class Dataserver
 					
 				when "controlTransferReturn"
 					@runCallback m.id, m
+					
+				when "deviceDisconnected"
+					@device.removed.notify()
+					@device = null
 					
 	
 	send: (cmd, m={})->

@@ -11,6 +11,37 @@ pixelpulse.overlay = (message) ->
 	else
 		$("#error-overlay").fadeIn(300)
 		$("#error-status").text(message)
+		
+pixelpulse.reset = ->
+	i.destroy()	for i in pixelpulse.channelviews
+	$('#streams').empty()
+	pixelpulse.channelviews = []
+	
+pixelpulse.chooseDevice = ->
+	ndevices = server.devices.length
+	if ndevices > 0
+		# select the "first" device
+		dev = server.selectDevice(server.devices[0])
+		pixelpulse.deviceSelected(dev)
+	else
+		pixelpulse.overlay "No devices found"
+		
+pixelpulse.deviceSelected = (dev) ->
+	console.info "Selected device", dev
+	pixelpulse.overlay("Loading Device...")
+	dev.changed.listen ->
+		pixelpulse.overlay()
+		console.info "device updated", dev
+		pixelpulse.reset()
+		for chId, channel of dev.channels
+			s = new pixelpulse.ChannelView(channel)
+			pixelpulse.channelviews.push(s)
+			$('#streams').append(s.el)
+	
+	dev.removed.listen ->
+		pixelpulse.reset()
+		pixelpulse.chooseDevice()
+	
 
 pixelpulse.init = (server, params) ->
 	ts = $("#timeseries").get(0)
@@ -27,7 +58,6 @@ pixelpulse.init = (server, params) ->
 	server.connected.listen ->
 		document.title = "Pixelpulse (Connected)"
 		document.body.className = "connected"
-		pixelpulse.overlay()
 		hasConnected = yes
 
 	server.disconnected.listen ->
@@ -40,26 +70,10 @@ pixelpulse.init = (server, params) ->
 
 	server.devicesChanged.listen (l) ->
 		console.info "Device list changed", l
-		if Object.keys(l).length
-			if not server.device
-				# select the "first" device if we don't have a device chosen
-				dev = server.selectDevice(l[Object.keys(l)])
-				deviceSelected(dev)
-		else
-			pixelpulse.overlay "No devices found"
-
-	deviceSelected = (dev) ->
-		console.info "Selected device", dev
-		dev.changed.listen ->
-			i.destroy()	for i in pixelpulse.channelviews
-			$('#streams').empty()
-			pixelpulse.channelviews = []
-			console.info "device updated", dev
-			for chId, channel of dev.channels
-				s = new pixelpulse.ChannelView(channel)
-				pixelpulse.channelviews.push(s)
-				$('#streams').append(s.el)
-					
+		
+		if not server.device
+			pixelpulse.chooseDevice()
+			
 	server.captureStateChanged.listen (s) ->
 		if s
 			$('#startpause').removeClass('startbtn').addClass('stopbtn').attr('title', 'Pause')
