@@ -16,6 +16,7 @@ pixelpulse.reset = ->
 	i.destroy()	for i in pixelpulse.channelviews
 	$('#streams').empty()
 	pixelpulse.channelviews = []
+	pixelpulse.initViewGlobals()
 	
 pixelpulse.chooseDevice = ->
 	ndevices = server.devices.length

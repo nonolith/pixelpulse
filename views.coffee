@@ -5,6 +5,10 @@
 
 pixelpulse = (window.pixelpulse ?= {})
 
+pixelpulse.initViewGlobals = ->
+	@timeseries_x = new livegraph.Axis(-10, 0)
+	@timeseries_graph_group = []
+
 class pixelpulse.ChannelView
 	constructor: (@channel) ->
 		@section = $("<section class='channel'>")
@@ -55,11 +59,15 @@ class pixelpulse.StreamView
 			@value.removeClass('negative')
 
 	initTimeseries: ->
-		@xaxis = new livegraph.Axis(-10, 0)
+		@xaxis = pixelpulse.timeseries_x
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
 		@series =  @stream.series()
 		
 		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
+		
+		# Make all timeseries graphs update together (for drag-to-scroll)
+		pixelpulse.timeseries_graph_group.push(@lg)
+		@lg.updateGroup = pixelpulse.timeseries_graph_group
 		
 		$(window).resize => @lg.resized()
 

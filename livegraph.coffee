@@ -109,6 +109,11 @@ class livegraph.canvas
 		
 		if not @init_webgl() then @init_canvas2d()
 		
+		# Array of graphs that will be updated together. Change this
+		# when graphs share state such as an axis
+		# TODO: too much of a hack?
+		@updateGroup = [this]
+		
 		@resized()
 		
 	init_canvas2d: ->
@@ -469,9 +474,9 @@ class livegraph.canvas
 			gl.bufferData(gl.ARRAY_BUFFER, series.ydata, gl.STREAM_DRAW)
 			gl.vertexAttribPointer(gl.shaderProgram.attrib.y, 1, gl.FLOAT, false, 0, 0)
 			gl.drawArrays(gl.LINE_STRIP, 0, series.xdata.length)
-		
-		
+	
 class livegraph.DragScrollAction
+	# Helper for the drag-to scroll behavior with momentum and rebound
 	constructor: (@lg, @origPos) ->
 		@origMin = @lg.xaxis.visibleMin
 		@origMax = @lg.xaxis.visibleMax
@@ -481,22 +486,27 @@ class livegraph.DragScrollAction
 		
 		@x = @lastX = @origPos[0]
 		@t = +new Date()
+		
+		if @lg.xaxis.action
+			@lg.xaxis.action.cancel()
+		@lg.xaxis.action = this
 	
 	onDrag: ([x, y]) ->
-		time = +new Date()
 		@scrollTo(x)
-		@x = x
+		@x = x # Save position so onAnim can compute velocity
 		
 	scrollTo: (x) ->
 		scrollby = (x-@origPos[0])/@scale
 		@lg.xaxis.visibleMin = @origMin - scrollby
 		@lg.xaxis.visibleMax = @origMax - scrollby
-		@lg.needsRedraw(true)
+		for i in @lg.updateGroup then i.needsRedraw(true)
 		
 	onRelease: ->
 		@pressed = false
-		@lg.needsRedraw()
 		@t = +new Date()-1
+		
+		# force a redraw to get animation timer started
+		@lg.needsRedraw(true)
 		
 	onAnim: ->
 		if @stop then return
@@ -534,7 +544,7 @@ class livegraph.DragScrollAction
 				@velocity -= vstep
 				
 				if (Math.abs(@velocity)) < Math.abs(vstep)
-					@stop = true
+					@cancel()
 					return false
 			
 			@x = @x + @velocity*dt
@@ -543,6 +553,7 @@ class livegraph.DragScrollAction
 			return true # keep animating
 		
 	cancel: ->
+		delete @lg.xaxis.action if @lg.xaxis.action is this
 		@stop = true
 		
 livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
