@@ -64,34 +64,6 @@ window.requestAnimFrame =
 	window.msRequestAnimationFrame ||
 	(callback, element) -> window.setTimeout(callback, 1000/60)
 
-class LiveGraph
-	constructor: (@div, @xaxis, @yaxis, @series) ->		
-		@div.setAttribute('class', 'livegraph')
-		
-#	autoscroll: ->
-#		if @xaxis.autoScroll
-#			@xaxis.max = @data[@data.length-1][@series[0].xvar]
-#			@xaxis.min = @xaxis.max + @xaxis.autoScroll
-	
-	perfStat_enable: (div)->
-		@psDiv = div
-		@psCount = 0
-		@psSum = 0
-		@psRunningSum = 0
-		@psRunningCount = 0
-
-		setInterval((=> 
-			@psRunningSum += @psSum
-			@psRunningCount += @psCount
-			@psDiv.innerHTML = "#{@renderer}: #{@psCount}fps; #{@psSum}ms draw time; Avg: #{@psRunningSum/@psRunningCount}"
-			@psCount = 0
-			@psSum = 0
-		), 1000)
-
-	perfStat: (time) ->
-		@psCount += 1
-		@psSum += time
-
 # Creates a matrix A  =  sx  0   dx
 #                        0   sy  dy
 #						 0   0   1
@@ -117,9 +89,9 @@ relMousePos = (elem, event) ->
 	o = $(elem).offset()
 	return [event.pageX-o.left, event.pageY-o.top]
 		
-class livegraph.canvas extends LiveGraph
-	constructor: (div, xaxis, yaxis, series) ->
-		super(div, xaxis, yaxis, series)
+class livegraph.canvas
+	constructor: (@div, @xaxis, @yaxis, @series) ->		
+		@div.setAttribute('class', 'livegraph')
 		
 		@axisCanvas = document.createElement('canvas')
 		@graphCanvas = document.createElement('canvas')
@@ -217,6 +189,25 @@ class livegraph.canvas extends LiveGraph
 		@renderer = 'webgl'
 		@redrawGraph = @redrawGraph_webgl
 		return true
+		
+	perfStat_enable: (div)->
+		@psDiv = div
+		@psCount = 0
+		@psSum = 0
+		@psRunningSum = 0
+		@psRunningCount = 0
+
+		setInterval((=> 
+			@psRunningSum += @psSum
+			@psRunningCount += @psCount
+			@psDiv.innerHTML = "#{@renderer}: #{@psCount}fps; #{@psSum}ms draw time; Avg: #{@psRunningSum/@psRunningCount}"
+			@psCount = 0
+			@psSum = 0
+		), 1000)
+
+	perfStat: (time) ->
+		@psCount += 1
+		@psSum += time
 		
 	mousedown: (e) =>
 		pos = origPos = relMousePos(@div, e)
