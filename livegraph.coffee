@@ -4,8 +4,8 @@
 
 livegraph = if exports? then exports else (this.livegraph = {})
 
-PADDING = 10
-AXIS_SPACING = 25
+PADDING = livegraph.PADDING = 10
+AXIS_SPACING = livegraph.AXIS_SPACING = 25
 			
 class livegraph.Axis
 	constructor: (@min, @max) ->

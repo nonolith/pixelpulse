@@ -338,6 +338,20 @@ section.stream.sourcing{
 	left: 0px;
 }
 
+#streams #timeaxis{
+	display: box;
+	display: -webkit-box;
+	display: -moz-box;
+	
+	-webkit-box-orient: horizontal;
+	-webkit-box-pack: end;
+	
+	height: 10px;
+	
+	-webkit-box-flex: 0;
+	-webkit-box-ordinal-group: 10;
+}
+
 #sidegraphs{
 	position: absolute;
 	bottom: 85px;

@@ -14,7 +14,7 @@ pixelpulse.overlay = (message) ->
 		
 pixelpulse.reset = ->
 	i.destroy()	for i in pixelpulse.channelviews
-	$('#streams').empty()
+	$('#streams section.channel').remove()
 	pixelpulse.channelviews = []
 	pixelpulse.initViewGlobals()
 	
@@ -38,6 +38,7 @@ pixelpulse.deviceSelected = (dev) ->
 			s = new pixelpulse.ChannelView(channel)
 			pixelpulse.channelviews.push(s)
 			$('#streams').append(s.el)
+		pixelpulse.finishViewInit()
 	
 	dev.removed.listen ->
 		pixelpulse.reset()

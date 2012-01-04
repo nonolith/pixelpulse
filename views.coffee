@@ -8,6 +8,19 @@ pixelpulse = (window.pixelpulse ?= {})
 pixelpulse.initViewGlobals = ->
 	@timeseries_x = new livegraph.Axis(-10, 0)
 	@timeseries_graph_group = []
+	
+pixelpulse.finishViewInit = ->
+	# show the x-axis ticks on the last stream
+	lastChannel = @channelviews[@channelviews.length-1]
+	lastStream = lastChannel.streamViews[lastChannel.streamViews.length-1]
+	lastStream.lg.showXbottom = yes
+	
+	#push the bottom out into the space reserved by #timeaxis
+	$(lastStream.lg.div).css('margin-bottom', -livegraph.AXIS_SPACING)
+	$(lastStream.lg.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
+	lastStream.lg.resized()
+	
+	
 
 class pixelpulse.ChannelView
 	constructor: (@channel) ->
