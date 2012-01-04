@@ -367,22 +367,21 @@ class livegraph.canvas
 
 	redraw: =>
 		startTime = new Date()
-		keepAnimating = false
 		
 		if @height != @div.offsetHeight or @width != @div.offsetWidth
 			@resized()
 		
+		@redrawRequested = false
+		
 		if @dragAction
-			keepAnimating ||= @dragAction.onAnim()
+			@dragAction.onAnim()
 			
 		if @axisRedrawRequested
 			@redrawAxis()
 			@axisRedrawRequested = false
 			
 		@redrawGraph()
-		@redrawRequested = false
 		
-		if keepAnimating then @needsRedraw()
 		@perfStat(new Date()-startTime)
 		return
 		
@@ -508,6 +507,10 @@ class livegraph.Action
 	# Called when the button is released
 	onRelease: ->
 	
+	# Called on the redraw event
+	onAnim: ->
+	
+	
 	
 
 # Helper for the drag-to scroll behavior with momentum and rebound	
@@ -594,12 +597,11 @@ class livegraph.DragScrollAction extends livegraph.Action
 						@redraw(true)
 						
 					@cancel()
-					return false
+					return
 			
 			@x = @x + @velocity*dt
 			@scrollTo(@x)
-			
-			return true # keep animating
+
 		
 livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
 	c = document.createElement('canvas')
