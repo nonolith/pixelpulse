@@ -20,15 +20,21 @@ class livegraph.Axis
 	
 	span: -> @visibleMax - @visibleMin
 		
-	gridstep: ->
-		grid=Math.pow(10, Math.round(Math.log(@max-@min)/Math.LN10)-1)
-		if (@max-@min)/grid >= 10
-			grid *= 2
-		return grid
-		
-	grid: ->
-		[min, max] = if @autoScroll then [@autoScroll, 0] else [@min, @max]
-		livegraph.arange(min, max, @gridstep())
+	grid: (countHint = 10) ->
+		# Based on code from d3.js
+		step = Math.pow(10, Math.floor(Math.log(@span() / countHint) / Math.LN10))
+		err = countHint / @span() * step;
+
+		# Filter ticks to get closer to the desired count.
+		if err <= .15 then step *= 10;
+		else if err <= .35 then step *= 5;
+		else if err <= .75 then step *= 2;
+
+		# Round start and stop values to step interval.
+		gridMin = Math.ceil(Math.max(@visibleMin, @min) / step) * step;
+		gridMax = Math.floor(Math.min(@visibleMax, @max) / step) * step + step * .5; # inclusive
+
+		livegraph.arange(gridMin, gridMax, step)
 		
 	xtransform: (x, geom) ->
 		(x - @visibleMin) * geom.width / @span() + geom.xleft
@@ -43,7 +49,6 @@ class DigitalAxis
 	min = 0
 	max = 1
 	
-	gridstep: -> 1
 	grid: -> [0, 1]
 	
 	xtransform: (x, geom) -> if x then geom.xleft else geom.xright
@@ -294,7 +299,7 @@ class livegraph.canvas
 		if @showYright  then @drawYAxis(@geom.xright, 'left',   8)
 		
 	drawXAxis: (y) ->
-		xgrid = @xaxis.grid()
+		xgrid = @xaxis.grid(Math.min(@width/50, 10))
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.beginPath()
@@ -322,7 +327,7 @@ class livegraph.canvas
 			@ctxa.fillText(Math.round(x*10)/10, xp ,y+textoffset)
 		
 	drawYAxis: (x, align, textoffset) =>
-		grid = @yaxis.grid()
+		grid = @yaxis.grid(@height / 30)
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.textAlign = align
