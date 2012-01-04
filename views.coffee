@@ -18,8 +18,12 @@ pixelpulse.finishViewInit = ->
 	$(lastGraph.div).css('margin-bottom', -livegraph.AXIS_SPACING)
 	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
 	lastGraph.resized()
-	
-	
+
+# run after a window changing operation to fetch new data from the server
+pixelpulse.updateTimeSeries = ->
+	for c in pixelpulse.channelviews
+		for s in c.streamViews
+			s.updateSeries()
 
 class pixelpulse.ChannelView
 	constructor: (@channel) ->
@@ -82,8 +86,8 @@ class pixelpulse.StreamView
 		$(window).resize => @lg.resized()
 
 		@lg.onResized = =>
-			if @series.requestedPoints != @lg.width
-				@series.configure(@xaxis.visibleMin, @xaxis.visibleMax, @lg.width/2)
+			if @series.requestedPoints != @lg.width/2
+				@updateSeries()
 				
 		@lg.onClick = (pos) =>
 			[x,y] = pos
@@ -91,6 +95,11 @@ class pixelpulse.StreamView
 				return new livegraph.DragScrollAction(@lg, pos, pixelpulse.timeseries_graphs)
 			else
 				return new DragToSetAction(this, pos)
+				
+		@lg.onDblClick = (e, pos) =>
+			opts = {time: 200, zoomFactor: if e.shiftKey then 2 else 0.5} 
+			return new livegraph.ZoomXAction(opts, @lg, pos,
+				pixelpulse.timeseries_graphs) #, pixelpulse.updateTimeSeries)
 		
 		@isSource = false
 		if @stream.outputMode
@@ -112,6 +121,9 @@ class pixelpulse.StreamView
 			if @dot and not @isSource then @dot.position(@series.listener.lastData)
 			
 		@lg.needsRedraw()
+		
+	updateSeries: ->
+		@series.configure(@xaxis.visibleMin, @xaxis.visibleMax, @lg.width/2)
 
 	destroy: ->
 		@series.destroy()

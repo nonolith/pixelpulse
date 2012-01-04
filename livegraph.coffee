@@ -107,6 +107,7 @@ class livegraph.canvas
 		@div.appendChild(@graphCanvas)
 		
 		$(@div).mousedown(@mousedown)
+		$(@div).dblclick(@doubleclick)
 		
 		@showXbottom = false
 		@showYleft = true
@@ -238,6 +239,13 @@ class livegraph.canvas
 		
 	onClick: (pos) ->
 		return new livegraph.DragScrollAction(this, pos)
+		
+	doubleclick: (e) =>
+		pos = origPos = relMousePos(@div, e)
+		@dragAction = @onDblClick(e, pos)
+		
+	onDblClick: (e, pos) ->
+		
 	
 	resized: () ->
 		if @div.offsetWidth == 0 or @div.offsetHeight == 0 then return
@@ -483,7 +491,7 @@ class livegraph.canvas
 # allTargets - other LiveGraph instances that need to be updated
 #              because they share state - e.g. axes
 class livegraph.Action
-	constructor: (@lg, @origPos, @allTargets=[@lg]) ->
+	constructor: (@lg, @origPos, @allTargets=[@lg], @doneCallback) ->
 		@stop = false
 		
 		for tgt in @allTargets
@@ -500,6 +508,8 @@ class livegraph.Action
 	# (subclasses should test this flag)		
 	cancel: ->
 		@stop = true
+		if @doneCallback then @doneCallback()
+		@doneCallback = null
 		
 	# Called when the mouse is dragged with the button still down
 	onDrag: ([x, y]) ->
@@ -602,7 +612,54 @@ class livegraph.DragScrollAction extends livegraph.Action
 			@x = @x + @velocity*dt
 			@scrollTo(@x)
 
+class livegraph.ZoomXAction extends livegraph.Action
+	constructor: (opts, lg, origPos, allTargets=null, doneCallback=null) ->
+		super(lg, origPos, allTargets, doneCallback)
 		
+		@time = opts.time
+		
+		@origMin = @lg.xaxis.visibleMin
+		@origMax = @lg.xaxis.visibleMax
+		@startSpan = @lg.xaxis.span()
+		
+		@endSpan = @startSpan * opts.zoomFactor
+		@center = invTransform(@origPos[0], @origPos[1], makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis))[0]
+		
+		@endMin = @center - @endSpan/2
+		@endMax = @center + @endSpan/2
+		
+		if @endMax > @lg.xaxis.max
+			@endMax = @lg.xaxis.max
+			@endMin = @endMax - @endSpan
+		else if @endMin < @lg.xaxis.min
+			@endMin = @lg.xaxis.min
+			@endMax = @endMin + @endSpan
+			
+		@startT = +new Date()
+		@redraw(true)
+	
+	onAnim: ->
+		if @stop then return
+		
+		t = +new Date() - @startT
+		ps = t / @time
+		pe = 1-ps
+		
+		if ps > 1
+			@cancel()
+		else
+			@lg.xaxis.visibleMin = @origMin*pe + @endMin*ps
+			@lg.xaxis.visibleMax = @origMax*pe + @endMax*ps
+			@redraw(true)
+			
+	cancel: ->
+		# don't want to get stuck between zoom levels
+		@lg.xaxis.visibleMin = @endMin
+		@lg.xaxis.visibleMax = @endMax
+		@redraw(true)
+		super()
+	
+	
 livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
 	c = document.createElement('canvas')
 	c.width = 2*radius + 4
