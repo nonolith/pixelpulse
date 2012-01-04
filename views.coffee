@@ -7,18 +7,17 @@ pixelpulse = (window.pixelpulse ?= {})
 
 pixelpulse.initViewGlobals = ->
 	@timeseries_x = new livegraph.Axis(-10, 0)
-	@timeseries_graph_group = []
+	@timeseries_graphs = []
 	
 pixelpulse.finishViewInit = ->
 	# show the x-axis ticks on the last stream
-	lastChannel = @channelviews[@channelviews.length-1]
-	lastStream = lastChannel.streamViews[lastChannel.streamViews.length-1]
-	lastStream.lg.showXbottom = yes
+	lastGraph = @timeseries_graphs[@timeseries_graphs.length-1]
+	lastGraph.showXbottom = yes
 	
-	#push the bottom out into the space reserved by #timeaxis
-	$(lastStream.lg.div).css('margin-bottom', -livegraph.AXIS_SPACING)
-	$(lastStream.lg.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
-	lastStream.lg.resized()
+	# push the bottom out into the space reserved by #timeaxis
+	$(lastGraph.div).css('margin-bottom', -livegraph.AXIS_SPACING)
+	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
+	lastGraph.resized()
 	
 	
 
@@ -78,9 +77,7 @@ class pixelpulse.StreamView
 		
 		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
 		
-		# Make all timeseries graphs update together (for drag-to-scroll)
-		pixelpulse.timeseries_graph_group.push(@lg)
-		@lg.updateGroup = pixelpulse.timeseries_graph_group
+		pixelpulse.timeseries_graphs.push(@lg)
 		
 		$(window).resize => @lg.resized()
 
@@ -91,7 +88,7 @@ class pixelpulse.StreamView
 		@lg.onClick = (pos) =>
 			[x,y] = pos
 			if x < @lg.width - 45
-				return new livegraph.DragScrollAction(@lg, pos)
+				return new livegraph.DragScrollAction(@lg, pos, pixelpulse.timeseries_graphs)
 			else
 				return new DragToSetAction(this, pos)
 		
@@ -120,7 +117,7 @@ class pixelpulse.StreamView
 		@series.destroy()
 
 
-class DragToSetAction
+class DragToSetAction extends livegraph.Action
 	constructor: (@view, pos) ->
 		@transform = livegraph.makeTransform(@view.lg.geom, @view.lg.xaxis, @view.lg.yaxis)
 		@onDrag(pos)
@@ -128,10 +125,5 @@ class DragToSetAction
 	onDrag: ([x, y]) ->
 		[x, y] = livegraph.invTransform(x,y,@transform)
 		@view.stream.parent.setConstant(@view.stream.outputMode, y)
-
-	
-	onAnim: ->
-	onRelease: ->
-	cancel: ->
 	
 

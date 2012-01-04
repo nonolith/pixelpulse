@@ -112,11 +112,6 @@ class livegraph.canvas
 		
 		if not @init_webgl() then @init_canvas2d()
 		
-		# Array of graphs that will be updated together. Change this
-		# when graphs share state such as an axis
-		# TODO: too much of a hack?
-		@updateGroup = [this]
-		
 		@resized()
 		
 	init_canvas2d: ->
@@ -219,7 +214,6 @@ class livegraph.canvas
 		
 	mousedown: (e) =>
 		pos = origPos = relMousePos(@div, e)
-		if @dragAction then @dragAction.cancel()
 		@dragAction = @onClick(pos)
 		
 		mousemove = (e) =>
@@ -477,23 +471,58 @@ class livegraph.canvas
 			gl.bufferData(gl.ARRAY_BUFFER, series.ydata, gl.STREAM_DRAW)
 			gl.vertexAttribPointer(gl.shaderProgram.attrib.y, 1, gl.FLOAT, false, 0, 0)
 			gl.drawArrays(gl.LINE_STRIP, 0, series.xdata.length)
+
+# Abstract base for classes that manage user interactions with a Livegraph
+# lg - The LiveGraph which started the interaction.
+#      Its properties will be used by default
+# origPos - The original position of the user action
+# allTargets - other LiveGraph instances that need to be updated
+#              because they share state - e.g. axes
+class livegraph.Action
+	constructor: (@lg, @origPos, @allTargets=[@lg]) ->
+		@stop = false
+		
+		for tgt in @allTargets
+			if tgt.dragAction
+				tgt.dragAction.cancel()
+				delete tgt.dragAction
 	
-class livegraph.DragScrollAction
-	# Helper for the drag-to scroll behavior with momentum and rebound
-	constructor: (@lg, @origPos) ->
+	# Queue a redraw of all target graphs
+	redraw: (redrawAxes) ->
+		for graph in @allTargets
+			graph.needsRedraw(redrawAxes)
+	
+	# Prevent further effects
+	# (subclasses should test this flag)		
+	cancel: ->
+		@stop = true
+		
+	# Called when the mouse is dragged with the button still down
+	onDrag: ([x, y]) ->
+	
+	# Called when the button is released
+	onRelease: ->
+	
+	
+
+# Helper for the drag-to scroll behavior with momentum and rebound	
+class livegraph.DragScrollAction extends livegraph.Action	
+	constructor: (lg, origPos, allTargets=null) ->
+		super(lg, origPos, allTargets)
+		
+		# Save some original state
 		@origMin = @lg.xaxis.visibleMin
 		@origMax = @lg.xaxis.visibleMax
-		@scale = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)[0]
 		@span = @lg.xaxis.span()
+		
+		# Conversion factor - pixels per graph unit
+		@scale = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)[0]
+		
 		@velocity = 0
 		@pressed = true
 		
 		@x = @lastX = @origPos[0]
 		@t = +new Date()
-		
-		if @lg.xaxis.action
-			@lg.xaxis.action.cancel()
-		@lg.xaxis.action = this
 	
 	onDrag: ([x, y]) ->
 		@scrollTo(x)
@@ -503,14 +532,14 @@ class livegraph.DragScrollAction
 		scrollby = (x-@origPos[0])/@scale
 		@lg.xaxis.visibleMin = @origMin - scrollby
 		@lg.xaxis.visibleMax = @origMax - scrollby
-		for i in @lg.updateGroup then i.needsRedraw(true)
+		@redraw(true)
 		
 	onRelease: ->
 		@pressed = false
 		@t = +new Date()-1
 		
 		# force a redraw to get animation timer started
-		@lg.needsRedraw(true)
+		@redraw(true)
 		
 	onAnim: ->
 		if @stop then return
@@ -553,11 +582,11 @@ class livegraph.DragScrollAction
 					if minOvershoot
 						@lg.xaxis.visibleMin = @lg.xaxis.min
 						@lg.xaxis.visibleMax = @lg.xaxis.min + @span
-						for i in @lg.updateGroup then i.needsRedraw(true)
+						@redraw(true)
 					else if maxOvershoot
 						@lg.xaxis.visibleMin = @lg.xaxis.max - @span
 						@lg.xaxis.visibleMax = @lg.xaxis.max 
-						for i in @lg.updateGroup then i.needsRedraw(true)
+						@redraw(true)
 						
 					@cancel()
 					return false
@@ -566,10 +595,6 @@ class livegraph.DragScrollAction
 			@scrollTo(@x)
 			
 			return true # keep animating
-		
-	cancel: ->
-		delete @lg.xaxis.action if @lg.xaxis.action is this
-		@stop = true
 		
 livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
 	c = document.createElement('canvas')
