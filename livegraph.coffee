@@ -335,7 +335,7 @@ class livegraph.canvas
 			@ctxa.fillText(Math.round(x*10)/10, xp ,y+textoffset)
 		
 	drawYAxis: (x, align, textoffset) =>
-		grid = @yaxis.grid(@height / 30)
+		grid = @yaxis.grid(@height / 35)
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.textAlign = align
@@ -357,7 +357,7 @@ class livegraph.canvas
 			@ctxa.fillText(Math.round(y*10)/10, x+textoffset, yp)
 			
 	drawYgrid: ->
-		grid = @yaxis.grid()
+		grid = @yaxis.grid(@height / 35)
 		@ctxa.strokeStyle = 'rgba(0,0,0,0.08)'
 		@ctxa.lineWidth = 1
 		for y in grid
@@ -578,16 +578,16 @@ class livegraph.DragScrollAction extends livegraph.Action
 			@velocity = dx/dt
 			overshoot = Math.max(minOvershoot, maxOvershoot)
 			if overshoot > 0
-				@velocity *= (1-overshoot)/200
+				@velocity *= (1-overshoot*@scale)/200
 		else
 			if minOvershoot*@scale > 1
 				if @velocity <= 0
-					@velocity = -1*minOvershoot
+					@velocity = -1*minOvershoot*@scale/100
 				else
 					@velocity -= 0.1*dt
 			else if maxOvershoot*@scale > 1
 				if @velocity >= 0
-					@velocity = 1*maxOvershoot
+					@velocity = 1*maxOvershoot*@scale/100
 				else
 					@velocity += 0.1*dt
 			else
@@ -628,10 +628,16 @@ class livegraph.ZoomXAction extends livegraph.Action
 		@endMin = @center - @endSpan/2
 		@endMax = @center + @endSpan/2
 		
-		if @endMax > @lg.xaxis.max
+		tooMin = @endMax > @lg.xaxis.max
+		tooMax = @endMin < @lg.xaxis.min
+		
+		if tooMin and tooMax
+			@endMax = @lg.xaxis.max
+			@endMin = @lg.xaxis.min
+		else if tooMax
 			@endMax = @lg.xaxis.max
 			@endMin = @endMax - @endSpan
-		else if @endMin < @lg.xaxis.min
+		else if tooMin
 			@endMin = @lg.xaxis.min
 			@endMax = @endMin + @endSpan
 			
