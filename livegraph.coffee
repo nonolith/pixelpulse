@@ -484,6 +484,7 @@ class livegraph.DragScrollAction
 		@origMin = @lg.xaxis.visibleMin
 		@origMax = @lg.xaxis.visibleMax
 		@scale = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)[0]
+		@span = @lg.xaxis.span()
 		@velocity = 0
 		@pressed = true
 		
@@ -532,12 +533,12 @@ class livegraph.DragScrollAction
 			if overshoot > 0
 				@velocity *= (1-overshoot)/200
 		else
-			if minOvershoot > 0.0001
+			if minOvershoot*@scale > 1
 				if @velocity <= 0
 					@velocity = -1*minOvershoot
 				else
 					@velocity -= 0.1*dt
-			else if maxOvershoot > 0.0001
+			else if maxOvershoot*@scale > 1
 				if @velocity >= 0
 					@velocity = 1*maxOvershoot
 				else
@@ -546,7 +547,18 @@ class livegraph.DragScrollAction
 				vstep = (if @velocity > 0 then 1 else -1) * 0.05
 				@velocity -= vstep
 				
-				if (Math.abs(@velocity)) < Math.abs(vstep)
+				if (Math.abs(@velocity)) < Math.abs(vstep)*10
+					# Velocity has become negligible
+					# But if we're against min/max, stop exactly on it
+					if minOvershoot
+						@lg.xaxis.visibleMin = @lg.xaxis.min
+						@lg.xaxis.visibleMax = @lg.xaxis.min + @span
+						for i in @lg.updateGroup then i.needsRedraw(true)
+					else if maxOvershoot
+						@lg.xaxis.visibleMin = @lg.xaxis.max - @span
+						@lg.xaxis.visibleMax = @lg.xaxis.max 
+						for i in @lg.updateGroup then i.needsRedraw(true)
+						
 					@cancel()
 					return false
 			
