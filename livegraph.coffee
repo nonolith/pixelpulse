@@ -85,6 +85,9 @@ transform = livegraph.transform = (x, y, [sx, sy, dx, dy]) ->
 invTransform = livegraph.invTransform = (x, y, [sx, sy, dx, dy]) ->
 	return [(x-dx)/sx, (y-dy)/sy]
 	
+# Snap a pixel coordinate to a position that will create a sharp line
+snapPx = (px) -> Math.round(px - 0.5) + 0.5 
+	
 relMousePos = (elem, event) ->
 	o = $(elem).offset()
 	return [event.pageX-o.left, event.pageY-o.top]
@@ -299,10 +302,10 @@ class livegraph.canvas
 	drawXAxis: (y) ->
 		xgrid = @xaxis.grid()
 		@ctxa.strokeStyle = 'black'
-		@ctxa.lineWidth = 2
+		@ctxa.lineWidth = 1
 		@ctxa.beginPath()
-		@ctxa.moveTo(@geom.xleft, y)
-		@ctxa.lineTo(@geom.xright, y)
+		@ctxa.moveTo(snapPx(@geom.xleft), snapPx(y))
+		@ctxa.lineTo(snapPx(@geom.xright), snapPx(y))
 		@ctxa.stroke()
 		
 		textoffset = 5
@@ -318,7 +321,7 @@ class livegraph.canvas
 		
 		for x in xgrid
 			@ctxa.beginPath()
-			xp = @xaxis.xtransform(x+offset, @geom)
+			xp = snapPx(@xaxis.xtransform(x+offset, @geom))
 			@ctxa.moveTo(xp,y-4)
 			@ctxa.lineTo(xp,y+4)
 			@ctxa.stroke()
@@ -332,12 +335,12 @@ class livegraph.canvas
 		@ctxa.textBaseline = 'middle'
 		
 		@ctxa.beginPath()
-		@ctxa.moveTo(x, @geom.ytop)
-		@ctxa.lineTo(x, @geom.ybottom)
+		@ctxa.moveTo(snapPx(x), snapPx(@geom.ytop))
+		@ctxa.lineTo(snapPx(x), snapPx(@geom.ybottom))
 		@ctxa.stroke()
 		
 		for y in grid
-			yp = Math.round(@yaxis.ytransform(y, @geom)) + 0.5
+			yp = snapPx(@yaxis.ytransform(y, @geom))
 			
 			#draw side axis ticks and labels
 			@ctxa.beginPath()
@@ -351,7 +354,7 @@ class livegraph.canvas
 		@ctxa.strokeStyle = 'rgba(0,0,0,0.08)'
 		@ctxa.lineWidth = 1
 		for y in grid
-			yp = Math.round(@yaxis.ytransform(y, @geom)) + 0.5
+			yp = snapPx(@yaxis.ytransform(y, @geom))
 			@ctxa.beginPath()
 			@ctxa.moveTo(@geom.xleft, yp)
 			@ctxa.lineTo(@geom.xright, yp)
