@@ -224,6 +224,7 @@ class Listener
 			startSample = Math.round(startTime/@device.sampleTime)
 		else
 			startSample = -1
+		console.log 'startSample', startSample, count
 		@server.send 'listen'
 			id: @id
 			channel: @channel.id
@@ -260,22 +261,23 @@ class TimeDataSeries
 	submit: ->
 		time = @xmax - @xmin
 		requestedSampleTime = time/@requestedPoints
-		[decimateFactor, sampleTime] = @series.calcDecimate(requestedSampleTime)
-		len = time/sampleTime
-		console.log 'buf', time, sampleTime, len, @requestedPoints
-
-		@ydata = new Float32Array(len)
-		@xdata = new Float32Array(len)
-		for i in [0...len]
-			@xdata[i] = @xmin + i*sampleTime
+		[decimateFactor, @sampleTime] = @series.calcDecimate(requestedSampleTime)
+		@len = time/@sampleTime
 		
 		@listener.requestedSampleTime = requestedSampleTime
-		@listener.submit(@xmin)
+		
+		# At end of "recent" stream means get new data
+		reqLen = if @xmin < 0 and @xmax==0 then -1 else @len
+		
+		@listener.submit(@xmin, reqLen)
 		return
 	
 	onData: (d, idx) =>
 		if idx == 0
-			@ydata = new Float32Array(@xdata.length)
+			@ydata = new Float32Array(@len)
+			@xdata = new Float32Array(@len)
+			for i in [0...@len]
+				@xdata[i] = @xmin + i*@sampleTime
 
 		if d.length and @xmin < 0
 			@ydata.set(@ydata.subarray(d.length)) #shift array element left

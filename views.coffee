@@ -92,14 +92,15 @@ class pixelpulse.StreamView
 		@lg.onClick = (pos) =>
 			[x,y] = pos
 			if x < @lg.width - 45
-				return new livegraph.DragScrollAction(@lg, pos, pixelpulse.timeseries_graphs)
+				return new livegraph.DragScrollAction(@lg, pos,
+					pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
 			else
 				return new DragToSetAction(this, pos)
 				
 		@lg.onDblClick = (e, pos) =>
 			opts = {time: 200, zoomFactor: if e.shiftKey then 2 else 0.5} 
 			return new livegraph.ZoomXAction(opts, @lg, pos,
-				pixelpulse.timeseries_graphs) #, pixelpulse.updateTimeSeries)
+				pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
 		
 		@isSource = false
 		if @stream.outputMode
@@ -123,7 +124,9 @@ class pixelpulse.StreamView
 		@lg.needsRedraw()
 		
 	updateSeries: ->
-		@series.configure(@xaxis.visibleMin, @xaxis.visibleMax, @lg.width/2)
+		min = Math.max(@xaxis.visibleMin - 0.5*@xaxis.span(), @xaxis.min)
+		max = Math.min(@xaxis.visibleMax + 0.5*@xaxis.span(), @xaxis.max)
+		@series.configure(min, max, @lg.width)
 
 	destroy: ->
 		@series.destroy()

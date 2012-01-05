@@ -26,9 +26,9 @@ class livegraph.Axis
 		err = countHint / @span() * step;
 
 		# Filter ticks to get closer to the desired count.
-		if err <= .15 then step *= 10;
-		else if err <= .35 then step *= 5;
-		else if err <= .75 then step *= 2;
+		if err <= .15 then step *= 10
+		else if err <= .35 then step *= 5
+		else if err <= .75 then step *= 2
 
 		# Round start and stop values to step interval.
 		gridMin = Math.ceil(Math.max(@visibleMin, @min) / step) * step;
@@ -520,8 +520,8 @@ class livegraph.Action
 
 # Helper for the drag-to scroll behavior with momentum and rebound	
 class livegraph.DragScrollAction extends livegraph.Action	
-	constructor: (lg, origPos, allTargets=null) ->
-		super(lg, origPos, allTargets)
+	constructor: (lg, origPos, allTargets=null, doneCallback=null) ->
+		super(lg, origPos, allTargets, doneCallback)
 		
 		# Save some original state
 		@origMin = @lg.xaxis.visibleMin
