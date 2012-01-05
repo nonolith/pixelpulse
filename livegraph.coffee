@@ -318,13 +318,8 @@ class livegraph.canvas
 		textoffset = 5
 		@ctxa.textAlign = 'center'
 		@ctxa.textBaseline = 'top'
-		
-		if @xaxis.autoScroll
-			[min, max] = [@xaxis.autoScroll, 0]
-			offset = @xaxis.max
-		else
-			[min, max] = [@xaxis.min, @xaxis.max]
-			offset = 0
+			
+		digits = Math.max(Math.ceil(-Math.log(Math.abs(xgrid[1]-xgrid[0]))/Math.LN10), 0)
 		
 		for x in xgrid
 			@ctxa.beginPath()
@@ -332,7 +327,7 @@ class livegraph.canvas
 			@ctxa.moveTo(xp,y-4)
 			@ctxa.lineTo(xp,y+4)
 			@ctxa.stroke()
-			@ctxa.fillText(Math.round(x*10)/10, xp ,y+textoffset)
+			@ctxa.fillText(x.toFixed(digits), xp ,y+textoffset)
 		
 	drawYAxis: (x, align, textoffset) =>
 		grid = @yaxis.grid(@height / 35)
