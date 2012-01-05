@@ -323,7 +323,7 @@ class livegraph.canvas
 		
 		for x in xgrid
 			@ctxa.beginPath()
-			xp = snapPx(@xaxis.xtransform(x+offset, @geom))
+			xp = snapPx(@xaxis.xtransform(x, @geom))
 			@ctxa.moveTo(xp,y-4)
 			@ctxa.lineTo(xp,y+4)
 			@ctxa.stroke()
