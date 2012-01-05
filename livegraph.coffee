@@ -623,8 +623,8 @@ class livegraph.ZoomXAction extends livegraph.Action
 		@endMin = @center - @endSpan/2
 		@endMax = @center + @endSpan/2
 		
-		tooMin = @endMax > @lg.xaxis.max
-		tooMax = @endMin < @lg.xaxis.min
+		tooMax = @endMax > @lg.xaxis.max
+		tooMin = @endMin < @lg.xaxis.min
 		
 		if tooMin and tooMax
 			@endMax = @lg.xaxis.max
