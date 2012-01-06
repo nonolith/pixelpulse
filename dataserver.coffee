@@ -167,13 +167,15 @@ class Channel
 		for sId, stream of @streams
 			stream.onRemoved()
 		@removed.notify(this)
+		
+	set: (mode, source, dict) ->
+		dict['mode'] = mode
+		dict['source'] = source
+		dict['channel'] = @id
+		server.send 'set', dict
 
 	setConstant: (mode, val) ->
-		server.send 'set' #TODO: don't use global?
-			source: 'constant'
-			channel: @id
-			mode: mode
-			value: val
+		@set mode, 'constant', {value:val}
 			
 	onOutputChanged: (m) ->
 		@outputChanged.notify(m)

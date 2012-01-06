@@ -101,23 +101,29 @@ class pixelpulse.StreamView
 				pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
 		
 		@isSource = false
+		@dotFollowsStream = false
 		if @stream.outputMode
 			@dot = @lg.addDot('white', 'blue')
 			@stream.parent.outputChanged.listen (m) =>
 				@isSource = (m.mode == @stream.outputMode)
-				@dot.fill = if @isSource then 'blue' else 'white'
-				@dot.render()
-				
+				@dotFollowsStream = false
 				@section.toggleClass('sourcing', @isSource)
 				
-				if @isSource
-					@dot.position(m.valueTarget)
+				if m.source is 'constant'
+					@dot.fill = if @isSource then 'blue' else 'white'
+					@dot.render()
+				
+					if @isSource
+						@dot.position(m.value)
+					else
+						@dot.position(@series.listener.lastData)
+						@dotFollowsStream = true
 				else
-					@dot.position(@series.listener.lastData)
+					@dot.position(false)
 			
 		@series.updated.listen =>
 			@lg.needsRedraw()
-			if @dot and not @isSource then @dot.position(@series.listener.lastData)
+			if @dotFollowsStream then @dot.position(@series.listener.lastData)
 			
 		@lg.needsRedraw()
 		
