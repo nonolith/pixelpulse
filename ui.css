@@ -205,9 +205,38 @@ body{
 	-webkit-text-fill-color: inherit;
 }
 
+
+.stream .source{
+	font-size: 12px;
+}
+
 .stream .source h2{
 	text-transform: uppercase;
-	font-size: 12px;
+	white-space:nowrap;
+}
+
+.stream .source h2 select, .stream .source input{
+	border: none;
+	background: transparent;
+	font: inherit;
+	text-transform: capitalize;
+	width: 48px;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.stream .source span{
+	display: inline-block;
+	width: 50px;
+	white-space: nowrap;
+}
+
+.stream .source span input{
+	width: 34px;
 }
 
 #error-overlay{
@@ -307,7 +336,7 @@ body{
 	
 	-webkit-box-pack: end;
 	
-	min-height: 50px;
+	height: 50px;
 	
 	-webkit-box-flex: 1;
 }

@@ -141,7 +141,77 @@ class pixelpulse.StreamView
 	sourceChanged: (m) =>
 		if m.mode == @stream.outputMode
 			@source.empty()
-			$("<h2>Source </h2>").append($("<small>").text(m.source)).appendTo(@source)
+			
+			stream = @stream
+			channel = stream.parent
+			sampleTime = channel.parent.sampleTime
+			
+			sel = $("<select>")
+			for i in ['constant', 'square', 'sine']
+				sel.append($("<option>").text(i))
+			sel.val(m.source)
+				
+			sel.change -> channel.guessSourceOptions(sel.val())
+			
+			$("<h2>Source </h2>").append(sel).appendTo(@source)
+			
+			ATTRS = ['value', 'high', 'low', 'highSamples', 'lowSamples', 'offset', 'amplitude', 'period']
+			
+			propInput = (prop, conv) ->
+				value = m[prop]
+				
+				switch conv
+					when 'val'
+						min = stream.min
+						max = stream.max
+						unit = stream.units
+						step = 0.1
+					when 's'
+						value *= sampleTime
+						min = sampleTime
+						max = 10
+						step = 0.1
+						unit = 's'
+					when 'hz'
+						value = 1/(value * sampleTime)
+						min = 0.1
+						max = 1/sampleTime/5
+						step = 1
+						unit = 'Hz'
+					
+				inp = $('<input type=number>')
+					.attr({min, max, step})
+					.val(value)
+					.change =>
+						d = {}
+						for i in ATTRS
+							if m[i]? then d[i] = m[i]
+						d[prop] = parseFloat(inp.val())
+						
+						if conv is 's'
+							d[prop] /= channel.parent.sampleTime
+						else if conv is 'hz'
+							d[prop] = (1/d[prop])/channel.parent.sampleTime
+						
+						channel.set(m.mode, m.source, d)
+				
+				$("<span>").append(inp).append(unit)
+			
+			switch m.source
+				when 'constant'
+					@source.append propInput('value', 'val')
+				when 'square'
+					@source.append propInput('low', 'val')
+					@source.append ' for '
+					@source.append propInput('lowSamples', 's')
+					@source.append propInput('high', 'val')
+					@source.append ' for '
+					@source.append propInput('highSamples', 's')
+				when 'sine', 'triangle'
+					@source.append propInput('offset', 'val')
+					@source.append propInput('amplitude', 'val')
+					@source.append propInput('period', 'hz')
+			
 		else
 			@source.html("<h2>measure</h2>")
 

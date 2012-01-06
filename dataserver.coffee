@@ -176,8 +176,38 @@ class Channel
 
 	setConstant: (mode, val) ->
 		@set mode, 'constant', {value:val}
+		
+	# switch to a source type, picking appropriate parameters
+	guessSourceOptions:  (sourceType) ->
+		m = @source.mode
+		value = 0
+		period = Math.round(1/@parent.sampleTime)
+		amplitude = 1
+		switch @source.source
+			when 'constant'
+				value = @source.value
+			when 'sine', 'triangle'
+				value = @source.offset
+				period = @source.period
+				amplitude = @source.amplitude
+			when 'square'
+				value = (@source.high + @source.low)/2
+				period = @source.highSamples + @source.lowSamples
+				amplitude = (@source.high - @source.low)/2
+		switch sourceType
+			when 'constant'
+				@setConstant(m, value)
+			when 'sine', 'triangle'
+				@set m, sourceType, {offset:value, amplitude, period}
+			when 'square'
+				@set(m, sourceType, {high:value+amplitude, low: value-amplitude, highSamples:period/2, lowSamples:period/2})
+		
+			
+				
+				
 			
 	onOutputChanged: (m) ->
+		@source = m
 		@outputChanged.notify(m)
 
 class Stream
