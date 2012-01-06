@@ -182,6 +182,11 @@ body{
 	margin-top: 2px;
 }
 
+/*
+.reading{
+	-webkit-user-select: text;
+}*/
+
 .reading .value{
 	background: transparent;
 	width: 2.65em;
@@ -198,6 +203,11 @@ body{
 .reading input[disabled]{
 	color: inherit;
 	-webkit-text-fill-color: inherit;
+}
+
+.stream .source h2{
+	text-transform: uppercase;
+	font-size: 12px;
 }
 
 #error-overlay{
@@ -317,12 +327,6 @@ section.stream.sourcing{
 
 #streams section.stream:not(:last-child) aside{
 	border-bottom: 1px solid #ccc;
-}
-
-#streams > .analog{
-	box-flex: 2;
-	-webkit-box-flex: 2;
-	-moz-box-flex: 2;
 }
 
 #streams .livegraph{

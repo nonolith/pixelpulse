@@ -135,8 +135,6 @@ class pixelpulse.StreamView
 		max = Math.min(@xaxis.visibleMax + 0.5*@xaxis.span(), @xaxis.max)
 		pts = @lg.width / 2 * (max - min) / @xaxis.span()
 		
-		console.log(pts)
-		
 		if min != @series.xmin or max != @series.xmax or @series.requestedPoints != pts
 			@series.configure(min, max, pts)
 			

@@ -270,9 +270,12 @@ class livegraph.canvas
 		
 		@needsRedraw(true)
 		
+		@dot.position(@dotY)
+		
 	addDot: (x, fill, stroke) ->
-		dot = livegraph.makeDotCanvas(5, 'white', 'blue')
+		dot = @dot = livegraph.makeDotCanvas(5, 'white', 'blue')
 		dot.position = (y) =>
+			@dotY = y
 			dot.style.visibility = if !isNaN(y) and y? then 'visible' else 'hidden'
 			
 			if not @geom then return
