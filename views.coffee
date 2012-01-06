@@ -52,7 +52,7 @@ class pixelpulse.StreamView
 		@el = @section.get(0)
 		
 		@h1 = $("<h1>").text(@stream.displayName).appendTo(@aside)
-		
+
 		@timeseriesElem = $("<div class='livegraph'>").appendTo(@section)
 
 		@addReadingUI(@aside)
@@ -60,6 +60,9 @@ class pixelpulse.StreamView
 		@listener = @stream.listen =>
 			@onValue(@listener.lastData)
 			
+		@source = $("<div class='source'>").appendTo(@aside)
+		@stream.parent.outputChanged.listen @sourceChanged
+		
 		@initTimeseries()
 
 	addReadingUI: (tile) ->
@@ -112,15 +115,15 @@ class pixelpulse.StreamView
 				if m.source is 'constant'
 					@dot.fill = if @isSource then 'blue' else 'white'
 					@dot.render()
-				
+					
 					if @isSource
 						@dot.position(m.value)
 					else
 						@dot.position(@series.listener.lastData)
 						@dotFollowsStream = true
 				else
-					@dot.position(false)
-			
+					@dot.position(null)
+								
 		@series.updated.listen =>
 			@lg.needsRedraw()
 			if @dotFollowsStream then @dot.position(@series.listener.lastData)
@@ -133,6 +136,13 @@ class pixelpulse.StreamView
 		
 		if min != @series.xmin or max != @series.xmax or @series.requestedPoints != @lg.width
 			@series.configure(min, max, @lg.width)
+			
+	sourceChanged: (m) =>
+		if m.mode == @stream.outputMode
+			@source.empty()
+			$("<h2>Source </h2>").append($("<small>").text(m.source)).appendTo(@source)
+		else
+			@source.html("<h2>measure</h2>")
 
 	destroy: ->
 		@series.destroy()

@@ -273,9 +273,11 @@ class livegraph.canvas
 	addDot: (x, fill, stroke) ->
 		dot = livegraph.makeDotCanvas(5, 'white', 'blue')
 		dot.position = (y) =>
-			[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
-			
 			dot.style.visibility = if !isNaN(y) and y? then 'visible' else 'hidden'
+			
+			if not @geom then return
+			
+			[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
 			
 			if y > @yaxis.visibleMax
 				y = @yaxis.visibleMax
