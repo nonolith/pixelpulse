@@ -133,9 +133,12 @@ class pixelpulse.StreamView
 	updateSeries: ->
 		min = Math.max(@xaxis.visibleMin - 0.5*@xaxis.span(), @xaxis.min)
 		max = Math.min(@xaxis.visibleMax + 0.5*@xaxis.span(), @xaxis.max)
+		pts = @lg.width / 2 * (max - min) / @xaxis.span()
 		
-		if min != @series.xmin or max != @series.xmax or @series.requestedPoints != @lg.width
-			@series.configure(min, max, @lg.width)
+		console.log(pts)
+		
+		if min != @series.xmin or max != @series.xmax or @series.requestedPoints != pts
+			@series.configure(min, max, pts)
 			
 	sourceChanged: (m) =>
 		if m.mode == @stream.outputMode
