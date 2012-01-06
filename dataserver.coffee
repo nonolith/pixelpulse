@@ -224,7 +224,6 @@ class Listener
 			startSample = Math.round(startTime/@device.sampleTime)
 		else
 			startSample = -1
-		console.log 'startSample', startSample, count
 		@server.send 'listen'
 			id: @id
 			channel: @channel.id
@@ -262,7 +261,7 @@ class TimeDataSeries
 		time = @xmax - @xmin
 		requestedSampleTime = time/@requestedPoints
 		[decimateFactor, @sampleTime] = @series.calcDecimate(requestedSampleTime)
-		@len = time/@sampleTime
+		@len = Math.ceil(time/@sampleTime)
 		
 		@listener.requestedSampleTime = requestedSampleTime
 		

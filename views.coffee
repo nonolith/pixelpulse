@@ -85,9 +85,7 @@ class pixelpulse.StreamView
 		
 		$(window).resize => @lg.resized()
 
-		@lg.onResized = =>
-			if @series.requestedPoints != @lg.width/2
-				@updateSeries()
+		@lg.onResized = => @updateSeries()
 				
 		@lg.onClick = (pos) =>
 			[x,y] = pos
@@ -126,7 +124,9 @@ class pixelpulse.StreamView
 	updateSeries: ->
 		min = Math.max(@xaxis.visibleMin - 0.5*@xaxis.span(), @xaxis.min)
 		max = Math.min(@xaxis.visibleMax + 0.5*@xaxis.span(), @xaxis.max)
-		@series.configure(min, max, @lg.width)
+		
+		if min != @series.xmin or max != @series.xmax or @series.requestedPoints != @lg.width
+			@series.configure(min, max, @lg.width)
 
 	destroy: ->
 		@series.destroy()
