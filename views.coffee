@@ -5,6 +5,15 @@
 
 pixelpulse = (window.pixelpulse ?= {})
 
+COLORS = [
+	[[0x32, 0x00, 0xC7], [00, 0x32, 0xC7]]
+	[[00, 0x7C, 0x16], [0x6f, 0xC7, 0x00]]
+]
+
+#COLORS = [
+#	[[0, 0, 255], [0, 0, 255]], [[0, 0, 255], [0, 0, 255]]
+#]
+
 pixelpulse.initViewGlobals = ->
 	@timeseries_x = new livegraph.Axis(-10, 0)
 	@timeseries_graphs = []
@@ -26,7 +35,7 @@ pixelpulse.updateTimeSeries = ->
 			s.updateSeries()
 
 class pixelpulse.ChannelView
-	constructor: (@channel) ->
+	constructor: (@channel, @index) ->
 		@section = $("<section class='channel'>")
 		@el = @section.get(0)
 		
@@ -36,8 +45,9 @@ class pixelpulse.ChannelView
 		
 		@h1 = $("<h1>").text(@channel.displayName).appendTo(@aside)
 		
+		i = 0
 		@streamViews = for id, s of @channel.streams
-			v = new pixelpulse.StreamView(s)
+			v = new pixelpulse.StreamView(this, s,  i++)
 			@section.append(v.el)
 			v
 			
@@ -46,7 +56,7 @@ class pixelpulse.ChannelView
 		
 
 class pixelpulse.StreamView
-	constructor: (@stream)->
+	constructor: (@channelView, @stream, @index)->
 		@section = $("<section class='stream'>")
 		@aside = $("<aside>").appendTo(@section)
 		@el = @section.get(0)
@@ -81,6 +91,7 @@ class pixelpulse.StreamView
 		@xaxis = pixelpulse.timeseries_x
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
 		@series =  @stream.series()
+		@series.color = COLORS[@channelView.index][@index]
 		
 		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
 		
@@ -113,7 +124,7 @@ class pixelpulse.StreamView
 				@section.toggleClass('sourcing', @isSource)
 				
 				if m.source is 'constant'
-					@dot.fill = if @isSource then 'blue' else 'white'
+					@dot.fill = if @isSource then @lg.cssColor() else 'white'
 					@dot.render()
 					
 					if @isSource

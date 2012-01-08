@@ -236,7 +236,8 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .stream .source span input{
-	width: 34px;
+	text-align: right;
+	-webkit-appearance: none;
 }
 
 #error-overlay{

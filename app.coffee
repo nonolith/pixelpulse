@@ -34,8 +34,9 @@ pixelpulse.deviceSelected = (dev) ->
 		pixelpulse.overlay()
 		console.info "device updated", dev
 		pixelpulse.reset()
+		i = 0
 		for chId, channel of dev.channels
-			s = new pixelpulse.ChannelView(channel)
+			s = new pixelpulse.ChannelView(channel, i++)
 			pixelpulse.channelviews.push(s)
 			$('#streams').append(s.el)
 		pixelpulse.finishViewInit()

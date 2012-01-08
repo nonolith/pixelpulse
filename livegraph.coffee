@@ -127,7 +127,6 @@ class livegraph.canvas
 		return true
 		
 	init_webgl: ->
-	
 		shader_vs = """
 			attribute float x;
 			attribute float y;
@@ -145,9 +144,11 @@ class livegraph.canvas
 			#ifdef GL_ES
 			precision highp float;
 			#endif
+			
+			uniform vec4 color;
 
 			void main(void) {
-				gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+				gl_FragColor = color;
 			}
 		"""
 		
@@ -183,6 +184,7 @@ class livegraph.canvas
 			y: gl.getAttribLocation(gl.shaderProgram, "y")
 		gl.shaderProgram.uniform =
 			transform: gl.getUniformLocation(gl.shaderProgram, "transform")
+			color: gl.getUniformLocation(gl.shaderProgram, "color")
 			
 		gl.enableVertexAttribArray(gl.shaderProgram.attrib.x)
 		gl.enableVertexAttribArray(gl.shaderProgram.attrib.y)
@@ -273,7 +275,7 @@ class livegraph.canvas
 		@dot.position(@dotY)
 		
 	addDot: (x, fill, stroke) ->
-		dot = @dot = livegraph.makeDotCanvas(5, 'white', 'blue')
+		dot = @dot = livegraph.makeDotCanvas(5, 'white', @cssColor())
 		dot.position = (y) =>
 			@dotY = y
 			dot.style.visibility = if !isNaN(y) and y? then 'visible' else 'hidden'
@@ -393,6 +395,7 @@ class livegraph.canvas
 		@perfStat(new Date()-startTime)
 		return
 		
+	cssColor: -> "rgb(#{@series[0].color[0]},#{@series[0].color[1]},#{@series[0].color[2]})"		
 			
 	redrawGraph_canvas2d: ->
 		@ctxg.clearRect(0,0,@width, @height)
@@ -401,7 +404,7 @@ class livegraph.canvas
 		[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
 		
 		for series in @series
-			@ctxg.strokeStyle = series.color	
+			@ctxg.strokeStyle = @cssColor()
 			 
 			@ctxg.save()
 			
@@ -428,33 +431,6 @@ class livegraph.canvas
 					
 			@ctxg.stroke()
 			@ctxg.restore()
-			
-			if series.grabDot
-				@ctxg.beginPath()
-				
-				xp = x*sx + dx
-				yp = y*sy + dy
-				
-				if y<=@yaxis.min
-					@ctxg.moveTo(xp-5,yp)
-					@ctxg.lineTo(xp,yp+10)
-					@ctxg.lineTo(xp+5,yp)
-					@ctxg.lineTo(xp-5,yp)
-				else if y>=@yaxis.max
-					@ctxg.moveTo(xp-5,yp)
-					@ctxg.lineTo(xp,yp-10)
-					@ctxg.lineTo(xp+5,yp)
-					@ctxg.lineTo(xp-5,yp)
-				else
-					@ctxg.arc(x, y, 5, 0, Math.PI*2, true);
-				if series.grabDot == 'fill'
-					@ctxg.fillStyle = series.color
-				else
-					@ctxg.fillStyle = 'white'
-				@ctxg.fill()
-				@ctxg.stroke()
-				
-		return
 		
 	redrawGraph_webgl: ->
 		gl = @gl
@@ -474,6 +450,8 @@ class livegraph.canvas
 		tmatrix = [sx*w, 0, 0, 0,   0, sy*h, 0, 0,   dx*w, dy*h, 0, 0,   -1, 1, -1, 1]
 		
 		gl.uniformMatrix4fv(gl.shaderProgram.uniform.transform, false, new Float32Array(tmatrix))
+		gl.uniform4fv(gl.shaderProgram.uniform.color, new Float32Array(
+			[@series[0].color[0]/255.0, @series[0].color[1]/255.0, @series[0].color[2]/255.0, 1]))
 		
 		for series in @series
 			gl.bindBuffer(gl.ARRAY_BUFFER, gl.xBuffer)
