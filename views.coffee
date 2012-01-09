@@ -73,6 +73,9 @@ class pixelpulse.StreamView
 		@source = $("<div class='source'>").appendTo(@aside)
 		@stream.parent.outputChanged.listen @sourceChanged
 		
+		if @stream.parent.source
+			@sourceChanged(@stream.parent.source)
+		
 		@initTimeseries()
 
 	addReadingUI: (tile) ->

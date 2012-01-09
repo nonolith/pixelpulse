@@ -162,6 +162,8 @@ class Channel
 		@streams = {}
 		for streamId, streamInfo of info.streams
 			@streams[streamId] = new Stream(streamInfo, this)
+			
+		@source = info.output
 	
 	onRemoved: ->
 		for sId, stream of @streams
