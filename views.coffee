@@ -158,7 +158,7 @@ class pixelpulse.StreamView
 			sampleTime = channel.parent.sampleTime
 			
 			sel = $("<select>")
-			for i in ['constant', 'square', 'sine']
+			for i in ['constant', 'square', 'sine', 'triangle']
 				sel.append($("<option>").text(i))
 			sel.val(m.source)
 				
