@@ -245,7 +245,7 @@ nextListenerId = 100
 
 class Listener
 	constructor: (@server, @device, @channel, @stream, @requestedSampleTime) ->
-		@id ='w'+(nextListenerId++)
+		@id = nextListenerId++
 		@updated = new Event()
 		@lastData = NaN
 
