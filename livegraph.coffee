@@ -123,6 +123,7 @@ class livegraph.canvas
 	init_canvas2d: ->
 		@ctxg = @graphCanvas.getContext('2d')
 		@redrawGraph = @redrawGraph_canvas2d
+		@refreshViewParams = -> false
 		@renderer = 'canvas2d'
 		return true
 		
@@ -142,7 +143,7 @@ class livegraph.canvas
 		
 		shader_fs = """
 			#ifdef GL_ES
-			precision highp float;
+			precision mediump float;
 			#endif
 			
 			uniform vec4 color;
@@ -199,6 +200,7 @@ class livegraph.canvas
 
 		@renderer = 'webgl'
 		@redrawGraph = @redrawGraph_webgl
+		@refreshViewParams = @webgl_refreshViewParams
 		return true
 		
 	perfStat_enable: (div)->
@@ -269,26 +271,39 @@ class livegraph.canvas
 
 		if @onResized
 			@onResized()
+			
+		@refreshViewParams()
 		
 		@needsRedraw(true)
 		
-		@dot.position(@dotY)
+		@dot.lastY = undefined
+		@dot.position(@dot.y)
 		
 	addDot: (x, fill, stroke) ->
 		dot = @dot = livegraph.makeDotCanvas(5, 'white', @cssColor())
-		dot.position = (y) =>
-			@dotY = y
-			dot.style.visibility = if !isNaN(y) and y? then 'visible' else 'hidden'
+		lg = this
+		
+		dot.position = (y) ->
+			dot.y = y
+			if not lg.geom then return
 			
-			if not @geom then return
+			# Update visibility, if it has changed
+			v =  if !isNaN(y) and y? then 'visible' else 'hidden'
+			if dot.style.visibility != v then dot.style.visibility=v
 			
-			[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
+			# Find pixel position
+			[sx, sy, dx, dy] = makeTransform(lg.geom, lg.xaxis, lg.yaxis)
+			ty = Math.round(dy+y*sy)
 			
-			if y > @yaxis.visibleMax
-				y = @yaxis.visibleMax
+			# Bail out if it hasn't changed
+			if not dot.lastY==ty then return
+			dot.lastY = ty
+			
+			if y > lg.yaxis.visibleMax
+				y = lg.yaxis.visibleMax
 				shape = 'up'
-			else if y < @yaxis.visibleMin
-				y = @yaxis.visibleMin
+			else if y < lg.yaxis.visibleMin
+				y = lg.yaxis.visibleMin
 				shape = 'down'
 			else
 				shape = 'circle'
@@ -297,10 +312,7 @@ class livegraph.canvas
 				dot.shape = shape
 				dot.render()
 			
-			y = Math.round(dy+y*sy)
-			if dot.lastY != y
-				dot.positionRight(PADDING+AXIS_SPACING, y)
-				dot.lastY = y
+			dot.positionRight(PADDING+AXIS_SPACING, ty)
 			
 		$(dot).appendTo(@div)
 		return dot
@@ -388,6 +400,7 @@ class livegraph.canvas
 			
 		if @axisRedrawRequested
 			@redrawAxis()
+			@refreshViewParams()
 			@axisRedrawRequested = false
 			
 		@redrawGraph()
@@ -432,14 +445,13 @@ class livegraph.canvas
 			@ctxg.stroke()
 			@ctxg.restore()
 		
-	redrawGraph_webgl: ->
+	webgl_refreshViewParams: ->
 		gl = @gl
 		
 		gl.clearColor(0.0, 0.0, 0.0, 0.0)
 		gl.enable(gl.SCISSOR_TEST)
 		gl.viewport(0, 0, @width, @height)
 		gl.scissor(@geom.xleft, @height-@geom.ybottom, @geom.width, @geom.height)
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		gl.lineWidth(2)
 		
 		[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
@@ -452,6 +464,11 @@ class livegraph.canvas
 		gl.uniformMatrix4fv(gl.shaderProgram.uniform.transform, false, new Float32Array(tmatrix))
 		gl.uniform4fv(gl.shaderProgram.uniform.color, new Float32Array(
 			[@series[0].color[0]/255.0, @series[0].color[1]/255.0, @series[0].color[2]/255.0, 1]))
+	
+	redrawGraph_webgl: ->
+		gl = @gl
+		
+		gl.clear(gl.COLOR_BUFFER_BIT)
 		
 		for series in @series
 			gl.bindBuffer(gl.ARRAY_BUFFER, gl.xBuffer)
