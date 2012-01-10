@@ -40,7 +40,6 @@ pixelpulse.deviceSelected = (dev) ->
 			pixelpulse.channelviews.push(s)
 			$('#streams').append(s.el)
 		pixelpulse.finishViewInit()
-		pixelpulse.initSideGraph()
 	
 	dev.removed.listen ->
 		pixelpulse.reset()

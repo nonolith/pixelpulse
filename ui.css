@@ -404,12 +404,13 @@ section.stream.sourcing{
 	-webkit-box-pack: center;
 	-moz-box-pack: center;
 	
-	-webkit-transition: width 0.8s ease-in-out;
+	-webkit-transition: width 0.5s ease-in-out;
 }
 
 #sidegraphs > section{
 	display: none;
 	width: 100%;
+	position: relative;
 }
 
 /* layout-1side */
@@ -423,7 +424,6 @@ body.layout-1side #sidegraphs{
 }
 
 body.layout-1side #sidegraph1{
-	position: relative;
 	display: box;
 	display: -webkit-box;
 	display: -moz-box;

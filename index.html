@@ -22,7 +22,7 @@ Pixelpulse
 <script src='app.js'></script>
 
 </head>
-<body class='layout-1side'>
+<body class='layout-0side'>
 
 <div id='error-overlay'><div id='error-status'>Loading...</div></div>
 
@@ -43,9 +43,9 @@ Pixelpulse
 </div>
 
 <div id='layout-sel'>
-<button onclick="document.body.setAttribute('class', 'layout-0side')">0</button>
-<button onclick="document.body.setAttribute('class', 'layout-1side')">1</button>
-<button onclick="document.body.setAttribute('class', 'layout-2side')">2</button>
+<button onclick="pixelpulse.setLayout(0)">0</button>
+<button onclick="pixelpulse.setLayout(1)">1</button>
+<button onclick="pixelpulse.setLayout(2)">2</button>
 </div>
 
 <div id='perfstat'></div>

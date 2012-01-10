@@ -26,6 +26,9 @@ pixelpulse.initView = (dev) ->
 	@meter_listener = new server.Listener(dev, @streams)
 	@data_listener = new server.DataListener(dev, @streams)
 	
+	@sidegraph1 = new pixelpulse.XYGraphView(document.getElementById('sidegraph1'))
+	@sidegraph2 = new pixelpulse.XYGraphView(document.getElementById('sidegraph2'))
+	
 	
 pixelpulse.finishViewInit = ->
 	# show the x-axis ticks on the last stream
@@ -249,22 +252,49 @@ class pixelpulse.StreamView
 		else
 			@source.html("<h2>measure</h2>")
 
-pixelpulse.initSideGraph = ->
-	xvar = @streams[0]
-	yvar = @streams[1]
+pixelpulse.setLayout = (l) ->
+	$(document.body).removeClass('layout-0side').removeClass('layout-1side').removeClass('layout-2side')
+		.addClass("layout-#{l}side")
+		
+	if l >= 1
+		@sidegraph1.configure(@streams[0], @streams[1])
+	else
+		@sidegraph1.hidden()
+		
+	if l >= 2
+		@sidegraph2.configure(@streams[2], @streams[3])
+	else
+		@sidegraph2.hidden()
 	
-	xaxis = new livegraph.Axis(xvar.min, xvar.max)
-	yaxis = new livegraph.Axis(yvar.min, yvar.max)
+class pixelpulse.XYGraphView
+	constructor: (@el) ->
+		@color = [255, 0, 0]
+		
+		@lg = new livegraph.canvas(el, false, false, [false], 
+			{xbottom:true, yright:false, xgrid:true})
+		
+	configure: (@xstream, @ystream) ->	
+		@xaxis = new livegraph.Axis(@xstream.min, @xstream.max)
+		@yaxis = new livegraph.Axis(@ystream.min, @ystream.max)
+		
+		@lg.xaxis = @xaxis
+		@lg.yaxis = @yaxis
+		
+		@hidden()
+		
+		@series = pixelpulse.data_listener.series(@xstream, @ystream)
+		@series.color = @color
+		@lg.series = [@series]
+		
+		@series.updated.listen @updated
+		setTimeout (=> @lg.resized()), 1000
+		console.log('configured', @lg)
+		
+	hidden: ->
+		if @series
+			@series.updated.unListen @updated
 	
-	series = pixelpulse.data_listener.series(xvar, yvar)
-	series.color = [255, 0, 0]
-	
-	lg = new livegraph.canvas(document.getElementById('sidegraph1'), xaxis, yaxis, [series], 
-		{xbottom:true, yright:false, xgrid:true})
-
-	series.updated.listen ->
-		lg.needsRedraw()
-	
+	updated: => @lg.needsRedraw()
 	
 
 class DragToSetAction extends livegraph.Action

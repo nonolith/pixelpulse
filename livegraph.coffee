@@ -255,6 +255,7 @@ class livegraph.canvas
 	
 	resized: () ->
 		if @div.offsetWidth == 0 or @div.offsetHeight == 0 then return
+		if not (@xaxis and @yaxis) then return
 			
 		@width = @div.offsetWidth
 		@height = @div.offsetHeight
