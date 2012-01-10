@@ -34,6 +34,7 @@ pixelpulse.deviceSelected = (dev) ->
 		pixelpulse.overlay()
 		console.info "device updated", dev
 		pixelpulse.reset()
+		pixelpulse.onCaptureStateChange(dev.captureState)
 		i = 0
 		for chId, channel of dev.channels
 			s = new pixelpulse.ChannelView(channel, i++)
@@ -44,6 +45,14 @@ pixelpulse.deviceSelected = (dev) ->
 	dev.removed.listen ->
 		pixelpulse.reset()
 		pixelpulse.chooseDevice()
+		
+	dev.captureStateChanged.listen pixelpulse.onCaptureStateChange
+		
+pixelpulse.onCaptureStateChange = (s) ->
+	if s
+		$('#startpause').removeClass('startbtn').addClass('stopbtn').attr('title', 'Pause')
+	else
+		$('#startpause').removeClass('stopbtn').addClass('startbtn').attr('title', 'Start')
 	
 
 pixelpulse.init = (server, params) ->
@@ -77,14 +86,8 @@ pixelpulse.init = (server, params) ->
 		if not server.device
 			pixelpulse.chooseDevice()
 			
-	server.captureStateChanged.listen (s) ->
-		if s
-			$('#startpause').removeClass('startbtn').addClass('stopbtn').attr('title', 'Pause')
-		else
-			$('#startpause').removeClass('stopbtn').addClass('startbtn').attr('title', 'Start')
-			
 	$('#startpause').click ->
-		if server.captureState
+		if server.device.captureState
 			server.pauseCapture()
 		else
 			server.startCapture()

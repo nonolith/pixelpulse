@@ -24,10 +24,7 @@ class Dataserver
 		@connected = new Event()
 		@disconnected = new Event()
 		@devicesChanged = new Event()
-		@captureStateChanged = new Event()
 		@samplesReset = new Event()
-
-		@captureState = false
 
 		@devices = {}
 		@listenersById = {}
@@ -57,8 +54,9 @@ class Dataserver
 					@device.onInfo(m.device)
 					
 				when "captureState"
-					@captureState = m.state
-					@captureStateChanged.notify(@captureState)
+					@device.captureState = m.state
+					@device.captureDone = m.done
+					@device.captureStateChanged.notify(@device.captureState)
 					
 				when "captureReset"
 					@samplesReset.notify()
@@ -126,10 +124,12 @@ class ActiveDevice
 	constructor: (@parent) ->
 		@changed = new Event()
 		@removed = new Event()
+		@captureStateChanged = new Event()
 		@channels = {}
 
 	onInfo: (info) ->
-		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial', 'sampleTime']
+		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial',
+		          'sampleTime', 'captureState', 'captureDone']
 			this[i] = info[i]
 		
 		@channels = {}
