@@ -41,6 +41,7 @@ pixelpulse.deviceSelected = (dev) ->
 			pixelpulse.channelviews.push(s)
 			$('#streams').append(s.el)
 		pixelpulse.finishViewInit()
+		pixelpulse.initSideGraph()
 	
 	dev.removed.listen ->
 		pixelpulse.reset()
@@ -69,12 +70,10 @@ pixelpulse.init = (server, params) ->
 	
 	server.connected.listen ->
 		document.title = "Pixelpulse (Connected)"
-		document.body.className = "connected"
 		hasConnected = yes
 
 	server.disconnected.listen ->
 		document.title = "Pixelpulse (Disconnected)"
-		document.body.className = "disconnected"
 		if not hasConnected
 			pixelpulse.overlay "Dataserver not detected"
 		else
@@ -102,9 +101,6 @@ for pair in document.location.search.slice(1).split('&')
 $(document).ready ->	
 	if not params.timebar
 		$('#timesection').hide()
-		
-	if not params.layouts
-		$('#layout-sel').hide()
 		
 	if params.perfstat
 		$('#perfstat').show()

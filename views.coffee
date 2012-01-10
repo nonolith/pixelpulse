@@ -249,6 +249,23 @@ class pixelpulse.StreamView
 	destroy: ->
 		@series.destroy()
 
+pixelpulse.initSideGraph = ->
+	xvar = @streams[0]
+	yvar = @streams[1]
+	
+	xaxis = new livegraph.Axis(xvar.min, xvar.max)
+	yaxis = new livegraph.Axis(yvar.min, yvar.max)
+	
+	series = pixelpulse.data_listener.series(xvar, yvar)
+	series.color = [255, 0, 0]
+	
+	lg = new livegraph.canvas(document.getElementById('sidegraph1'), xaxis, yaxis, [series], true)
+
+	series.updated.listen ->
+		console.log('sg update')
+		lg.needsRedraw()
+	
+	
 
 class DragToSetAction extends livegraph.Action
 	constructor: (@view, pos) ->

@@ -98,7 +98,7 @@ relMousePos = (elem, event) ->
 	return [event.pageX-o.left, event.pageY-o.top]
 		
 class livegraph.canvas
-	constructor: (@div, @xaxis, @yaxis, @series) ->		
+	constructor: (@div, @xaxis, @yaxis, @series, @showXbottom = false) ->		
 		@div.setAttribute('class', 'livegraph')
 		
 		@axisCanvas = document.createElement('canvas')
@@ -109,7 +109,6 @@ class livegraph.canvas
 		$(@div).mousedown(@mousedown)
 		$(@div).dblclick(@doubleclick)
 		
-		@showXbottom = false
 		@showYleft = true
 		@showYright = true
 		@showYgrid = true
@@ -276,8 +275,9 @@ class livegraph.canvas
 		
 		@needsRedraw(true)
 		
-		@dot.lastY = undefined
-		@dot.position(@dot.y)
+		if @dot
+			@dot.lastY = undefined
+			@dot.position(@dot.y)
 		
 	addDot: (x, fill, stroke) ->
 		dot = @dot = livegraph.makeDotCanvas(5, 'white', @cssColor())

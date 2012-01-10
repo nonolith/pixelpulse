@@ -308,7 +308,7 @@ class server.DataListener extends server.Listener
 			for j in src
 				dest[idx++] = j
 		
-		@updated.notify()
+		super()
 		
 	series: (x, y) -> new DataSeries(this, x, y)
 
@@ -324,5 +324,4 @@ class DataSeries
 		else
 			@listener.data[@listener.streamIndex(@xseries)])
 		@ydata = @listener.data[@listener.streamIndex(@yseries)] 
-		console.log('reset', @listener, @xdata, @ydata)
 

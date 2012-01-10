@@ -415,7 +415,7 @@ section.stream.sourcing{
 /* layout-1side */
 
 body.layout-1side #streams{
-	left: 540px;
+	margin-left: 540px;
 }
 
 body.layout-1side #sidegraphs{
@@ -423,17 +423,18 @@ body.layout-1side #sidegraphs{
 }
 
 body.layout-1side #sidegraph1{
+	position: relative;
 	display: box;
 	display: -webkit-box;
 	display: -moz-box;
 	height: 540px;
-	background: #8888ff;
+	background: #eeeeee;
 }
 
 /* layout-2side */
 
 body.layout-2side #streams{
-	left: 280px;
+	margin-left: 280px;
 }
 
 body.layout-2side #sidegraphs{
@@ -445,7 +446,7 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	display: -webkit-box;
 	display: -moz-box;
 	height: 280px;
-	background: #8888ff;
+	background: #eeeeee;
 	margin-top: 2px;
 }
 
