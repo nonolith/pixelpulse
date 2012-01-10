@@ -121,28 +121,32 @@ class pixelpulse.StreamView
 		@dotFollowsStream = false
 		if @stream.outputMode
 			@dot = @lg.addDot('white', 'blue')
-			@stream.parent.outputChanged.listen (m) =>
-				@isSource = (m.mode == @stream.outputMode)
-				@dotFollowsStream = false
-				@section.toggleClass('sourcing', @isSource)
+			@stream.parent.outputChanged.listen (m) => @updateDot(m)
+			@updateDot(@stream.parent.source)
 				
-				if m.source is 'constant'
-					@dot.fill = if @isSource then @lg.cssColor() else 'white'
-					@dot.render()
-					
-					if @isSource
-						@dot.position(m.value)
-					else
-						@dot.position(@series.listener.lastData)
-						@dotFollowsStream = true
-				else
-					@dot.position(null)
 								
 		@series.updated.listen =>
 			@lg.needsRedraw()
 			if @dotFollowsStream then @dot.position(@series.listener.lastData)
 			
 		@lg.needsRedraw()
+		
+	updateDot: (m) ->	
+		@isSource = (m.mode == @stream.outputMode)
+		@dotFollowsStream = false
+		@section.toggleClass('sourcing', @isSource)
+		
+		if m.source is 'constant'
+			@dot.fill = if @isSource then @lg.cssColor() else 'white'
+			@dot.render()
+			
+			if @isSource
+				@dot.position(m.value)
+			else
+				@dot.position(@series.listener.lastData)
+				@dotFollowsStream = true
+		else
+			@dot.position(null)
 		
 	updateSeries: ->
 		min = Math.max(@xaxis.visibleMin - 0.5*@xaxis.span(), @xaxis.min)
