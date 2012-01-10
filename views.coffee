@@ -53,6 +53,12 @@ pixelpulse.updateTimeSeries = ->
 		console.log('configure', min, max, pts)
 		listener.configure(min, max, pts)
 		listener.submit()
+		
+pixelpulse.destroyView =->
+	$('#streams section.channel').remove()
+	$('#sidegraphs > section').empty()
+	if @data_listener
+		@data_listener.cancel()
 
 class pixelpulse.ChannelView
 	constructor: (@channel, @index) ->
@@ -70,9 +76,6 @@ class pixelpulse.ChannelView
 			v = new pixelpulse.StreamView(this, s,  i++)
 			@section.append(v.el)
 			v
-			
-	destroy: ->
-		s.destroy() for s in @streamViews
 		
 
 class pixelpulse.StreamView
@@ -246,9 +249,6 @@ class pixelpulse.StreamView
 		else
 			@source.html("<h2>measure</h2>")
 
-	destroy: ->
-		@series.destroy()
-
 pixelpulse.initSideGraph = ->
 	xvar = @streams[0]
 	yvar = @streams[1]
@@ -262,7 +262,6 @@ pixelpulse.initSideGraph = ->
 	lg = new livegraph.canvas(document.getElementById('sidegraph1'), xaxis, yaxis, [series], true)
 
 	series.updated.listen ->
-		console.log('sg update')
 		lg.needsRedraw()
 	
 	

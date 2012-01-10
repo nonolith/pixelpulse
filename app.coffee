@@ -13,8 +13,7 @@ pixelpulse.overlay = (message) ->
 		$("#error-status").text(message)
 		
 pixelpulse.reset = ->
-	i.destroy()	for i in pixelpulse.channelviews
-	$('#streams section.channel').remove()
+	pixelpulse.destroyView()
 	
 pixelpulse.chooseDevice = ->
 	ndevices = server.devices.length
