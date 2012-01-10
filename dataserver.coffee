@@ -64,8 +64,7 @@ class Dataserver
 						i.onReset()
 						
 				when "update"
-					for d in m.listeners
-						@listenersById[d.id].onMessage(d)
+					@listenersById[m.id].onMessage(m)
 						
 				when "outputChanged"
 					channel = @device.channels[m.channel]
@@ -146,6 +145,12 @@ class ActiveDevice
 	controlTransfer: (bmRequestType, bRequest, wValue, wIndex, data=[], wLength=64, callback) ->
 		id = server.createCallback callback
 		server.send 'controlTransfer', {bmRequestType, bRequest, wValue, wIndex, data, wLength, id}
+		
+	calcDecimate: (requestedSampleTime) ->
+		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/@sampleTime))
+		sampleTime = @sampleTime * decimateFactor
+		console.log('calcDecimate', requestedSampleTime, sampleTime, decimateFactor)
+		return [decimateFactor, sampleTime]
 
 class Channel
 	constructor: (info, @parent) ->
@@ -203,11 +208,7 @@ class Channel
 				@set m, sourceType, {offset:value, amplitude, period}
 			when 'square'
 				@set(m, sourceType, {high:value+amplitude, low: value-amplitude, highSamples:period/2, lowSamples:period/2})
-		
-			
-				
-				
-			
+	
 	onOutputChanged: (m) ->
 		@source = m
 		@outputChanged.notify(m)
@@ -224,109 +225,104 @@ class Stream
 	onRemoved: ->
 		@removed.notify()
 
-	calcDecimate: (requestedSampleTime) ->
-		devSampleTime = @parent.parent.sampleTime
-		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/devSampleTime))
-		sampleTime = devSampleTime * decimateFactor
-		return [decimateFactor, sampleTime]
-
-	listen: (fn, sampleTime=0.1) ->
-		channel = @parent
-		device = channel.parent
-		server = device.parent
-		l = new Listener(server, device, channel, this, sampleTime)
-		if fn
-			l.updated.listen(fn)
-			l.submit()
-		return l
-
-	series: -> new TimeDataSeries(this)
-		
+window.server = new Dataserver('localhost:9003')	
 
 nextListenerId = 100
 
-class Listener
-	constructor: (@server, @device, @channel, @stream, @requestedSampleTime) ->
+class server.Listener
+	constructor: (@device, @streams) ->
+		@server = @device.parent
 		@id = nextListenerId++
 		@updated = new Event()
-		@lastData = NaN
+		@reset = new Event()
+		@configure()
+		
+	streamIndex: (stream) -> @streams.indexOf(stream)
 
-	submit: (startTime=null, count=-1) ->
+	configure: (startTime=null, requestedSampleTime=0.1, @count=-1) ->
 		@server.listenersById[@id] = this
-		[@decimateFactor, @sampleTime] = @stream.calcDecimate(@requestedSampleTime)
+		[@decimateFactor, @sampleTime] = @device.calcDecimate(requestedSampleTime)
 		if startTime?
-			startSample = Math.round(startTime/@device.sampleTime)
+			@startSample = Math.floor(startTime/@device.sampleTime)-@decimateFactor
 		else
-			startSample = -1
+			@startSample = -@decimateFactor-2
+			
+	submit: ->
 		@server.send 'listen'
 			id: @id
-			channel: @channel.id
-			stream: @stream.id
+			streams: ({channel:s.parent.id, stream:s.id} for s in @streams)
 			decimateFactor: @decimateFactor
-			start: startSample
-			count: count
+			start: @startSample
+			count: @count
 
 	onReset: ->
-		console.log 'onReset'
-		@lastData = NaN
-		@updated.notify([], 0)
+		@reset.notify()
 		
 	onMessage: (m) ->
-		@lastData = m.data[m.data.length-1]
-		@updated.notify(m.data, m.idx)
+		@updated.notify(m)
 
 	cancel: ->
 		@server.send 'cancelListen'
 			id: @id
 		if @server.listenersById[@id]
 			delete @server.listenersById[@id]
-
-class TimeDataSeries
-	constructor: (@series) ->
-		@listener = @series.listen()
-		@listener.updated.listen(@onData)
-		@server = @listener.server
-		@updated = new Event()
+			
+class server.DataListener extends server.Listener
+	constructor: (device, streams) ->
+		super(device, streams)
+		@timedata = []
 		@xdata = []
-		@ydata = []
-		@requestedPoints = 0
+		@data = ([] for i in streams)
+		console.log('streams', streams)
+		@requestedPoints = 0	
 	
-	submit: ->
+	configure: (@xmin, @xmax, @requestedPoints) ->
 		time = @xmax - @xmin
 		requestedSampleTime = time/@requestedPoints
-		[decimateFactor, @sampleTime] = @series.calcDecimate(requestedSampleTime)
+		
+		super(@xmin, requestedSampleTime)
+		
 		@len = Math.ceil(time/@sampleTime)
 		
-		@listener.requestedSampleTime = requestedSampleTime
-		
 		# At end of "recent" stream means get new data
-		reqLen = if @xmin < 0 and @xmax==0 then -1 else @len
-		
-		@listener.submit(@xmin, reqLen)
-		return
-	
-	onData: (d, idx) =>
-		if idx == 0
-			@ydata = new Float32Array(@len)
+		@count = if @xmin < 0 and @xmax==0 then -1 else @len
+
+	onMessage: (m) ->
+		if m.idx == 0
 			@xdata = new Float32Array(@len)
 			for i in [0...@len]
 				@xdata[i] = @xmin + i*@sampleTime
+			
+			@data = (new Float32Array(@len) for i in @streams)
+			@reset.notify()
+		
+		for i in [0...@streams.length]
+			src = m.data[i]
+			dest = @data[i]
+			idx = m.idx
+			
+			if src.length and @xmin < 0
+				dest.set(dest.subarray(src.length)) #shift array element left
+				idx = dest.length-src.length
 
-		if d.length and @xmin < 0
-			@ydata.set(@ydata.subarray(d.length)) #shift array element left
-			idx = @ydata.length-d.length
-
-		for i in d
-			@ydata[idx++] = i
+			for j in src
+				dest[idx++] = j
 		
 		@updated.notify()
+		
+	series: (x, y) -> new DataSeries(this, x, y)
 
+class DataSeries
+	constructor: (@listener, @xseries, @yseries) ->
+		@updated = @listener.updated
+		@listener.reset.listen @reset
+		@reset()
 	
-	configure: (@xmin, @xmax, @requestedPoints) ->
-		# negative xmin, xmax==0 means to always show the last -xmin seconds
-		@submit()
+	reset: =>
+		@xdata = (if @xseries == 'time'
+			@listener.xdata
+		else
+			@listener.data[@listener.streamIndex(@xseries)])
+		@ydata = @listener.data[@listener.streamIndex(@yseries)] 
+		console.log('reset', @listener, @xdata, @ydata)
 
-	destroy: ->
-		@listener.cancel()
-
-window.server = new Dataserver('localhost:9003')	

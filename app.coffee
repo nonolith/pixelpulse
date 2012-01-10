@@ -15,8 +15,6 @@ pixelpulse.overlay = (message) ->
 pixelpulse.reset = ->
 	i.destroy()	for i in pixelpulse.channelviews
 	$('#streams section.channel').remove()
-	pixelpulse.channelviews = []
-	pixelpulse.initViewGlobals()
 	
 pixelpulse.chooseDevice = ->
 	ndevices = server.devices.length
@@ -35,6 +33,8 @@ pixelpulse.deviceSelected = (dev) ->
 		console.info "device updated", dev
 		pixelpulse.reset()
 		pixelpulse.onCaptureStateChange(dev.captureState)
+		pixelpulse.channelviews = []
+		pixelpulse.initView(dev)
 		i = 0
 		for chId, channel of dev.channels
 			s = new pixelpulse.ChannelView(channel, i++)

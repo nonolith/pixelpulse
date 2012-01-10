@@ -14,9 +14,18 @@ COLORS = [
 #	[[0, 0, 255], [0, 0, 255]], [[0, 0, 255], [0, 0, 255]]
 #]
 
-pixelpulse.initViewGlobals = ->
+pixelpulse.initView = (dev) ->
 	@timeseries_x = new livegraph.Axis(-10, 0)
 	@timeseries_graphs = []
+	
+	@streams = []
+	for chId, channel of dev.channels
+		for sId, stream of channel.streams
+			@streams.push(stream)
+		
+	@meter_listener = new server.Listener(dev, @streams)
+	@data_listener = new server.DataListener(dev, @streams)
+	
 	
 pixelpulse.finishViewInit = ->
 	# show the x-axis ticks on the last stream
@@ -27,12 +36,23 @@ pixelpulse.finishViewInit = ->
 	$(lastGraph.div).css('margin-bottom', -livegraph.AXIS_SPACING)
 	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
 	lastGraph.resized()
-
+	
+	@meter_listener.submit()
+	setTimeout @updateTimeSeries, 100
+	
 # run after a window changing operation to fetch new data from the server
 pixelpulse.updateTimeSeries = ->
-	for c in pixelpulse.channelviews
-		for s in c.streamViews
-			s.updateSeries()
+	xaxis = pixelpulse.timeseries_x
+	lg = pixelpulse.timeseries_graphs[0]
+	listener = pixelpulse.data_listener
+	min = Math.max(xaxis.visibleMin - 0.5*xaxis.span(), xaxis.min)
+	max = Math.min(xaxis.visibleMax + 0.5*xaxis.span(), xaxis.max)
+	pts = lg.width / 2 * (max - min) / xaxis.span()
+	
+	if min != listener.xmin or max != listener.xmax or listener.requestedPoints != pts
+		console.log('configure', min, max, pts)
+		listener.configure(min, max, pts)
+		listener.submit()
 
 class pixelpulse.ChannelView
 	constructor: (@channel, @index) ->
@@ -67,9 +87,11 @@ class pixelpulse.StreamView
 
 		@addReadingUI(@aside)
 
-		@listener = @stream.listen =>
-			@onValue(@listener.lastData)
-			
+		pixelpulse.meter_listener.updated.listen (m) =>
+			index = pixelpulse.meter_listener.streamIndex(@stream)
+			arr = m.data[index]
+			@onValue arr[arr.length - 1]
+					
 		@source = $("<div class='source'>").appendTo(@aside)
 		@stream.parent.outputChanged.listen @sourceChanged
 		
@@ -93,16 +115,16 @@ class pixelpulse.StreamView
 	initTimeseries: ->
 		@xaxis = pixelpulse.timeseries_x
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
-		@series =  @stream.series()
+		@series =  pixelpulse.data_listener.series('time', @stream)
 		@series.color = COLORS[@channelView.index][@index]
+		
+		console.log(@series)
 		
 		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
 		
 		pixelpulse.timeseries_graphs.push(@lg)
 		
 		$(window).resize => @lg.resized()
-
-		@lg.onResized = => @updateSeries()
 				
 		@lg.onClick = (pos) =>
 			[x,y] = pos
@@ -123,8 +145,7 @@ class pixelpulse.StreamView
 			@dot = @lg.addDot('white', 'blue')
 			@stream.parent.outputChanged.listen (m) => @updateDot(m)
 			@updateDot(@stream.parent.source)
-				
-								
+		
 		@series.updated.listen =>
 			@lg.needsRedraw()
 			if @dotFollowsStream then @dot.position(@series.listener.lastData)
@@ -148,14 +169,6 @@ class pixelpulse.StreamView
 		else
 			@dot.position(null)
 		
-	updateSeries: ->
-		min = Math.max(@xaxis.visibleMin - 0.5*@xaxis.span(), @xaxis.min)
-		max = Math.min(@xaxis.visibleMax + 0.5*@xaxis.span(), @xaxis.max)
-		pts = @lg.width / 2 * (max - min) / @xaxis.span()
-		
-		if min != @series.xmin or max != @series.xmax or @series.requestedPoints != pts
-			@series.configure(min, max, pts)
-			
 	sourceChanged: (m) =>
 		if m.mode == @stream.outputMode
 			@source.empty()
