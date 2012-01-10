@@ -259,7 +259,8 @@ pixelpulse.initSideGraph = ->
 	series = pixelpulse.data_listener.series(xvar, yvar)
 	series.color = [255, 0, 0]
 	
-	lg = new livegraph.canvas(document.getElementById('sidegraph1'), xaxis, yaxis, [series], true)
+	lg = new livegraph.canvas(document.getElementById('sidegraph1'), xaxis, yaxis, [series], 
+		{xbottom:true, yright:false, xgrid:true})
 
 	series.updated.listen ->
 		lg.needsRedraw()

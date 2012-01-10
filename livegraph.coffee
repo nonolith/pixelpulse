@@ -98,7 +98,7 @@ relMousePos = (elem, event) ->
 	return [event.pageX-o.left, event.pageY-o.top]
 		
 class livegraph.canvas
-	constructor: (@div, @xaxis, @yaxis, @series, @showXbottom = false) ->		
+	constructor: (@div, @xaxis, @yaxis, @series, opts={}) ->		
 		@div.setAttribute('class', 'livegraph')
 		
 		@axisCanvas = document.createElement('canvas')
@@ -109,9 +109,12 @@ class livegraph.canvas
 		$(@div).mousedown(@mousedown)
 		$(@div).dblclick(@doubleclick)
 		
-		@showYleft = true
-		@showYright = true
-		@showYgrid = true
+		@showYleft = opts.yleft ? true
+		@showYright = opts.yright ? true
+		@showYgrid = opts.ygrid ? true
+		@showXbottom = opts.xbottom ? false
+		@showXgrid = opts.xgrid ? false
+		@gridcolor = opts.gridcolor ? 'rgba(0,0,0,0.08)'
 		
 		@ctxa = @axisCanvas.getContext('2d')
 		
@@ -224,6 +227,7 @@ class livegraph.canvas
 	mousedown: (e) =>
 		pos = origPos = relMousePos(@div, e)
 		@dragAction = @onClick(pos)
+		if not @dragAction then return
 		
 		mousemove = (e) =>
 			pos = relMousePos(@div, e)
@@ -240,8 +244,7 @@ class livegraph.canvas
 		$(window).mousemove(mousemove)
 		         .mouseup(mouseup)
 		
-	onClick: (pos) ->
-		return new livegraph.DragScrollAction(this, pos)
+	onClick: (pos) -> false
 		
 	doubleclick: (e) =>
 		pos = origPos = relMousePos(@div, e)
@@ -267,6 +270,9 @@ class livegraph.canvas
 			xright: @width - (PADDING + @showYright * AXIS_SPACING)
 			width: @width - 2*PADDING - (@showYleft+@showYright) * AXIS_SPACING
 			height: @height - 2*PADDING - @showXbottom  * AXIS_SPACING
+			
+		@xgridticks = Math.min(@width/50, 10)
+		@ygridticks = @height/35
 
 		if @onResized
 			@onResized()
@@ -320,13 +326,14 @@ class livegraph.canvas
 	redrawAxis: ->
 		@ctxa.clearRect(0,0,@width, @height)
 		
+		if @showXgrid	then @drawXgrid()
 		if @showXbottom then @drawXAxis(@geom.ybottom)	
 		if @showYgrid   then @drawYgrid()	
 		if @showYleft   then @drawYAxis(@geom.xleft,  'right', -5)
 		if @showYright  then @drawYAxis(@geom.xright, 'left',   8)
 		
 	drawXAxis: (y) ->
-		xgrid = @xaxis.grid(Math.min(@width/50, 10))
+		xgrid = @xaxis.grid(@xgridticks)
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.beginPath()
@@ -347,9 +354,20 @@ class livegraph.canvas
 			@ctxa.lineTo(xp,y+4)
 			@ctxa.stroke()
 			@ctxa.fillText(x.toFixed(digits), xp ,y+textoffset)
+			
+	drawXgrid: ->
+		grid = @xaxis.grid(@xgridticks)
+		@ctxa.strokeStyle = @gridcolor
+		@ctxa.lineWidth = 1
+		for x in grid
+			xp = snapPx(@xaxis.xtransform(x, @geom))
+			@ctxa.beginPath()
+			@ctxa.moveTo(xp, @geom.ybottom)
+			@ctxa.lineTo(xp, @geom.ytop)
+			@ctxa.stroke()
 		
 	drawYAxis: (x, align, textoffset) =>
-		grid = @yaxis.grid(@height / 35)
+		grid = @yaxis.grid(@ygridticks)
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.textAlign = align
@@ -371,8 +389,8 @@ class livegraph.canvas
 			@ctxa.fillText(Math.round(y*10)/10, x+textoffset, yp)
 			
 	drawYgrid: ->
-		grid = @yaxis.grid(@height / 35)
-		@ctxa.strokeStyle = 'rgba(0,0,0,0.08)'
+		grid = @yaxis.grid(@ygridticks)
+		@ctxa.strokeStyle = @gridcolor
 		@ctxa.lineWidth = 1
 		for y in grid
 			yp = snapPx(@yaxis.ytransform(y, @geom))
