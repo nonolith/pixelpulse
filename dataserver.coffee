@@ -236,6 +236,7 @@ class server.Listener
 		@updated = new Event()
 		@reset = new Event()
 		@configure()
+		@disableTrigger()
 		
 	streamIndex: (stream) -> @streams.indexOf(stream)
 
@@ -247,6 +248,11 @@ class server.Listener
 		else
 			@startSample = -@decimateFactor-2
 			
+	disableTrigger: -> @trigger = false
+	
+	configureTrigger: (stream, level, holdoff=0) ->
+		@trigger = {channel: stream.parent.id, stream:stream.id, level, holdoff}
+			
 	submit: ->
 		@server.send 'listen'
 			id: @id
@@ -254,6 +260,8 @@ class server.Listener
 			decimateFactor: @decimateFactor
 			start: @startSample
 			count: @count
+			trigger: @trigger
+		@needsReset = true
 
 	onReset: ->
 		@reset.notify()
@@ -274,7 +282,7 @@ class server.DataListener extends server.Listener
 		@xdata = []
 		@data = ([] for i in streams)
 		console.log('streams', streams)
-		@requestedPoints = 0	
+		@requestedPoints = 0
 	
 	configure: (@xmin, @xmax, @requestedPoints) ->
 		time = @xmax - @xmin
@@ -285,10 +293,11 @@ class server.DataListener extends server.Listener
 		@len = Math.ceil(time/@sampleTime)
 		
 		# At end of "recent" stream means get new data
-		@count = if @xmin < 0 and @xmax==0 then -1 else @len
+		@count = if @xmin < 0 and @xmax==0 and not @trigger then -1 else @len
 
 	onMessage: (m) ->
-		if m.idx == 0
+		if m.idx == 0 and @needsReset
+			@needsReset = false
 			@xdata = new Float32Array(@len)
 			for i in [0...@len]
 				@xdata[i] = @xmin + i*@sampleTime
@@ -301,7 +310,7 @@ class server.DataListener extends server.Listener
 			dest = @data[i]
 			idx = m.idx
 			
-			if src.length and @xmin < 0
+			if src.length and @xmin < 0 and not @trigger
 				dest.set(dest.subarray(src.length)) #shift array element left
 				idx = dest.length-src.length
 
