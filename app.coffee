@@ -25,7 +25,6 @@ pixelpulse.chooseDevice = ->
 	pixelpulse.overlay "No devices found"
 		
 pixelpulse.deviceSelected = (dev) ->
-	console.info "Selected device", dev
 	pixelpulse.overlay("Loading Device...")
 	dev.changed.listen ->
 		pixelpulse.overlay()
@@ -55,9 +54,6 @@ pixelpulse.onCaptureStateChange = (s) ->
 	
 
 pixelpulse.init = (server, params) ->
-	ts = $("#timeseries").get(0)
-	meters = $("#meters").get(0)
-
 	if !window.WebSocket
 		pixelpulse.overlay "Pixelpulse requires WebSockets and currently only works in Chrome and Safari"
 		return
@@ -67,11 +63,9 @@ pixelpulse.init = (server, params) ->
 	hasConnected = no
 	
 	server.connected.listen ->
-		document.title = "Pixelpulse (Connected)"
 		hasConnected = yes
 
 	server.disconnected.listen ->
-		document.title = "Pixelpulse (Disconnected)"
 		if not hasConnected
 			pixelpulse.overlay "Dataserver not detected"
 		else
@@ -89,17 +83,14 @@ pixelpulse.init = (server, params) ->
 		else
 			server.device.startCapture()
 				
-pixelpulse.channelviews = []			
-		
+pixelpulse.channelviews = []
+
 #URL params
 params = {}
 for pair in document.location.search.slice(1).split('&')
 	[key,params[key]] = pair.split('=')
 
-$(document).ready ->	
-	if not params.timebar
-		$('#timesection').hide()
-		
+$(document).ready ->
 	if params.perfstat
 		$('#perfstat').show()
 		

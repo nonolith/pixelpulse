@@ -9,10 +9,7 @@ app.init = (server, params) ->
 	server.connect()
 
 	server.disconnected.listen ->
-		if not hasConnected
-			console.log "Dataserver not detected"
-		else
-			console.log "Connection lost"
+		$(document.body).html("Disconnected")
 
 	server.devicesChanged.listen (l) ->
 		app.chooseDevice()

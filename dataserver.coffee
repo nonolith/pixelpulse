@@ -70,7 +70,7 @@ class Dataserver
 			@device.onRemove()
 		@device = device.makeActiveObj(this)
 		return @device
-		
+	
 	createCallback: (fn) ->
 		if fn
 			id = (+new Date() + Math.round(Math.random()*100000))&0xfffffff
@@ -78,18 +78,18 @@ class Dataserver
 			return id
 		else
 			return ''
-		
+	
 	runCallback: (id, data, remove=yes) ->
 		if @callbacks[id]
 			@callbacks[id](data)
 			if remove
-				delete @callbacks[id]		
+				delete @callbacks[id]
 
 class Device
 	constructor: (info) ->
 		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial']
 			this[i] = info[i]
-			
+	
 	makeActiveObj: (parent) ->
 		return switch @model
 			when 'com.nonolithlabs.cee'
@@ -105,7 +105,7 @@ class CEEDevice
 		@samplesReset = new Event()
 		@listenersById = {}
 		@channels = {}
-		
+	
 	onMessage: (m) ->
 		switch m._action
 			when "deviceConfig"
@@ -160,7 +160,6 @@ class CEEDevice
 	calcDecimate: (requestedSampleTime) ->
 		decimateFactor = Math.max(1, Math.floor(requestedSampleTime/@sampleTime))
 		sampleTime = @sampleTime * decimateFactor
-		console.log('calcDecimate', requestedSampleTime, sampleTime, decimateFactor)
 		return [decimateFactor, sampleTime]
 
 class Channel
@@ -236,7 +235,7 @@ class Stream
 	onRemoved: ->
 		@removed.notify()
 
-window.server = new Dataserver('localhost:9003')	
+window.server = new Dataserver('localhost:9003')
 
 nextListenerId = 100
 
@@ -263,8 +262,8 @@ class server.Listener
 	
 	configureTrigger: (stream, level, holdoff=0, offset=0, force=0) ->
 		@trigger = {stream, level, holdoff, offset, force}
-			
-	submit: ->	
+	
+	submit: ->
 		@server.send 'listen'
 			id: @id
 			streams: ({channel:s.parent.id, stream:s.id} for s in @streams)
@@ -282,10 +281,10 @@ class server.Listener
 
 	onReset: ->
 		@reset.notify()
-		
+	
 	onMessage: (m) ->
 		@updated.notify(m)
-
+	
 	cancel: ->
 		@server.send 'cancelListen'
 			id: @id
@@ -298,7 +297,6 @@ class server.DataListener extends server.Listener
 		@timedata = []
 		@xdata = []
 		@data = ([] for i in streams)
-		console.log('streams', streams)
 		@requestedPoints = 0
 	
 	configure: (@xmin, @xmax, @requestedPoints) ->
@@ -318,7 +316,6 @@ class server.DataListener extends server.Listener
 			@xdata = new Float32Array(@len)
 			
 			min = if @trigger then @trigger.offset else @xmin
-			console.log("Generating x", min, min+@len*@sampleTime)
 			
 			for i in [0...@len]
 				@xdata[i] = min + i*@sampleTime
@@ -368,7 +365,6 @@ class BootloaderDevice
 	onInfo: (info) ->
 		for i in ["magic", "version", "devid","page_size", "app_section_end", "hw_product", "hw_version"]
 			this[i] = info[i]
-
 		@changed.notify(this)
 		
 	onRemoved: ->
@@ -388,5 +384,4 @@ class BootloaderDevice
 		
 	reset: ->
 		server.send 'reset'
-	
 	
