@@ -85,9 +85,9 @@ pixelpulse.init = (server, params) ->
 			
 	$('#startpause').click ->
 		if server.device.captureState
-			server.pauseCapture()
+			server.device.pauseCapture()
 		else
-			server.startCapture()
+			server.device.startCapture()
 				
 pixelpulse.channelviews = []			
 		

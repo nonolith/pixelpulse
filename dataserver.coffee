@@ -24,10 +24,8 @@ class Dataserver
 		@connected = new Event()
 		@disconnected = new Event()
 		@devicesChanged = new Event()
-		@samplesReset = new Event()
 
 		@devices = {}
-		@listenersById = {}
 		@callbacks = {}
 
 	connect: ->
@@ -42,6 +40,7 @@ class Dataserver
 		@ws.onmessage = (evt) =>
 			#console.log 'm', evt.data
 			m = JSON.parse(evt.data)
+			
 			switch m._action
 				when "devices"
 					# note that this only refreshes the device list, not
@@ -49,37 +48,16 @@ class Dataserver
 					@devices =  for devId, devInfo of m.devices
 						new Device(devInfo, this)
 					@devicesChanged.notify(@devices)
-					
-				when "deviceConfig"
-					@device.onInfo(m.device)
-					
-				when "info"
-					@device.onInfo(m)
-					
-				when "captureState"
-					@device.captureState = m.state
-					@device.captureDone = m.done
-					@device.captureStateChanged.notify(@device.captureState)
-					
-				when "captureReset"
-					@samplesReset.notify()
-					for id, i of @listenersById
-						i.onReset()
-						
-				when "update"
-					@listenersById[m.id].onMessage(m)
-						
-				when "outputChanged"
-					channel = @device.channels[m.channel]
-					channel.onOutputChanged(m)
-					
-				when "controlTransferReturn", "return"
-					@runCallback m.id, m
-					
+				
 				when "deviceDisconnected"
 					@device.removed.notify()
 					@device = null
 					
+				when "return"
+					@runCallback(m.id, m)
+					
+				else
+					@device.onMessage(m)
 	
 	send: (cmd, m={})->
 		m._cmd = cmd
@@ -92,16 +70,6 @@ class Dataserver
 			@device.onRemove()
 		@device = device.makeActiveObj(this)
 		return @device
-
-	#TODO: move to CEEDevice
-	configure: (mode=0, sampleTime=0.00004, samples=250000, continuous=false, raw=false) ->
-		@send 'configure', {mode, sampleTime, samples, continuous, raw}
-		
-	startCapture: ->
-		@send 'startCapture'
-
-	pauseCapture: ->
-		@send 'pauseCapture'
 		
 	createCallback: (fn) ->
 		if fn
@@ -134,7 +102,31 @@ class CEEDevice
 		@changed = new Event()
 		@removed = new Event()
 		@captureStateChanged = new Event()
+		@samplesReset = new Event()
+		@listenersById = {}
 		@channels = {}
+		
+	onMessage: (m) ->
+		switch m._action
+			when "deviceConfig"
+				@onInfo(m.device)
+				
+			when "captureState"
+				@captureState = m.state
+				@captureDone = m.done
+				@captureStateChanged.notify(@captureState)
+				
+			when "captureReset"
+				@samplesReset.notify()
+				for id, i of @listenersById
+					i.onReset()
+					
+			when "update"
+				@listenersById[m.id].onMessage(m)
+					
+			when "outputChanged"
+				channel = @channels[m.channel]
+				channel.onOutputChanged(m)		
 
 	onInfo: (info) ->
 		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial',
@@ -151,6 +143,15 @@ class CEEDevice
 		for cId, channel of @channels
 			channel.onRemoved()
 		@removed.notify(this)
+		
+	configure: (mode=0, sampleTime=0.00004, samples=250000, continuous=false, raw=false) ->
+		@parent.send 'configure', {mode, sampleTime, samples, continuous, raw}
+		
+	startCapture: ->
+		@parent.send 'startCapture'
+
+	pauseCapture: ->
+		@parent.send 'pauseCapture'
 		
 	controlTransfer: (bmRequestType, bRequest, wValue, wIndex, data=[], wLength=64, callback) ->
 		id = server.createCallback callback
@@ -251,7 +252,7 @@ class server.Listener
 	streamIndex: (stream) -> @streams.indexOf(stream)
 
 	configure: (startTime=null, requestedSampleTime=0.1, @count=-1) ->
-		@server.listenersById[@id] = this
+		@device.listenersById[@id] = this
 		[@decimateFactor, @sampleTime] = @device.calcDecimate(requestedSampleTime)
 		if startTime?
 			@startSample = Math.floor(startTime/@device.sampleTime)-@decimateFactor
@@ -288,8 +289,8 @@ class server.Listener
 	cancel: ->
 		@server.send 'cancelListen'
 			id: @id
-		if @server.listenersById[@id]
-			delete @server.listenersById[@id]
+		if @device.listenersById[@id]
+			delete @device.listenersById[@id]
 			
 class server.DataListener extends server.Listener
 	constructor: (device, streams) ->
@@ -358,14 +359,20 @@ class BootloaderDevice
 	constructor: (@server) ->
 		@changed = new Event()
 		@removed = new Event()
-
+		
+	onMessage: (m) ->
+		switch m._action
+			when "info"
+				@onInfo(m)
+	
 	onInfo: (info) ->
 		for i in ["magic", "version", "devid","page_size", "app_section_end", "hw_product", "hw_version"]
 			this[i] = info[i]
 
 		@changed.notify(this)
 		
-	onRemove: ->
+	onRemoved: ->
+		@removed.notify()
 		
 	crcApp: (callback) ->
 		server.send 'crc_app', {id:server.createCallback(callback)}
