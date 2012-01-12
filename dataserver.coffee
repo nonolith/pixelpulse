@@ -250,17 +250,23 @@ class server.Listener
 			
 	disableTrigger: -> @trigger = false
 	
-	configureTrigger: (stream, level, holdoff=0) ->
-		@trigger = {channel: stream.parent.id, stream:stream.id, level, holdoff}
+	configureTrigger: (stream, level, holdoff=0, offset=0, force=0) ->
+		@trigger = {stream, level, holdoff, offset, force}
 			
-	submit: ->
+	submit: ->	
 		@server.send 'listen'
 			id: @id
 			streams: ({channel:s.parent.id, stream:s.id} for s in @streams)
 			decimateFactor: @decimateFactor
 			start: @startSample
 			count: @count
-			trigger: @trigger
+			trigger: if @trigger
+				channel: @trigger.stream.parent.id
+				stream: @trigger.stream.id
+				level: @trigger.level
+				holdoff: Math.round(@trigger.holdoff / @device.sampleTime)
+				offset: Math.round(@trigger.offset / @device.sampleTime)
+				force: Math.round(@trigger.force / @device.sampleTime)
 		@needsReset = true
 
 	onReset: ->
@@ -299,8 +305,12 @@ class server.DataListener extends server.Listener
 		if m.idx == 0 and @needsReset
 			@needsReset = false
 			@xdata = new Float32Array(@len)
+			
+			min = if @trigger then @trigger.offset else @xmin
+			console.log("Generating x", min, min+@len*@sampleTime)
+			
 			for i in [0...@len]
-				@xdata[i] = @xmin + i*@sampleTime
+				@xdata[i] = min + i*@sampleTime
 			
 			@data = (new Float32Array(@len) for i in @streams)
 			@reset.notify()

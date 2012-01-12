@@ -48,14 +48,22 @@ pixelpulse.updateTimeSeries = ->
 	xaxis = pixelpulse.timeseries_x
 	lg = pixelpulse.timeseries_graphs[0]
 	listener = pixelpulse.data_listener
-	min = Math.max(xaxis.visibleMin - 0.5*xaxis.span(), xaxis.min)
-	max = Math.min(xaxis.visibleMax + 0.5*xaxis.span(), xaxis.max)
-	pts = lg.width / 2 * (max - min) / xaxis.span()
+	
+	if listener.trigger
+		min = -xaxis.span()
+		max = 0
+		pts = lg.width/2
+		listener.trigger.offset = xaxis.visibleMin
+	else
+		min = Math.max(xaxis.visibleMin - 0.5*xaxis.span(), xaxis.min)
+		max = Math.min(xaxis.visibleMax + 0.5*xaxis.span(), xaxis.max)
+		pts = lg.width / 2 * (max - min) / xaxis.span()
 	
 	if min != listener.xmin or max != listener.xmax or listener.requestedPoints != pts
 		console.log('configure', min, max, pts)
 		listener.configure(min, max, pts)
 		listener.submit()
+		
 		
 pixelpulse.destroyView =->
 	$('#streams section.channel').remove()
