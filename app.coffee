@@ -17,12 +17,12 @@ pixelpulse.reset = ->
 	
 pixelpulse.chooseDevice = ->
 	ndevices = server.devices.length
-	if ndevices > 0
+	for dev in server.devices
 		# select the "first" device
-		dev = server.selectDevice(server.devices[0])
-		pixelpulse.deviceSelected(dev)
-	else
-		pixelpulse.overlay "No devices found"
+		if dev.model == "com.nonolithlabs.cee"
+			dev = server.selectDevice(server.devices[0])
+			return pixelpulse.deviceSelected(dev)
+	pixelpulse.overlay "No devices found"
 		
 pixelpulse.deviceSelected = (dev) ->
 	console.info "Selected device", dev

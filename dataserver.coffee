@@ -53,6 +53,9 @@ class Dataserver
 				when "deviceConfig"
 					@device.onInfo(m.device)
 					
+				when "info"
+					@device.onInfo(m)
+					
 				when "captureState"
 					@device.captureState = m.state
 					@device.captureDone = m.done
@@ -70,7 +73,7 @@ class Dataserver
 					channel = @device.channels[m.channel]
 					channel.onOutputChanged(m)
 					
-				when "controlTransferReturn"
+				when "controlTransferReturn", "return"
 					@runCallback m.id, m
 					
 				when "deviceDisconnected"
@@ -87,9 +90,10 @@ class Dataserver
 			id: device.id
 		if @device
 			@device.onRemove()
-		@device = new ActiveDevice(this)
+		@device = device.makeActiveObj(this)
 		return @device
 
+	#TODO: move to CEEDevice
 	configure: (mode=0, sampleTime=0.00004, samples=250000, continuous=false, raw=false) ->
 		@send 'configure', {mode, sampleTime, samples, continuous, raw}
 		
@@ -101,7 +105,7 @@ class Dataserver
 		
 	createCallback: (fn) ->
 		if fn
-			id = +new Date() + Math.round(Math.random()*100000)
+			id = (+new Date() + Math.round(Math.random()*100000))&0xfffffff
 			@callbacks[id] = fn
 			return id
 		else
@@ -111,15 +115,21 @@ class Dataserver
 		if @callbacks[id]
 			@callbacks[id](data)
 			if remove
-				delete @callbacks[id]
-		
+				delete @callbacks[id]		
 
 class Device
 	constructor: (info) ->
 		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial']
 			this[i] = info[i]
+			
+	makeActiveObj: (parent) ->
+		return switch @model
+			when 'com.nonolithlabs.cee'
+				new CEEDevice(parent)
+			when 'com.nonolithlabs.bootloader'
+				new BootloaderDevice(parent)
 
-class ActiveDevice
+class CEEDevice
 	constructor: (@parent) ->
 		@changed = new Event()
 		@removed = new Event()
@@ -344,3 +354,32 @@ class DataSeries
 			@listener.data[@listener.streamIndex(@xseries)])
 		@ydata = @listener.data[@listener.streamIndex(@yseries)] 
 
+class BootloaderDevice
+	constructor: (@server) ->
+		@changed = new Event()
+		@removed = new Event()
+
+	onInfo: (info) ->
+		for i in ["magic", "version", "devid","page_size", "app_section_end", "hw_product", "hw_version"]
+			this[i] = info[i]
+
+		@changed.notify(this)
+		
+	onRemove: ->
+		
+	crcApp: (callback) ->
+		server.send 'crc_app', {id:server.createCallback(callback)}
+	
+	crcBoot: (callback) ->
+		server.send 'crc_boot', {id:server.createCallback(callback)}
+	
+	erase: (callback) ->
+		server.send 'erase', {id:server.createCallback(callback)}
+	
+	write: (data, callback) ->
+		server.send 'write', {id:server.createCallback(callback), data}
+		
+	reset: ->
+		server.send 'reset'
+	
+	
