@@ -18,8 +18,8 @@ Pixelpulse
 <script src='jquery-1.7.1.min.js'></script>
 <script src='livegraph.js'></script>
 <script src='dataserver.js'></script>
-<script src='views.js'></script>
 <script src='app.js'></script>
+<script src='views.js'></script>
 
 </head>
 <body class='layout-0side'>
@@ -38,14 +38,23 @@ Pixelpulse
 
 
 <div id='toolbar'>
-<button id='startpause' title="Start" class='startbtn'></button>
-<div id='device-info'></div>
-</div>
-
-<div id='layout-sel'>
-<button onclick="pixelpulse.setLayout(0)">0</button>
-<button onclick="pixelpulse.setLayout(1)">1</button>
-<button onclick="pixelpulse.setLayout(2)">2</button>
+	<div id='toolbar-layouts'>
+		<div id='layout-sel'><button id='layout0' onclick="pixelpulse.setLayout(0)">0</button><button id='layout1' onclick="pixelpulse.setLayout(1)">1</button><button id='layout2' onclick="pixelpulse.setLayout(2)">2</button>
+		</div>
+	</div>
+	<div id='toolbar-left'>
+		<button name="Toggle triggering">Trigger</button>
+	</div>
+	<div class='spacer'></div>
+	<div id='toolbar-center'>
+		<button id='startpause' title="Start" class='startbtn'></button>
+	</div>
+	<div class='spacer'></div>
+	<div id='toolbar-right'>
+		<button>Mode</button>
+	</div>
+	<div id='device-info'>
+	</div>
 </div>
 
 <div id='perfstat'></div>

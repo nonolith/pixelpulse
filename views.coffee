@@ -5,18 +5,34 @@
 
 pixelpulse = (window.pixelpulse ?= {})
 
+pixelpulse.captureState.subscribe (s) ->
+	$(document.body).toggleClass('capturing', s)
+
+## Bottom toolbar
+$ ->
+# Start/pause button
+	$(window).resize -> pixelpulse.layoutChanged.notify()
+	
+	$('#startpause').click ->
+		if server.device.captureState
+			server.device.pauseCapture()
+		else
+			server.device.startCapture()
+
+	pixelpulse.captureState.subscribe (s) ->
+		$('#startpause').attr('title', if s then 'Pause' else 'Start')
+
+
+
 COLORS = [
 	[[0x32, 0x00, 0xC7], [00, 0x32, 0xC7]]
 	[[00, 0x7C, 0x16], [0x6f, 0xC7, 0x00]]
 ]
 
-#COLORS = [
-#	[[0, 0, 255], [0, 0, 255]], [[0, 0, 255], [0, 0, 255]]
-#]
-
 pixelpulse.initView = (dev) ->
 	@timeseries_x = new livegraph.Axis(-10, 0)
 	@timeseries_graphs = []
+	@channelviews = []
 	
 	@streams = []
 	for chId, channel of dev.channels
@@ -26,11 +42,15 @@ pixelpulse.initView = (dev) ->
 	@meter_listener = new server.Listener(dev, @streams)
 	@data_listener = new server.DataListener(dev, @streams)
 	
+	i = 0
+	for chId, channel of dev.channels
+		s = new pixelpulse.ChannelView(channel, i++)
+		pixelpulse.channelviews.push(s)
+		$('#streams').append(s.el)
+	
 	@sidegraph1 = new pixelpulse.XYGraphView(document.getElementById('sidegraph1'))
 	@sidegraph2 = new pixelpulse.XYGraphView(document.getElementById('sidegraph2'))
 	
-	
-pixelpulse.finishViewInit = ->
 	# show the x-axis ticks on the last stream
 	lastGraph = @timeseries_graphs[@timeseries_graphs.length-1]
 	lastGraph.showXbottom = yes
@@ -41,7 +61,7 @@ pixelpulse.finishViewInit = ->
 	lastGraph.resized()
 	
 	@meter_listener.submit()
-	setTimeout @updateTimeSeries, 100
+	setTimeout((->pixelpulse.updateTimeSeries()), 10)
 	
 # run after a window changing operation to fetch new data from the server
 pixelpulse.updateTimeSeries = ->
@@ -64,12 +84,16 @@ pixelpulse.updateTimeSeries = ->
 		listener.configure(min, max, pts)
 		listener.submit()
 		
-		
-pixelpulse.destroyView =->
+pixelpulse.destroyView = ->
 	$('#streams section.channel').remove()
 	$('#sidegraphs > section').empty()
+	if @meter_listener
+		@meter_listener.cancel()
 	if @data_listener
 		@data_listener.cancel()
+	for i in @channelviews then i.destroy()
+	pixelpulse.setLayout(0)
+	
 
 class pixelpulse.ChannelView
 	constructor: (@channel, @index) ->
@@ -87,7 +111,8 @@ class pixelpulse.ChannelView
 			v = new pixelpulse.StreamView(this, s,  i++)
 			@section.append(v.el)
 			v
-		
+			
+	destroy: -> for i in @streamViews then i.destroy()
 
 class pixelpulse.StreamView
 	constructor: (@channelView, @stream, @index)->
@@ -100,6 +125,8 @@ class pixelpulse.StreamView
 		@timeseriesElem = $("<div class='livegraph'>").appendTo(@section)
 
 		@addReadingUI(@aside)
+		
+		pixelpulse.layoutChanged.subscribe @relayout
 
 		pixelpulse.meter_listener.updated.listen (m) =>
 			index = pixelpulse.meter_listener.streamIndex(@stream)
@@ -137,8 +164,6 @@ class pixelpulse.StreamView
 		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
 		
 		pixelpulse.timeseries_graphs.push(@lg)
-		
-		$(window).resize => @lg.resized()
 				
 		@lg.onClick = (pos) =>
 			[x,y] = pos
@@ -165,6 +190,9 @@ class pixelpulse.StreamView
 			if @dotFollowsStream then @dot.position(@series.listener.lastData)
 			
 		@lg.needsRedraw()
+	
+	relayout: =>
+		@lg.resized()
 		
 	updateDot: (m) ->	
 		@isSource = (m.mode == @stream.outputMode)
@@ -259,26 +287,33 @@ class pixelpulse.StreamView
 			
 		else
 			@source.html("<h2>measure</h2>")
+			
+	destroy: ->
+		pixelpulse.layoutChanged.unListen @relayout
 
 pixelpulse.setLayout = (l) ->
 	$(document.body).removeClass('layout-0side').removeClass('layout-1side').removeClass('layout-2side')
 		.addClass("layout-#{l}side")
+	
+	if @sidegraph1 and @sidegraph2
+		if l >= 1
+			@sidegraph1.configure(@streams[0], @streams[1])
+		else
+			@sidegraph1.hidden()
 		
-	if l >= 1
-		@sidegraph1.configure(@streams[0], @streams[1])
-	else
-		@sidegraph1.hidden()
+		if l >= 2
+			@sidegraph2.configure(@streams[2], @streams[3])
+		else
+			@sidegraph2.hidden()
 		
-	if l >= 2
-		@sidegraph2.configure(@streams[2], @streams[3])
-	else
-		@sidegraph2.hidden()
+	pixelpulse.layoutChanged.notify()
 	
 class pixelpulse.XYGraphView
 	constructor: (@el) ->
+		@graphdiv = $("<div class='livegraph'>").appendTo(@el)
 		@color = [255, 0, 0]
 		
-		@lg = new livegraph.canvas(el, false, false, [false], 
+		@lg = new livegraph.canvas(@graphdiv.get(0), false, false, [false], 
 			{xbottom:true, yright:false, xgrid:true})
 		
 	configure: (@xstream, @ystream) ->	
@@ -295,14 +330,18 @@ class pixelpulse.XYGraphView
 		@lg.series = [@series]
 		
 		@series.updated.listen @updated
-		setTimeout (=> @lg.resized()), 1000
-		console.log('configured', @lg)
+		pixelpulse.layoutChanged.subscribe @relayout
 		
 	hidden: ->
 		if @series
 			@series.updated.unListen @updated
+		pixelpulse.layoutChanged.unListen @relayout
 	
 	updated: => @lg.needsRedraw()
+	
+	relayout: =>
+		@lg.resized()
+		
 	
 
 class DragToSetAction extends livegraph.Action

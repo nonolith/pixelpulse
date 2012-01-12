@@ -87,7 +87,6 @@ body{
 	box-pack: center;
 	-webkit-box-pack: center;
 	-moz-box-pack: center;
-	
 	box-align:stretch;
 	-webkit-box-align:stretch;
 	-moz-box-align:stretch;
@@ -95,21 +94,16 @@ body{
 	position: relative;
 }
 
-
-
-#device-info{
-	width: 160px;
+#toolbar>div, #toolbar>div>div{
+	white-space-collapse: discard;
 	height: 100%;
-	background: -webkit-linear-gradient(270deg, rgba(200, 200, 255, 0.15) 0%, rgba(128, 128, 255, 0.25) 100%);
-	border-left: 1px solid #707070;
-	height: 100%;
-	position: absolute;
-	right: 0;
-	top: 0;
 }
 
-#startpause {
-	width: 50px;
+#toolbar > .spacer{
+	-webkit-box-flex: 1;
+}
+
+#toolbar button{
 	height: 100%;
 	background: rgba(255, 255, 255, 0.1);
 	text-align: center;
@@ -120,25 +114,44 @@ body{
 	border-right: 1px solid #707070;
 	opacity: 0.9;
 	-webkit-transition: opacity 0.25s ease;
+	margin: 0;
+}
+
+#toolbar button.selected,
+body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layout2{
+	background: -webkit-linear-gradient(270deg, rgba(255, 255, 255, 0.25) 0%, rgba(160,160,160, 0.35) 100%);
+}  
+
+#toolbar button + button{
+	border-left: none;
+}
+
+#device-info{
+	width: 160px;
+	background: -webkit-linear-gradient(270deg, rgba(200, 200, 255, 0.15) 0%, rgba(128, 128, 255, 0.25) 100%);
+	border-left: 1px solid #707070;
+}
+
+#toolbar #startpause {
+	width: 50px;
+	/*Start button state */
+	background: -webkit-linear-gradient(270deg, rgba(200, 255, 200, 0.15) 0%, rgba(128, 255, 128, 0.25) 100%);
 }
 
 #startpause:hover{
 	opacity: 1;
 }
 
-#startpause.startbtn{
-	background: -webkit-linear-gradient(270deg, rgba(200, 255, 200, 0.15) 0%, rgba(128, 255, 128, 0.25) 100%);
-}
 
-#startpause.startbtn:before{
+#startpause:before{
 	content:'\25b8';
 }
 
-#startpause.stopbtn{
+body.capturing #toolbar #startpause{
 	background: -webkit-linear-gradient(270deg, rgba(255, 200, 200, 0.15) 0%, rgba(255, 128, 128, 0.25) 100%);
 }
 
-#startpause.stopbtn:before{
+body.capturing #startpause:before{
 	content:'\275A\275A';
 	font-size:14px;
 	letter-spacing: -0.25em;
@@ -288,7 +301,7 @@ input[type=number]::-webkit-outer-spin-button {
   	-webkit-box-orient: vertical;
   	-moz-box-orient: vertical;
   	
-  	-webkit-transition: left 0.8s ease-in-out;
+  	/*-webkit-transition: left 0.8s ease-in-out;*/
 }
 
 
@@ -404,7 +417,7 @@ section.stream.sourcing{
 	-webkit-box-pack: center;
 	-moz-box-pack: center;
 	
-	-webkit-transition: width 0.5s ease-in-out;
+	/*-webkit-transition: width 0.5s ease-in-out;*/
 }
 
 #sidegraphs > section{
@@ -413,13 +426,30 @@ section.stream.sourcing{
 	position: relative;
 }
 
+#sidegraphs .livegraph{
+	top: 5px;
+	left: 20px;
+	right: 5px;
+	bottom: 20px;
+	position: absolute;
+}
+
+body.layout-0side #toolbar-layouts{
+	margin-right: 10px;
+}
+
 /* layout-1side */
 
 body.layout-1side #streams{
 	margin-left: 540px;
+	border-left: 2px solid #ccc;
 }
 
 body.layout-1side #sidegraphs{
+	width: 540px;
+}
+
+body.layout-1side #toolbar-layouts{
 	width: 540px;
 }
 
@@ -428,27 +458,32 @@ body.layout-1side #sidegraph1{
 	display: -webkit-box;
 	display: -moz-box;
 	height: 540px;
-	background: #eeeeee;
 }
 
 /* layout-2side */
 
 body.layout-2side #streams{
-	margin-left: 280px;
+	margin-left: 320px;
+	border-left: 2px solid #ccc;
 }
 
 body.layout-2side #sidegraphs{
-	width: 280px;
+	width: 320px;
+}
+
+body.layout-2side #toolbar-layouts{
+	width: 320px;
 }
 
 body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	display: box;
 	display: -webkit-box;
 	display: -moz-box;
-	height: 280px;
-	background: #eeeeee;
-	margin-top: 2px;
+	height: 320px;
 }
+
+
+
 
 
 .dropdownButton{
@@ -500,17 +535,6 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	background: linear-gradient(270deg, rgba(80, 80, 160, 0.2) 0%, rgba(90, 90, 180, 0.4) 20%, rgba(80, 80, 160, 0.2) 100%);
 	background: -webkit-linear-gradient(270deg, rgba(80, 80, 160, 0.2) 0%, rgba(90, 90, 180, 0.4) 20%, rgba(80, 80, 160, 0.2) 100%);
 	background: -moz-linear-gradient(270deg, rgba(80, 80, 160, 0.2) 0%, rgba(90, 90, 180, 0.4) 20%, rgba(80, 80, 160, 0.2) 100%);
-}
-
-
-#layout-sel{
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	background: rgba(128,128,128,0.5);
-	border-radius: 0 8px 0 0;
-	z-index: 20;
-	padding: 2px;
 }
 
 #perfstat{

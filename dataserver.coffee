@@ -3,12 +3,14 @@
 # Author: Kevin Mehall <km@kevinmehall.net>
 # Distributed under the terms of the GNU LGPLv3
 
-class Event
+class window.Event
 	constructor: () ->
 		@listeners = []
 
-	listen: (func) ->
+	subscribe: (func) ->
 		@listeners.push(func)
+	
+	listen: @::subscribe
 
 	unListen: (func) ->
 		i = @listeners.indexOf(func)

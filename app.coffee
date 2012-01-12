@@ -5,6 +5,9 @@
 
 pixelpulse = (window.pixelpulse ?= {})
 
+pixelpulse.captureState = new Event()
+pixelpulse.layoutChanged = new Event()
+
 pixelpulse.overlay = (message) ->
 	if not message
 		$("#error-overlay").hide()
@@ -28,31 +31,16 @@ pixelpulse.deviceSelected = (dev) ->
 	pixelpulse.overlay("Loading Device...")
 	dev.changed.listen ->
 		pixelpulse.overlay()
-		console.info "device updated", dev
 		pixelpulse.reset()
-		pixelpulse.onCaptureStateChange(dev.captureState)
-		pixelpulse.channelviews = []
+		pixelpulse.captureState.notify(dev.captureState)
 		pixelpulse.initView(dev)
-		i = 0
-		for chId, channel of dev.channels
-			s = new pixelpulse.ChannelView(channel, i++)
-			pixelpulse.channelviews.push(s)
-			$('#streams').append(s.el)
-		pixelpulse.finishViewInit()
 	
 	dev.removed.listen ->
 		pixelpulse.reset()
 		pixelpulse.chooseDevice()
 		
-	dev.captureStateChanged.listen pixelpulse.onCaptureStateChange
+	dev.captureStateChanged.listen (s) -> pixelpulse.captureState.notify(s)
 		
-pixelpulse.onCaptureStateChange = (s) ->
-	if s
-		$('#startpause').removeClass('startbtn').addClass('stopbtn').attr('title', 'Pause')
-	else
-		$('#startpause').removeClass('stopbtn').addClass('startbtn').attr('title', 'Start')
-	
-
 pixelpulse.init = (server, params) ->
 	if !window.WebSocket
 		pixelpulse.overlay "Pixelpulse requires WebSockets and currently only works in Chrome and Safari"
@@ -76,12 +64,6 @@ pixelpulse.init = (server, params) ->
 		
 		if not server.device
 			pixelpulse.chooseDevice()
-			
-	$('#startpause').click ->
-		if server.device.captureState
-			server.device.pauseCapture()
-		else
-			server.device.startCapture()
 				
 pixelpulse.channelviews = []
 
