@@ -72,8 +72,8 @@ pixelpulse.channelviews = []
 
 #URL params
 params = {}
-for pair in document.location.search.slice(1).split('&')
-	[key,params[key]] = pair.split('=')
+for flag in document.location.hash.slice(1).split('&')
+	params[flag]=true
 
 $(document).ready ->
 	if params.perfstat
@@ -81,6 +81,9 @@ $(document).ready ->
 		
 	if params.demohint
 		$('#info').show()
+		
+	if params.nowebgl
+		window.nowebgl=true
 	
 	pixelpulse.init(server, params)
 

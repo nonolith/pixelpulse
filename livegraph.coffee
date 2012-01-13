@@ -118,7 +118,7 @@ class livegraph.canvas
 		
 		@ctxa = @axisCanvas.getContext('2d')
 		
-		if not @init_webgl() then @init_canvas2d()
+		if (window.nowebgl or not @init_webgl()) then @init_canvas2d()
 		
 		@resized()
 		
