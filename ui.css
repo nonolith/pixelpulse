@@ -67,6 +67,18 @@ body{
   	-moz-box-orient: vertical;
 }
 
+#topbar{
+	height: 16px;
+		background: linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
+        background: -webkit-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
+        background: -moz-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);   
+
+	color: white;
+	box-shadow: 0px -1px 2px rgba(0, 0, 0, 0.5);
+	-webkit-box-shadow: 0px -1px 2px rgba(0, 0, 0, 0.5);
+	-moz-box-shadow: 0px -1px 2px rgba(0, 0, 0, 0.5);
+}
+
 #toolbar{
 	height: 32px;
 	background: #444;
@@ -117,9 +129,9 @@ body{
 	margin: 0;
 }
 
-#toolbar button.selected,
+#toolbar button.active,
 body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layout2{
-	background: -webkit-linear-gradient(270deg, rgba(255, 255, 255, 0.25) 0%, rgba(160,160,160, 0.35) 100%);
+	background: -webkit-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
 }  
 
 #toolbar button + button{
@@ -135,7 +147,7 @@ body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layou
 #toolbar #startpause {
 	width: 50px;
 	/*Start button state */
-	background: -webkit-linear-gradient(270deg, rgba(200, 255, 200, 0.15) 0%, rgba(128, 255, 128, 0.25) 100%);
+	background: -webkit-linear-gradient(270deg, rgba(200, 255, 200, 0.25) 0%, rgba(128, 255, 128, 0.35) 100%);
 }
 
 #startpause:hover{
@@ -148,7 +160,7 @@ body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layou
 }
 
 body.capturing #toolbar #startpause{
-	background: -webkit-linear-gradient(270deg, rgba(255, 200, 200, 0.15) 0%, rgba(255, 128, 128, 0.25) 100%);
+	background: -webkit-linear-gradient(270deg, rgba(255, 200, 200, 0.25) 0%, rgba(255, 128, 128, 0.35) 100%);
 }
 
 body.capturing #startpause:before{
@@ -282,11 +294,6 @@ input[type=number]::-webkit-outer-spin-button {
 	border-radius: 20px;
 }
 
-
-
-
-/* defaults */
-
 /* See http://hacks.mozilla.org/2010/04/the-css-3-flexible-box-model/ for info on experimental box layout */
 
 #streams{
@@ -322,23 +329,34 @@ input[type=number]::-webkit-outer-spin-button {
   	-moz-box-orient: vertical;
 	
 	-webkit-box-flex: 1;
+	
+	position: relative;
+}
+
+#streams > section.channel + section.channel{
+	border-top: 2px solid #aaa;
 }
 
 .channel header{
 	display: -webkit-box;
 	-webkit-box-pack: end;
 	
-	height: 32px;
-	
-	
-	background: linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
-	background: -webkit-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
-	background: -moz-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
-	
+	position: absolute;
+	top: -16px;
+	right: 0;
+}
+
+#streams .channel header aside{
+	background: #aaa;
 }
 
 .channel > header > aside{
 	padding: 6px 8px;
+	height: 32px;
+	
+	background: linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
+	background: -webkit-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
+	background: -moz-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
 }
 
 #streams section.stream{
@@ -442,7 +460,7 @@ body.layout-0side #toolbar-layouts{
 
 body.layout-1side #streams{
 	margin-left: 540px;
-	border-left: 2px solid #ccc;
+	border-left: 2px solid #aaa;
 }
 
 body.layout-1side #sidegraphs{
@@ -464,7 +482,7 @@ body.layout-1side #sidegraph1{
 
 body.layout-2side #streams{
 	margin-left: 320px;
-	border-left: 2px solid #ccc;
+	border-left: 2px solid #aaa;
 }
 
 body.layout-2side #sidegraphs{
