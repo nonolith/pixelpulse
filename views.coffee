@@ -62,6 +62,29 @@ pixelpulse.initView = (dev) ->
 	
 	@meter_listener.submit()
 	setTimeout((->pixelpulse.updateTimeSeries()), 10)
+
+pixelpulse.toggleTrigger = ->
+	@triggering = !@triggering
+	$(document.body).toggleClass('triggering', pixelpulse.triggering)
+	
+	xaxis = pixelpulse.timeseries_x
+	if @triggering
+		xaxis.min = -5
+		xaxis.max = 5
+		xaxis.visibleMin = -0.125
+		xaxis.visibleMax = 0.125
+		@data_listener.configureTrigger(pixelpulse.streams[0], 2.5, 0.25, 0, 0.5)
+	else
+		xaxis.min = -10
+		xaxis.max = 0
+		xaxis.visibleMin = -10
+		xaxis.visibleMax = 0
+		@data_listener.disableTrigger()
+		
+	for i in pixelpulse.timeseries_graphs then i.needsRedraw(true)
+	pixelpulse.updateTimeSeries()
+			
+	pixelpulse.triggeringChanged.notify(@triggering)
 	
 # run after a window changing operation to fetch new data from the server
 pixelpulse.updateTimeSeries = ->
@@ -69,17 +92,23 @@ pixelpulse.updateTimeSeries = ->
 	lg = pixelpulse.timeseries_graphs[0]
 	listener = pixelpulse.data_listener
 	
-	if listener.trigger
+	changed = no
+	
+	if pixelpulse.triggering
 		min = -xaxis.span()
 		max = 0
 		pts = lg.width/2
-		listener.trigger.offset = xaxis.visibleMin
+		if listener.trigger.offset != xaxis.visibleMin
+			listener.trigger.offset = xaxis.visibleMin
+			changed = yes
+		#xaxis.min = -xaxis.span()*2
+		#xaxis.max = xaxis.span()*2
 	else
 		min = Math.max(xaxis.visibleMin - 0.5*xaxis.span(), xaxis.min)
 		max = Math.min(xaxis.visibleMax + 0.5*xaxis.span(), xaxis.max)
 		pts = lg.width / 2 * (max - min) / xaxis.span()
 	
-	if min != listener.xmin or max != listener.xmax or listener.requestedPoints != pts
+	if min != listener.xmin or max != listener.xmax or listener.requestedPoints or changed != pts
 		console.log('configure', min, max, pts)
 		listener.configure(min, max, pts)
 		listener.submit()

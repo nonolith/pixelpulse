@@ -7,6 +7,7 @@ pixelpulse = (window.pixelpulse ?= {})
 
 pixelpulse.captureState = new Event()
 pixelpulse.layoutChanged = new Event()
+pixelpulse.triggeringChanged = new Event()
 
 pixelpulse.overlay = (message) ->
 	if not message
@@ -16,6 +17,8 @@ pixelpulse.overlay = (message) ->
 		$("#error-status").text(message)
 		
 pixelpulse.reset = ->
+	pixelpulse.triggering = false
+	$(document.body).removeClass('triggering')
 	pixelpulse.destroyView()
 	
 pixelpulse.chooseDevice = ->

@@ -130,7 +130,8 @@ body{
 }
 
 #toolbar button.active,
-body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layout2{
+body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layout2,
+body.triggering #triggerbtn{
 	background: -webkit-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
 }  
 
