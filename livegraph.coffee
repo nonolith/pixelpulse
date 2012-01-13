@@ -298,14 +298,6 @@ class livegraph.canvas
 			v =  if !isNaN(y) and y? then 'visible' else 'hidden'
 			if dot.style.visibility != v then dot.style.visibility=v
 			
-			# Find pixel position
-			[sx, sy, dx, dy] = makeTransform(lg.geom, lg.xaxis, lg.yaxis)
-			ty = Math.round(dy+y*sy)
-			
-			# Bail out if it hasn't changed
-			if not dot.lastY==ty then return
-			dot.lastY = ty
-			
 			if y > lg.yaxis.visibleMax
 				y = lg.yaxis.visibleMax
 				shape = 'up'
@@ -314,6 +306,14 @@ class livegraph.canvas
 				shape = 'down'
 			else
 				shape = 'circle'
+				
+			# Find pixel position
+			[sx, sy, dx, dy] = makeTransform(lg.geom, lg.xaxis, lg.yaxis)
+			ty = Math.round(dy+y*sy)
+			
+			# Bail out if it hasn't changed
+			if not dot.lastY==ty then return
+			dot.lastY = ty
 				
 			if dot.shape != shape
 				dot.shape = shape

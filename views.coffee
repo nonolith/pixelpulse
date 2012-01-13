@@ -351,6 +351,7 @@ class DragToSetAction extends livegraph.Action
 	
 	onDrag: ([x, y]) ->
 		[x, y] = livegraph.invTransform(x,y,@transform)
+		y = Math.min(Math.max(y, @view.stream.min), @view.stream.max)
 		@view.stream.parent.setConstant(@view.stream.outputMode, y)
 	
 
