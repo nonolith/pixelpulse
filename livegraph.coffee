@@ -114,6 +114,7 @@ class livegraph.canvas
 		@showYgrid = opts.ygrid ? true
 		@showXbottom = opts.xbottom ? false
 		@showXgrid = opts.xgrid ? false
+		@showXgridZero = opts.xgridZero ? false
 		@gridcolor = opts.gridcolor ? 'rgba(0,0,0,0.08)'
 		
 		@ctxa = @axisCanvas.getContext('2d')
@@ -327,7 +328,7 @@ class livegraph.canvas
 	redrawAxis: ->
 		@ctxa.clearRect(0,0,@width, @height)
 		
-		if @showXgrid	then @drawXgrid()
+		if @showXgrid or @showXgridZero	then @drawXgrid()
 		if @showXbottom then @drawXAxis(@geom.ybottom)	
 		if @showYgrid   then @drawYgrid()	
 		if @showYleft   then @drawYAxis(@geom.xleft,  'right', -5)
@@ -357,11 +358,17 @@ class livegraph.canvas
 			@ctxa.fillText(x.toFixed(digits), xp ,y+textoffset)
 			
 	drawXgrid: ->
-		grid = @xaxis.grid(@xgridticks)
+		if @showXgrid
+			grid = @xaxis.grid(@xgridticks)
+		else if @showXgridZero
+			grid = [0]
+		else
+			return
 		@ctxa.strokeStyle = @gridcolor
 		@ctxa.lineWidth = 1
 		for x in grid
 			xp = snapPx(@xaxis.xtransform(x, @geom))
+			if xp > @geom.xright or xp < @geom.xleft then continue
 			@ctxa.beginPath()
 			@ctxa.moveTo(xp, @geom.ybottom)
 			@ctxa.lineTo(xp, @geom.ytop)

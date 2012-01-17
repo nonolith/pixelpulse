@@ -73,15 +73,21 @@ pixelpulse.toggleTrigger = ->
 		xaxis.max = 5
 		xaxis.visibleMin = -0.125
 		xaxis.visibleMax = 0.125
+		for lg in @timeseries_graphs
+			lg.showXgridZero = yes
+			
 		@data_listener.configureTrigger(pixelpulse.streams[0], 2.5, 0.25, 0, 0.5)
 	else
 		xaxis.min = -10
 		xaxis.max = 0
 		xaxis.visibleMin = -10
 		xaxis.visibleMax = 0
+		for lg in @timeseries_graphs
+			lg.showXgridZero = no
+			
 		@data_listener.disableTrigger()
 		
-	for i in pixelpulse.timeseries_graphs then i.needsRedraw(true)
+	for i in @timeseries_graphs then i.needsRedraw(true)
 	pixelpulse.updateTimeSeries()
 			
 	pixelpulse.triggeringChanged.notify(@triggering)
