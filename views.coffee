@@ -216,7 +216,7 @@ class pixelpulse.StreamView
 		@isSource = false
 		@dotFollowsStream = false
 		if @stream.outputMode
-			@dot = @lg.addDot('white', 'blue')
+			@dot = new livegraph.Dot(@lg, 'white', @lg.cssColor())
 			@stream.parent.outputChanged.listen (m) => @updateDot(m)
 			@updateDot(@stream.parent.source)
 		

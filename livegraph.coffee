@@ -117,6 +117,8 @@ class livegraph.canvas
 		@showXgridZero = opts.xgridZero ? false
 		@gridcolor = opts.gridcolor ? 'rgba(0,0,0,0.08)'
 		
+		@overlays = []
+		
 		@ctxa = @axisCanvas.getContext('2d')
 		
 		if (window.nowebgl or not @init_webgl()) then @init_canvas2d()
@@ -283,47 +285,10 @@ class livegraph.canvas
 		
 		@needsRedraw(true)
 		
-		if @dot
-			@dot.lastY = undefined
-			@dot.position(@dot.y)
+		for overlay in @overlays
+			overlay.resized()
 		
-	addDot: (x, fill, stroke) ->
-		dot = @dot = livegraph.makeDotCanvas(5, 'white', @cssColor())
-		lg = this
-		
-		dot.position = (y) ->
-			dot.y = y
-			if not lg.geom then return
-			
-			# Update visibility, if it has changed
-			v =  if !isNaN(y) and y? then 'visible' else 'hidden'
-			if dot.style.visibility != v then dot.style.visibility=v
-			
-			if y > lg.yaxis.visibleMax
-				y = lg.yaxis.visibleMax
-				shape = 'up'
-			else if y < lg.yaxis.visibleMin
-				y = lg.yaxis.visibleMin
-				shape = 'down'
-			else
-				shape = 'circle'
-				
-			# Find pixel position
-			[sx, sy, dx, dy] = makeTransform(lg.geom, lg.xaxis, lg.yaxis)
-			ty = Math.round(dy+y*sy)
-			
-			# Bail out if it hasn't changed
-			if not dot.lastY==ty then return
-			dot.lastY = ty
-				
-			if dot.shape != shape
-				dot.shape = shape
-				dot.render()
-			
-			dot.positionRight(PADDING+AXIS_SPACING, ty)
-			
-		$(dot).appendTo(@div)
-		return dot
+		return
 			
 	redrawAxis: ->
 		@ctxa.clearRect(0,0,@width, @height)
@@ -505,6 +470,103 @@ class livegraph.canvas
 			gl.vertexAttribPointer(gl.shaderProgram.attrib.y, 1, gl.FLOAT, false, 0, 0)
 			gl.drawArrays(gl.LINE_STRIP, 0, series.xdata.length)
 
+
+# Abstract base class for a UI overlay on top of the graph			
+class livegraph.Overlay
+	constructor: (lg) ->
+		@lg.overlays.push(this)
+	resized: ->
+	remove: ->
+		i = @lg.overlays.indexOf(this)
+		@lg.overlays.splice(i, 1)
+	
+class livegraph.Dot extends livegraph.Overlay
+	constructor: (@lg, @fill, @stroke, @radius=5) ->
+		@dot = document.createElement('canvas')
+		@dot.width = 2*@radius + 4
+		@dot.height = 2*@radius + 4
+		@center = @radius+2
+		@dot.fill = fill
+		@dot.stroke = stroke
+		$(@dot).css
+			position: 'absolute'
+			'margin-top':-@center
+			'margin-right':-@center
+		@ctx = @dot.getContext('2d')
+		@positionRight(PADDING+AXIS_SPACING)
+		$(@dot).appendTo(@lg.div)
+		super()
+		@render()
+	
+	remove: ->
+		$(@dot).remove()
+		super()
+	
+	resized: ->
+		@position(@y)
+	
+	position: (@y) ->
+		if not @lg.geom then return
+	
+		# Update visibility, if it has changed
+		v =  if !isNaN(y) and @y? then 'visible' else 'hidden'
+		if @dot.style.visibility != v then @dot.style.visibility=v
+	
+		if @y > @lg.yaxis.visibleMax
+			@y = @lg.yaxis.visibleMax
+			shape = 'up'
+		else if y < @lg.yaxis.visibleMin
+			@y = @lg.yaxis.visibleMin
+			shape = 'down'
+		else
+			shape = 'circle'
+		
+		# Find pixel position
+		[sx, sy, dx, dy] = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)
+		ty = Math.round(dy+y*sy)
+	
+		# Bail out if it hasn't changed
+		if not @lastY==@ty then return
+		@lastY = @ty
+		
+		if @shape != shape
+			@shape = shape
+			@render()
+	
+		@dot.style.top = "#{ty}px"
+	
+	positionLeft: (x)->
+		@dot.style.left = "#{x}px"
+		@dot.style.right = "auto"
+		
+	positionRight: (x)->
+		@dot.style.right = "#{x}px"
+		@dot.style.left = "auto"
+	
+	render: ->
+		@dot.width = @dot.width
+		@ctx.fillStyle = @fill
+		@ctx.strokeStyle = @stroke
+		@ctx.lineWidth = 2
+		
+		switch @shape
+			when 'circle'
+				@ctx.arc(@center, @center, @radius, 0, Math.PI*2, true);
+			when 'down'
+				@ctx.moveTo(@center,             @center+@radius)
+				@ctx.lineTo(@center+@radius*0.86, @center-@radius*0.5)
+				@ctx.lineTo(@center-@radius*0.86, @center-@radius*0.5)
+				@ctx.lineTo(@center,             @center+@radius)
+			when 'up'
+				@ctx.moveTo(@center,             @center-@radius)
+				@ctx.lineTo(@center+@radius*0.86, @center+@radius*0.5)
+				@ctx.lineTo(@center-@radius*0.86, @center+@radius*0.5)
+				@ctx.lineTo(@center,             @enter-@radius)
+				
+		@ctx.fill()
+		@ctx.stroke()
+	
+
 # Abstract base for classes that manage user interactions with a Livegraph
 # lg - The LiveGraph which started the interaction.
 #      Its properties will be used by default
@@ -685,59 +747,6 @@ class livegraph.ZoomXAction extends livegraph.Action
 		@lg.xaxis.visibleMax = @endMax
 		@redraw(true)
 		super()
-	
-	
-livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
-	c = document.createElement('canvas')
-	c.width = 2*radius + 4
-	c.height = 2*radius + 4
-	center = radius+2
-	c.fill = fill
-	c.stroke = stroke
-	
-	$(c).css
-		position: 'absolute'
-		'margin-top':-center
-		'margin-right':-center
-	ctx = c.getContext('2d')
-
-	c.positionLeft = (x, y)->
-		c.style.top = "#{y}px"
-		c.style.left = "#{x}px"
-		c.style.right = "auto"
-	c.positionRight = (x, y)->
-		c.style.top = "#{y}px"
-		c.style.right = "#{x}px"
-		c.style.left = "auto"
-	
-	c.render = ->
-		c.width = c.width
-		ctx.fillStyle = c.fill
-		ctx.strokeStyle = c.stroke
-		ctx.lineWidth = 2
-		
-		switch c.shape
-			when 'circle'
-				ctx.arc(center, center, radius, 0, Math.PI*2, true);
-			when 'down'
-				ctx.moveTo(center,             center+radius)
-				ctx.lineTo(center+radius*0.86, center-radius*0.5)
-				ctx.lineTo(center-radius*0.86, center-radius*0.5)
-				ctx.lineTo(center,             center+radius)
-			when 'up'
-				ctx.moveTo(center,             center-radius)
-				ctx.lineTo(center+radius*0.86, center+radius*0.5)
-				ctx.lineTo(center-radius*0.86, center+radius*0.5)
-				ctx.lineTo(center,             center-radius)
-				
-		ctx.fill()
-		ctx.stroke()
-		
-	c.render()
-
-	return c
-	
-	
 			
 livegraph.arange = (lo, hi, step) ->
 	ret = new Float32Array(Math.ceil((hi-lo)/step+1))
