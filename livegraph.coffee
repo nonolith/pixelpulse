@@ -509,7 +509,7 @@ class livegraph.Dot extends livegraph.Overlay
 		if not @lg.geom then return
 	
 		# Update visibility, if it has changed
-		v =  if !isNaN(y) and @y? then 'visible' else 'hidden'
+		v =  if !isNaN(@y) and @y? then 'visible' else 'hidden'
 		if @dot.style.visibility != v then @dot.style.visibility=v
 	
 		if @y > @lg.yaxis.visibleMax
@@ -523,7 +523,7 @@ class livegraph.Dot extends livegraph.Overlay
 		
 		# Find pixel position
 		[sx, sy, dx, dy] = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)
-		ty = Math.round(dy+y*sy)
+		ty = Math.round(dy+@y*sy)
 	
 		# Bail out if it hasn't changed
 		if not @lastY==@ty then return
@@ -565,6 +565,52 @@ class livegraph.Dot extends livegraph.Overlay
 				
 		@ctx.fill()
 		@ctx.stroke()
+		
+class livegraph.TriggerOverlay extends livegraph.Overlay
+	constructor: (@lg, color='#ffaa00') ->
+		super()
+		@div = $('<div>')
+		@triangle = document.createElement('canvas')
+		@triangle.width = 10
+		@triangle.height = 11
+		
+		ctx = @triangle.getContext('2d')
+		ctx.fillStyle = color
+		ctx.moveTo(0, 0)
+		ctx.lineTo(10, 5.5)
+		ctx.lineTo(0, 11)
+		ctx.lineTo(0,0)
+		ctx.fill()
+		
+		$(@div).css
+			position: 'absolute'
+			left: PADDING + AXIS_SPACING
+			right: PADDING + AXIS_SPACING
+			'border-top': "1px solid #{color}"
+			height: 0
+			
+		$(@triangle).css
+			'margin-top':-6
+			'margin-left':-3
+			
+		@div.append(@triangle).appendTo(@lg.div)
+	
+	remove: ->
+		$(@div).remove()
+		super()
+		
+	resized: ->
+		@position(@y)
+			
+	position: (@y)  ->
+		if not @lg.geom then return
+		
+		# Find pixel position
+		[sx, sy, dx, dy] = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)
+		ty = Math.round(dy+@y*sy)
+	
+		@div.get(0).style.top = "#{ty}px"
+	
 	
 
 # Abstract base for classes that manage user interactions with a Livegraph

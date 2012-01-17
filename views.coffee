@@ -76,7 +76,10 @@ pixelpulse.toggleTrigger = ->
 		for lg in @timeseries_graphs
 			lg.showXgridZero = yes
 			
-		@data_listener.configureTrigger(pixelpulse.streams[0], 2.5, 0.25, 0, 0.5)
+		default_trigger_level = 2.5
+		@data_listener.configureTrigger(pixelpulse.streams[0], default_trigger_level, 0.25, 0, 0.5)
+		@triggerOverlay = new livegraph.TriggerOverlay(@timeseries_graphs[0])
+		@triggerOverlay.position(default_trigger_level)
 	else
 		xaxis.min = -10
 		xaxis.max = 0
@@ -202,11 +205,18 @@ class pixelpulse.StreamView
 				
 		@lg.onClick = (pos) =>
 			[x,y] = pos
-			if x < @lg.width - 45
+			if x > @lg.width - 45
+				return new DragToSetAction(this, pos)
+			if x < 45 and pixelpulse.triggering
+				if pixelpulse.data_listener.trigger.stream != @stream
+					console.log('changing trigger stream')
+					pixelpulse.triggerOverlay.remove()
+					pixelpulse.triggerOverlay = new livegraph.TriggerOverlay(@lg)
+				return new DragTriggerAction(this, pos)
+			else
 				return new livegraph.DragScrollAction(@lg, pos,
 					pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
-			else
-				return new DragToSetAction(this, pos)
+				
 				
 		@lg.onDblClick = (e, pos) =>
 			opts = {time: 200, zoomFactor: if e.shiftKey then 2 else 0.5} 
@@ -377,9 +387,9 @@ class pixelpulse.XYGraphView
 	relayout: =>
 		@lg.resized()
 		
-	
 
-class DragToSetAction extends livegraph.Action
+
+class DragYAction extends livegraph.Action
 	constructor: (@view, pos) ->
 		@transform = livegraph.makeTransform(@view.lg.geom, @view.lg.xaxis, @view.lg.yaxis)
 		@onDrag(pos)
@@ -387,6 +397,20 @@ class DragToSetAction extends livegraph.Action
 	onDrag: ([x, y]) ->
 		[x, y] = livegraph.invTransform(x,y,@transform)
 		y = Math.min(Math.max(y, @view.stream.min), @view.stream.max)
+		@withPos(y)
+		
+	withPos: (y) ->
+
+class DragToSetAction extends DragYAction
+	withPos: (y) ->
 		@view.stream.parent.setConstant(@view.stream.outputMode, y)
+			
+class DragTriggerAction extends DragYAction
+	withPos: (@y) ->
+		pixelpulse.triggerOverlay.position(@y)
 	
+	onRelease: ->
+		pixelpulse.data_listener.trigger.stream = @view.stream
+		pixelpulse.data_listener.trigger.level = @y
+		pixelpulse.data_listener.submit()
 
