@@ -374,7 +374,7 @@ input[type=number]::-webkit-outer-spin-button {
 	-moz-box-orient: horizontal;
 	
 	-webkit-box-pack: end;
-	-moz-box-pack: end
+	-moz-box-pack: end;
 	
 	height: 50px;
 	
