@@ -21,6 +21,8 @@ class window.Event
 		func(args...) for func in @listeners
 		return
 
+window.WebSocket ?= window.MozWebSocket
+
 class Dataserver
 	constructor: (@host) ->
 		@connected = new Event()
@@ -69,7 +71,7 @@ class Dataserver
 		@send 'selectDevice',
 			id: device.id
 		if @device
-			@device.onRemove()
+			@device.onRemoved()
 		@device = device.makeActiveObj(this)
 		return @device
 	

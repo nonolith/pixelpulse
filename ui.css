@@ -57,6 +57,7 @@ body{
 	font-family: 'Droid Sans', sans-serif;
 	overflow: hidden;
 	-webkit-user-select: none;
+	-moz-user-select:none;
 	cursor: default;
 
 	display: box;
@@ -106,13 +107,14 @@ body{
 	position: relative;
 }
 
-#toolbar>div, #toolbar>div>div{
+#toolbar>div, #toolbar>div>div, #toolbar>div>button{
 	white-space-collapse: discard;
-	height: 100%;
+	height: 32px;
 }
 
 #toolbar > .spacer{
 	-webkit-box-flex: 1;
+	-moz-box-flex: 1;
 }
 
 #toolbar button{
@@ -126,6 +128,7 @@ body{
 	border-right: 1px solid #707070;
 	opacity: 0.9;
 	-webkit-transition: opacity 0.25s ease;
+	-moz-transition: opacity 0.25s ease;
 	margin: 0;
 }
 
@@ -133,6 +136,7 @@ body{
 body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layout2,
 body.triggering #triggerbtn{
 	background: -webkit-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
+	background: -moz-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
 }  
 
 #toolbar button + button{
@@ -142,6 +146,7 @@ body.triggering #triggerbtn{
 #device-info{
 	width: 160px;
 	background: -webkit-linear-gradient(270deg, rgba(200, 200, 255, 0.15) 0%, rgba(128, 128, 255, 0.25) 100%);
+	background: -moz-linear-gradient(270deg, rgba(200, 200, 255, 0.15) 0%, rgba(128, 128, 255, 0.25) 100%);
 	border-left: 1px solid #707070;
 }
 
@@ -149,6 +154,7 @@ body.triggering #triggerbtn{
 	width: 50px;
 	/*Start button state */
 	background: -webkit-linear-gradient(270deg, rgba(200, 255, 200, 0.25) 0%, rgba(128, 255, 128, 0.35) 100%);
+	background: -moz-linear-gradient(270deg, rgba(200, 255, 200, 0.25) 0%, rgba(128, 255, 128, 0.35) 100%);
 }
 
 #startpause:hover{
@@ -162,6 +168,7 @@ body.triggering #triggerbtn{
 
 body.capturing #toolbar #startpause{
 	background: -webkit-linear-gradient(270deg, rgba(255, 200, 200, 0.25) 0%, rgba(255, 128, 128, 0.35) 100%);
+	background: -moz-linear-gradient(270deg, rgba(255, 200, 200, 0.25) 0%, rgba(255, 128, 128, 0.35) 100%);
 }
 
 body.capturing #startpause:before{
@@ -225,12 +232,6 @@ body.capturing #startpause:before{
 	width: 2.98em;
 	margin-left: -0.36em;
 }
-
-.reading input[disabled]{
-	color: inherit;
-	-webkit-text-fill-color: inherit;
-}
-
 
 .stream .source{
 	font-size: 12px;
@@ -318,6 +319,7 @@ input[type=number]::-webkit-outer-spin-button {
 	width: 160px;
 	background: rgba(0, 0, 0, 0.1);
 	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
 }
 
 #streams section.channel{
@@ -330,6 +332,7 @@ input[type=number]::-webkit-outer-spin-button {
   	-moz-box-orient: vertical;
 	
 	-webkit-box-flex: 1;
+	-moz-box-flex: 1;
 	
 	position: relative;
 }
@@ -340,7 +343,9 @@ input[type=number]::-webkit-outer-spin-button {
 
 .channel header{
 	display: -webkit-box;
+	display: -moz-box;
 	-webkit-box-pack: end;
+	-moz-box-pack: end;
 	
 	position: absolute;
 	top: -16px;
@@ -366,12 +371,15 @@ input[type=number]::-webkit-outer-spin-button {
 	display: -moz-box;
 	
 	-webkit-box-orient: horizontal;
+	-moz-box-orient: horizontal;
 	
 	-webkit-box-pack: end;
+	-moz-box-pack: end
 	
 	height: 50px;
 	
 	-webkit-box-flex: 1;
+	-moz-box-flex: 1;
 }
 
 section.stream.sourcing{
@@ -380,11 +388,14 @@ section.stream.sourcing{
 
 #streams section.stream aside{
 	-webkit-box-ordinal-group: 10;
+	-moz-box-ordinal-group: 10;
 
 	padding-left: 24px;
 	
 	-webkit-box-orient: vertical;
+	-moz-box-orient: vertical;
 	-webkit-box-pack: center;
+	-moz-box-pack: center;
 }
 
 #streams section.stream:not(:last-child) aside{
@@ -410,12 +421,16 @@ section.stream.sourcing{
 	display: -moz-box;
 	
 	-webkit-box-orient: horizontal;
+	-moz-box-orient: horizontal;
 	-webkit-box-pack: end;
+	-moz-box-pack: end;
 	
 	height: 10px;
 	
 	-webkit-box-flex: 0;
+	-moz-box-flex: 0;
 	-webkit-box-ordinal-group: 10;
+	-moz-box-ordinal-group: 10;
 }
 
 #sidegraphs{

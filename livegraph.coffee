@@ -733,7 +733,7 @@ livegraph.makeDotCanvas = (radius = 5, fill='white', stroke='blue') ->
 	
 			
 livegraph.arange = (lo, hi, step) ->
-	ret = new Float32Array((hi-lo)/step+1)
+	ret = new Float32Array(Math.ceil((hi-lo)/step+1))
 	for i in [0...ret.length]
 		ret[i] = lo + i*step
 	return ret
