@@ -87,7 +87,8 @@ pixelpulse.toggleTrigger = ->
 		xaxis.visibleMax = 0
 		for lg in @timeseries_graphs
 			lg.showXgridZero = no
-			
+		@triggerOverlay.remove()
+		@triggerOverlay = null
 		@data_listener.disableTrigger()
 		
 	for i in @timeseries_graphs then i.needsRedraw(true)
