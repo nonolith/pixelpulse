@@ -516,6 +516,25 @@ body.layout-2side #sidegraph1, body.layout-2side #sidegraph2{
 	height: 320px;
 }
 
+.xaxislabel, .yaxislabel{
+	position: absolute;
+	font-size: 12px;
+}
+
+.xaxislabel{
+	bottom: 16px;
+	left: 50%;
+	-webkit-transform: translateX(-50%) translateX(20.5px);
+	text-align: center;
+}
+
+.yaxislabel{
+	-webkit-transform: translateX(-50%) rotate(-90deg) translateX(20.5px);
+	-webkit-transform-origin: 50% 0%;
+	top: 50%;
+	left: 12px;
+}
+
 
 
 

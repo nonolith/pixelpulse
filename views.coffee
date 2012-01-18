@@ -354,20 +354,51 @@ pixelpulse.setLayout = (l) ->
 		
 	pixelpulse.layoutChanged.notify()
 	
+pixelpulse.makeStreamSelect = ->
+	s = $("<select>")
+	for i in [0...@streams.length]
+		stream = @streams[i]
+		$("<option>").attr(value:i)
+		             .text("#{stream.displayName} (#{stream.units})")
+		             .appendTo(s)
+	s.selectStream = (stream) ->
+		s.val(pixelpulse.streams.indexOf(stream))
+		return s
+		
+	s.stream = -> pixelpulse.streams[parseInt(s.val())]
+		
+	return s
+	
 class pixelpulse.XYGraphView
 	constructor: (@el) ->
 		@graphdiv = $("<div class='livegraph'>").appendTo(@el)
+		
+		@xlabel = pixelpulse.makeStreamSelect()
+		@xlabel.addClass('xaxislabel').appendTo(@el).change(@axisSelectChanged)
+		@ylabel = pixelpulse.makeStreamSelect()
+		@ylabel.addClass('yaxislabel').appendTo(@el).change(@axisSelectChanged)
+		
 		@color = [255, 0, 0]
 		
 		@lg = new livegraph.canvas(@graphdiv.get(0), false, false, [false], 
 			{xbottom:true, yright:false, xgrid:true})
 		
+	axisSelectChanged: =>
+		xaxis = @xlabel.stream()
+		yaxis = @ylabel.stream()
+		
+		if xaxis != @xaxis or yaxis != @yaxis
+			@configure(xaxis, yaxis)
+	
 	configure: (@xstream, @ystream) ->	
 		@xaxis = new livegraph.Axis(@xstream.min, @xstream.max)
 		@yaxis = new livegraph.Axis(@ystream.min, @ystream.max)
 		
 		@lg.xaxis = @xaxis
 		@lg.yaxis = @yaxis
+		
+		@xlabel.selectStream(@xstream)
+		@ylabel.selectStream(@ystream)
 		
 		@hidden()
 		
@@ -377,6 +408,8 @@ class pixelpulse.XYGraphView
 		
 		@series.updated.listen @updated
 		pixelpulse.layoutChanged.subscribe @relayout
+		
+		@lg.needsRedraw(true)
 		
 	hidden: ->
 		if @series
