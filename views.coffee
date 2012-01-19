@@ -154,16 +154,17 @@ pixelpulse.fakeAutoset = (animate = true) ->
 	src = @data_listener.trigger.stream.parent.source
 	sampleTime = server.device.sampleTime
 	
+	f = 3
+	
 	timescale = switch src.source
 		when 'square'
-			(src.highSamples + src.lowSamples) * sampleTime
+			(src.highSamples + src.lowSamples) * sampleTime*f
 		when 'sine', 'triangle'
-			src.period * sampleTime
+			src.period * sampleTime*f
 		else
 			0.125
-	
-	f = 3
-	pixelpulse.goToWindow(-timescale*f, timescale*f, animate)
+			
+	pixelpulse.goToWindow(-timescale, timescale, animate)
 
 pixelpulse.autozoom = ->
 	if @triggering
