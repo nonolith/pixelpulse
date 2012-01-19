@@ -133,11 +133,26 @@ body{
 }
 
 #toolbar button.active,
-body.layout-0side #layout0, body.layout-1side #layout1, body.layout-2side #layout2,
 body.triggering #triggerbtn{
 	background: -webkit-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
 	background: -moz-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
-}  
+}
+
+#toolbar #layout0, #toolbar #layout1, #toolbar #layout2, #toolbar #device-config{
+	width: 32px;
+	font-size: 0;
+	opacity: 0.5;
+}
+
+#toolbar #layout0{background: url('img/sidegraph-layout-0.png');}
+#toolbar #layout1{background: url('img/sidegraph-layout-1.png');}
+#toolbar #layout2{background: url('img/sidegraph-layout-2.png');}
+#toolbar #device-config{background: url('img/gear.png');}
+
+body.layout-0side #toolbar #layout0, body.layout-1side #toolbar #layout1, body.layout-2side #toolbar #layout2{
+	opacity: 1;
+	background-color: rgba(255, 255, 255, 0.2);
+}
 
 #toolbar button + button{
 	border-left: none;
@@ -153,29 +168,17 @@ body.triggering #triggerbtn{
 #toolbar #startpause {
 	width: 50px;
 	/*Start button state */
-	background: -webkit-linear-gradient(270deg, rgba(200, 255, 200, 0.25) 0%, rgba(128, 255, 128, 0.35) 100%);
-	background: -moz-linear-gradient(270deg, rgba(200, 255, 200, 0.25) 0%, rgba(128, 255, 128, 0.35) 100%);
+	background-image: -webkit-linear-gradient(270deg, rgba(200, 255, 200, 0.25) 0%, rgba(128, 255, 128, 0.35) 100%), url('img/play.png');
+	background-image: -moz-linear-gradient(270deg, rgba(200, 255, 200, 0.25) 0%, rgba(128, 255, 128, 0.35) 100%), url('img/play.png');
 }
 
 #startpause:hover{
 	opacity: 1;
 }
 
-
-#startpause:before{
-	content:'\25b8';
-}
-
 body.capturing #toolbar #startpause{
-	background: -webkit-linear-gradient(270deg, rgba(255, 200, 200, 0.25) 0%, rgba(255, 128, 128, 0.35) 100%);
-	background: -moz-linear-gradient(270deg, rgba(255, 200, 200, 0.25) 0%, rgba(255, 128, 128, 0.35) 100%);
-}
-
-body.capturing #startpause:before{
-	content:'\275A\275A';
-	font-size:14px;
-	letter-spacing: -0.25em;
-	margin-left: -0.25em;
+	background: -webkit-linear-gradient(270deg, rgba(255, 200, 200, 0.25) 0%, rgba(255, 128, 128, 0.35) 100%), url('img/pause.png');
+	background: -moz-linear-gradient(270deg, rgba(255, 200, 200, 0.25) 0%, rgba(255, 128, 128, 0.35) 100%), url('img/pause.png');
 }
 
 .channel h1{
