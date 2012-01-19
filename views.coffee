@@ -61,6 +61,7 @@ pixelpulse.initView = (dev) ->
 	lastGraph.resized()
 	
 	@timeseries_x.windowDoneAnimating = -> pixelpulse.updateTimeSeries()
+	@timeseries_x.windowChanged = pixelpulse.checkWindowChange
 	
 	@meter_listener.submit()
 	setTimeout((->pixelpulse.updateTimeSeries()), 10)
@@ -121,6 +122,14 @@ pixelpulse.updateTimeSeries = ->
 	console.log('configure', min, max, pts)
 	listener.configure(min, max, pts)
 	listener.submit()
+
+# As part of a x-axis changing action, check if we need to fetch new server data	
+pixelpulse.checkWindowChange = (min, max, done) ->
+	if ((pixelpulse.data_listener.xmax < max or pixelpulse.data_listener.xmin > min) \
+	and max <= pixelpulse.timeseries_x.max and min >= pixelpulse.timeseries_x.min)
+		pixelpulse.updateTimeSeries()
+	
+	
 		
 pixelpulse.destroyView = ->
 	$('#streams section.channel').remove()
