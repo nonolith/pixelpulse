@@ -434,6 +434,8 @@ class livegraph.canvas
 			@redrawAxis()
 			@refreshViewParams()
 			@axisRedrawRequested = false
+			for overlay in @overlays
+				overlay.resized()
 			
 		@redrawGraph()
 		
