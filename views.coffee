@@ -239,7 +239,7 @@ class pixelpulse.StreamView
 			@stream.setGain(parseInt(@gainOpts.val()))
 			
 		for i in GAIN_OPTIONS
-			@gainOpts.append($("<option>").text(i))
+			@gainOpts.append($("<option>").html(i+'&times;').attr('value', i))
 			
 		@stream.gainChanged.listen @gainChanged	
 		@gainChanged(@stream.gain)

@@ -273,6 +273,19 @@ input[type=number]::-webkit-outer-spin-button {
 	-webkit-appearance: none;
 }
 
+.gainopts{
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	background: transparent;
+	font-size: 11px;
+	border: 1px solid #ccc;
+}
+
+header + .stream .gainopts{
+	top: 20px;
+}
+
 #error-overlay{
 	display: box;
 	display: -webkit-box;
@@ -323,7 +336,6 @@ input[type=number]::-webkit-outer-spin-button {
 #streams aside{
 	display: -webkit-box;
 	width: 160px;
-	background: rgba(0, 0, 0, 0.1);
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 }
@@ -356,19 +368,14 @@ input[type=number]::-webkit-outer-spin-button {
 	position: absolute;
 	top: -16px;
 	right: 0;
-}
-
-#streams .channel header aside{
-	background: #aaa;
+	z-index: 100;
 }
 
 .channel > header > aside{
 	padding: 6px 8px;
 	height: 32px;
 	
-	background: linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
-	background: -webkit-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
-	background: -moz-linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
+	background: #aaa;
 }
 
 #streams section.stream{
@@ -393,10 +400,13 @@ section.stream.sourcing{
 }
 
 #streams section.stream aside{
+	position: relative;
+	
 	-webkit-box-ordinal-group: 10;
 	-moz-box-ordinal-group: 10;
 
 	padding-left: 24px;
+	background: rgba(0, 0, 0, 0.1);
 	
 	-webkit-box-orient: vertical;
 	-moz-box-orient: vertical;
