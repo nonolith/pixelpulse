@@ -26,7 +26,7 @@ pixelpulse.chooseDevice = ->
 	for dev in server.devices
 		# select the "first" device
 		if dev.model == "com.nonolithlabs.cee"
-			dev = server.selectDevice(server.devices[0])
+			dev = server.selectDevice(dev)
 			return pixelpulse.deviceSelected(dev)
 	pixelpulse.overlay "No devices found"
 		

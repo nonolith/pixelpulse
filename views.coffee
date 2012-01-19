@@ -29,6 +29,8 @@ COLORS = [
 	[[00, 0x7C, 0x16], [0x6f, 0xC7, 0x00]]
 ]
 
+GAIN_OPTIONS = [1, 2, 4, 8, 16, 32, 64]
+
 pixelpulse.initView = (dev) ->
 	@timeseries_x = new livegraph.Axis(-10, 0)
 	@timeseries_graphs = []
@@ -232,7 +234,16 @@ class pixelpulse.StreamView
 			@sourceChanged(@stream.parent.source)
 		
 		@initTimeseries()
-
+		
+		@gainOpts = $("<select class='gainopts'>").appendTo(@aside).change =>
+			@stream.setGain(parseInt(@gainOpts.val()))
+			
+		for i in GAIN_OPTIONS
+			@gainOpts.append($("<option>").text(i))
+			
+		@stream.gainChanged.listen @gainChanged	
+		@gainChanged(@stream.gain)
+		
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
 			.append(@value = $("<span class='value'>"))
@@ -388,6 +399,11 @@ class pixelpulse.StreamView
 			
 		else
 			@source.html("<h2>measure</h2>")
+			
+	gainChanged: (g) =>
+			@gainOpts.val(g)
+			@yaxis.window(@yaxis.min/g, @yaxis.max/g, true)
+			@lg.needsRedraw(true)
 			
 	destroy: ->
 		pixelpulse.layoutChanged.unListen @relayout

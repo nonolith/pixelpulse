@@ -130,7 +130,12 @@ class CEEDevice
 					
 			when "outputChanged"
 				channel = @channels[m.channel]
-				channel.onOutputChanged(m)		
+				channel.onOutputChanged(m)
+				
+			when "gainChanged"
+				channel = @channels[m.channel]
+				stream = channel.streams[m.stream]
+				stream.onGain(m)	
 
 	onInfo: (info) ->
 		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial',
@@ -230,11 +235,23 @@ class Channel
 class Stream
 	constructor: (info, @parent) ->
 		@onRemoved = new Event()
+		@gainChanged = new Event()
 		@onInfo(info)
 
 	onInfo: (info) ->
-		for i in ['id', 'displayName', 'units', 'min', 'max', 'outputMode']
+		for i in ['id', 'displayName', 'units', 'min', 'max', 'outputMode', 'gain']
 			this[i] = info[i]
+			
+	onGain: (m) ->
+		@gain = m.gain
+		@gainChanged.notify(@gain)
+		
+	setGain: (g) ->
+		if g != @gain
+			server.send 'setGain'
+				channel: @parent.id
+				stream: @id
+				gain: g
 
 	onRemoved: ->
 		@removed.notify()
