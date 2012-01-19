@@ -35,8 +35,8 @@ pixelpulse.deviceSelected = (dev) ->
 	dev.changed.listen ->
 		pixelpulse.overlay()
 		pixelpulse.reset()
-		pixelpulse.captureState.notify(dev.captureState)
 		pixelpulse.initView(dev)
+		pixelpulse.captureState.notify(dev.captureState)
 	
 	dev.removed.listen ->
 		pixelpulse.reset()
