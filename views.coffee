@@ -60,6 +60,8 @@ pixelpulse.initView = (dev) ->
 	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
 	lastGraph.resized()
 	
+	@timeseries_x.windowDoneAnimating = -> pixelpulse.updateTimeSeries()
+	
 	@meter_listener.submit()
 	setTimeout((->pixelpulse.updateTimeSeries()), 10)
 
@@ -102,8 +104,6 @@ pixelpulse.updateTimeSeries = ->
 	lg = pixelpulse.timeseries_graphs[0]
 	listener = pixelpulse.data_listener
 	
-	changed = no
-	
 	if pixelpulse.triggering
 		min = -xaxis.span()
 		max = 0
@@ -118,10 +118,9 @@ pixelpulse.updateTimeSeries = ->
 		max = Math.min(xaxis.visibleMax + 0.5*xaxis.span(), xaxis.max)
 		pts = lg.width / 2 * (max - min) / xaxis.span()
 	
-	if min != listener.xmin or max != listener.xmax or listener.requestedPoints or changed != pts
-		console.log('configure', min, max, pts)
-		listener.configure(min, max, pts)
-		listener.submit()
+	console.log('configure', min, max, pts)
+	listener.configure(min, max, pts)
+	listener.submit()
 		
 pixelpulse.destroyView = ->
 	$('#streams section.channel').remove()
@@ -216,14 +215,14 @@ class pixelpulse.StreamView
 				new DragTriggerAction(this, pos)
 			else
 				new livegraph.DragScrollAction(@lg, pos,
-					pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
+					pixelpulse.timeseries_graphs)
 				
 				
 		@lg.onDblClick = (e, pos, btn) =>
 			zf = if e.shiftKey or btn==2 then 2 else 0.5
 			opts = {time: 200, zoomFactor:zf } 
 			return new livegraph.ZoomXAction(opts, @lg, pos,
-				pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
+				pixelpulse.timeseries_graphs)
 		
 		@isSource = false
 		@dotFollowsStream = false

@@ -17,6 +17,7 @@ class livegraph.Axis
 			
 		@visibleMin = @min
 		@visibleMax = @max
+		@isAnimating = false
 	
 	span: -> @visibleMax - @visibleMin
 		
@@ -44,6 +45,21 @@ class livegraph.Axis
 		
 	invYtransform: (ypx, geom) ->
 		(geom.ybottom - ypx)/geom.height * @span() + @visibleMin
+		
+	window: (min, max, done) ->
+		if min != @visibleMin or max != @visibleMax
+			@visibleMin = min
+			@visibleMax = max
+			@isAnimating = true
+			@windowChanged(min, max, done)
+		
+		if done and @isAnimating
+			@windowDoneAnimating(@visibleMin, @visibleMax)
+			@isAnimating = false
+			
+	windowChanged: (min, max, done) ->
+	windowDoneAnimating: (min, max) ->
+		
 		
 class DigitalAxis
 	min = 0
@@ -703,8 +719,7 @@ class livegraph.DragScrollAction extends livegraph.Action
 		
 	scrollTo: (x) ->
 		scrollby = (x-@origPos[0])/@scale
-		@lg.xaxis.visibleMin = @origMin - scrollby
-		@lg.xaxis.visibleMax = @origMax - scrollby
+		@lg.xaxis.window(@origMin - scrollby, @origMax - scrollby)
 		@redraw(true)
 		
 	onRelease: ->
@@ -753,12 +768,10 @@ class livegraph.DragScrollAction extends livegraph.Action
 					# Velocity has become negligible
 					# But if we're against min/max, stop exactly on it
 					if minOvershoot
-						@lg.xaxis.visibleMin = @lg.xaxis.min
-						@lg.xaxis.visibleMax = @lg.xaxis.min + @span
+						@lg.xaxis.window(@lg.xaxis.min, @lg.xaxis.min + @span)
 						@redraw(true)
 					else if maxOvershoot
-						@lg.xaxis.visibleMin = @lg.xaxis.max - @span
-						@lg.xaxis.visibleMax = @lg.xaxis.max 
+						@lg.xaxis.window(@lg.xaxis.max - @span, @lg.xaxis.max)
 						@redraw(true)
 						
 					@cancel()
@@ -766,6 +779,10 @@ class livegraph.DragScrollAction extends livegraph.Action
 			
 			@x = @x + @velocity*dt
 			@scrollTo(@x)
+	
+	cancel: ->
+		@lg.xaxis.window(@lg.xaxis.visibleMin, @lg.xaxis.visibleMax, true)
+		super()
 
 class livegraph.ZoomXAction extends livegraph.Action
 	constructor: (opts, lg, origPos, allTargets=null, doneCallback=null) ->
@@ -809,14 +826,12 @@ class livegraph.ZoomXAction extends livegraph.Action
 		if ps > 1
 			@cancel()
 		else
-			@lg.xaxis.visibleMin = @origMin*pe + @endMin*ps
-			@lg.xaxis.visibleMax = @origMax*pe + @endMax*ps
+			@lg.xaxis.window(@origMin*pe + @endMin*ps, @origMax*pe + @endMax*ps)
 			@redraw(true)
 			
 	cancel: ->
 		# don't want to get stuck between zoom levels
-		@lg.xaxis.visibleMin = @endMin
-		@lg.xaxis.visibleMax = @endMax
+		@lg.xaxis.window(@endMin, @endMax, true)
 		@redraw(true)
 		super()
 			
