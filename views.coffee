@@ -219,8 +219,9 @@ class pixelpulse.StreamView
 					pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
 				
 				
-		@lg.onDblClick = (e, pos) =>
-			opts = {time: 200, zoomFactor: if e.shiftKey then 2 else 0.5} 
+		@lg.onDblClick = (e, pos, btn) =>
+			zf = if e.shiftKey or btn==2 then 2 else 0.5
+			opts = {time: 200, zoomFactor:zf } 
 			return new livegraph.ZoomXAction(opts, @lg, pos,
 				pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
 		

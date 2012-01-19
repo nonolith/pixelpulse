@@ -108,6 +108,7 @@ class livegraph.canvas
 		
 		$(@div).mousedown(@mousedown)
 		$(@div).dblclick(@doubleclick)
+		$(@div).bind('contextmenu', -> false)
 		
 		@showYleft = opts.yleft ? true
 		@showYright = opts.yright ? true
@@ -117,6 +118,7 @@ class livegraph.canvas
 		@showXgridZero = opts.xgridZero ? false
 		@gridcolor = opts.gridcolor ? 'rgba(0,0,0,0.08)'
 		
+		@rightClickTime = 0
 		@overlays = []
 		
 		@ctxa = @axisCanvas.getContext('2d')
@@ -228,6 +230,15 @@ class livegraph.canvas
 		@psSum += time
 		
 	mousedown: (e) =>
+		if e.button == 2
+			t = +new Date()
+			if @rightClickTime and @rightClickTime + 200 > t
+				@rightClickTime = 0
+				@dragAction = @onDblClick(e, relMousePos(@div, e), 2)
+			else
+				@rightClickTime = t
+			return
+					
 		pos = origPos = relMousePos(@div, e)
 		@dragAction = @onClick(pos)
 		if not @dragAction then return
@@ -250,10 +261,10 @@ class livegraph.canvas
 	onClick: (pos) -> false
 		
 	doubleclick: (e) =>
-		pos = origPos = relMousePos(@div, e)
-		@dragAction = @onDblClick(e, pos)
+		pos = relMousePos(@div, e)
+		@dragAction = @onDblClick(e, pos, 1)
 		
-	onDblClick: (e, pos) ->
+	onDblClick: (e, pos, btn) ->
 		
 	
 	resized: () ->
