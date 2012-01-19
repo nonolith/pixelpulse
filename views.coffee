@@ -140,6 +140,8 @@ pixelpulse.goToWindow = (min, max, animate=true) ->
 		return new livegraph.AnimateXAction(opts, @timeseries_graphs[0], min, max, @timeseries_graphs)
 	else
 		@timeseries_x.window(min, max, true)
+		for lg in @timeseries_graphs
+			lg.needsRedraw(true)
 
 pixelpulse.zoomCompletelyOut = (animate=true) ->
 	pixelpulse.goToWindow(pixelpulse.timeseries_x.min, pixelpulse.timeseries_x.max, animate)
@@ -166,7 +168,13 @@ pixelpulse.autozoom = ->
 		@fakeAutoset()
 	else
 		@zoomCompletelyOut()
+		
+pixelpulse.canChangeView = -> pixelpulse.triggering or not server.device.captureState
 
+pixelpulse.captureState.subscribe (s) ->
+	console.log(pixelpulse.canChangeView())
+	if not pixelpulse.canChangeView()
+		pixelpulse.zoomCompletelyOut(false)
 		
 pixelpulse.destroyView = ->
 	$('#streams section.channel').remove()
@@ -259,12 +267,13 @@ class pixelpulse.StreamView
 					pixelpulse.triggerOverlay.remove()
 					pixelpulse.triggerOverlay = new livegraph.TriggerOverlay(@lg)
 				new DragTriggerAction(this, pos)
-			else
+			else if pixelpulse.canChangeView()
 				new livegraph.DragScrollAction(@lg, pos,
 					pixelpulse.timeseries_graphs)
 				
 				
 		@lg.onDblClick = (e, pos, btn) =>
+			if not pixelpulse.canChangeView() then return
 			zf = if e.shiftKey or btn==2 then 2 else 0.5
 			opts = {time: 200, zoomFactor:zf } 
 			return new livegraph.ZoomXAction(opts, @lg, pos,
