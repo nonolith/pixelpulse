@@ -120,6 +120,7 @@ class livegraph.canvas
 		
 		@rightClickTime = 0
 		@overlays = []
+		@action = false
 		
 		@ctxa = @axisCanvas.getContext('2d')
 		
@@ -229,27 +230,37 @@ class livegraph.canvas
 		@psCount += 1
 		@psSum += time
 		
+	startAction: (action) ->
+		if @action
+			@action.cancel()
+			
+		@action = action
+		
 	mousedown: (e) =>
-		if e.button == 2
+		if e.button == 0
+			pos = origPos = relMousePos(@div, e)
+			@onClick(pos, e)
+		
+		else if e.button == 2
+			# Simulate right-double-click
 			t = +new Date()
 			if @rightClickTime and @rightClickTime + 200 > t
 				@rightClickTime = 0
-				@dragAction = @onDblClick(e, relMousePos(@div, e), 2)
+				@onDblClick(e, relMousePos(@div, e), 2)
 			else
 				@rightClickTime = t
-			return
+		return
 					
-		pos = origPos = relMousePos(@div, e)
-		@dragAction = @onClick(pos)
-		if not @dragAction then return
+	startDrag: (origPos) ->
+		pos = origPos
 		
 		mousemove = (e) =>
 			pos = relMousePos(@div, e)
-			if @dragAction then @dragAction.onDrag(pos, origPos)
+			if @action then @action.onDrag(pos, origPos)
 			return
 			
 		mouseup = =>
-			if @dragAction then @dragAction.onRelease(pos, origPos)
+			if @action then @action.onRelease(pos, origPos)
 			$(window).unbind('mousemove', mousemove)
 			         .unbind('mouseup', mouseup)
                      .css('cursor', 'auto')
@@ -258,11 +269,14 @@ class livegraph.canvas
 		$(window).mousemove(mousemove)
 		         .mouseup(mouseup)
 		
+		return mouseup
+		
+		
 	onClick: (pos) -> false
 		
 	doubleclick: (e) =>
 		pos = relMousePos(@div, e)
-		@dragAction = @onDblClick(e, pos, 1)
+		@onDblClick(e, pos, 1)
 		
 	onDblClick: (e, pos, btn) ->
 		
@@ -397,8 +411,8 @@ class livegraph.canvas
 		
 		@redrawRequested = false
 		
-		if @dragAction
-			@dragAction.onAnim()
+		if @action
+			@action.onAnim()
 			
 		if @axisRedrawRequested
 			@redrawAxis()
@@ -507,6 +521,7 @@ class livegraph.Dot extends livegraph.Overlay
 		@positionRight(PADDING+AXIS_SPACING)
 		$(@dot).appendTo(@lg.div)
 		super()
+		
 		@render()
 	
 	remove: ->
@@ -635,9 +650,8 @@ class livegraph.Action
 		@stop = false
 		
 		for tgt in @allTargets
-			if tgt.dragAction
-				tgt.dragAction.cancel()
-				delete tgt.dragAction
+			tgt.startAction()
+		@lg.startAction(this)
 	
 	# Queue a redraw of all target graphs
 	redraw: (redrawAxes) ->
@@ -667,6 +681,7 @@ class livegraph.Action
 class livegraph.DragScrollAction extends livegraph.Action	
 	constructor: (lg, origPos, allTargets=null, doneCallback=null) ->
 		super(lg, origPos, allTargets, doneCallback)
+		@lg.startDrag(origPos)
 		
 		# Save some original state
 		@origMin = @lg.xaxis.visibleMin

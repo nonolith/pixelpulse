@@ -204,18 +204,18 @@ class pixelpulse.StreamView
 		
 		pixelpulse.timeseries_graphs.push(@lg)
 				
-		@lg.onClick = (pos) =>
+		@lg.onClick = (pos, e) =>
 			[x,y] = pos
 			if x > @lg.width - 45
-				return new DragToSetAction(this, pos)
-			if x < 45 and pixelpulse.triggering
+				new DragToSetAction(this, pos)
+			else if x < 45 and pixelpulse.triggering
 				if pixelpulse.data_listener.trigger.stream != @stream
 					console.log('changing trigger stream')
 					pixelpulse.triggerOverlay.remove()
 					pixelpulse.triggerOverlay = new livegraph.TriggerOverlay(@lg)
-				return new DragTriggerAction(this, pos)
+				new DragTriggerAction(this, pos)
 			else
-				return new livegraph.DragScrollAction(@lg, pos,
+				new livegraph.DragScrollAction(@lg, pos,
 					pixelpulse.timeseries_graphs, pixelpulse.updateTimeSeries)
 				
 				
@@ -426,6 +426,8 @@ class pixelpulse.XYGraphView
 
 class DragYAction extends livegraph.Action
 	constructor: (@view, pos) ->
+		super(@view.lg, pos)
+		@view.lg.startDrag(pos)
 		@transform = livegraph.makeTransform(@view.lg.geom, @view.lg.xaxis, @view.lg.yaxis)
 		@onDrag(pos)
 	
