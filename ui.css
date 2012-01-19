@@ -138,7 +138,9 @@ body.triggering #triggerbtn{
 	background: -moz-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
 }
 
-#toolbar #layout0, #toolbar #layout1, #toolbar #layout2, #toolbar #device-config{
+#toolbar #layout0, #toolbar #layout1, #toolbar #layout2,
+#toolbar #device-config,
+#toolbar #zoomfit{
 	width: 32px;
 	font-size: 0;
 	opacity: 0.5;
@@ -148,6 +150,7 @@ body.triggering #triggerbtn{
 #toolbar #layout1{background: url('img/sidegraph-layout-1.png');}
 #toolbar #layout2{background: url('img/sidegraph-layout-2.png');}
 #toolbar #device-config{background: url('img/gear.png');}
+#toolbar #zoomfit{background: url('img/zoomfit.png');}
 
 body.layout-0side #toolbar #layout0, body.layout-1side #toolbar #layout1, body.layout-2side #toolbar #layout2{
 	opacity: 1;

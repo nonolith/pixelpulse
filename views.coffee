@@ -70,12 +70,13 @@ pixelpulse.toggleTrigger = ->
 	@triggering = !@triggering
 	$(document.body).toggleClass('triggering', pixelpulse.triggering)
 	
+	@cancelAllActions()
+	
 	xaxis = pixelpulse.timeseries_x
 	if @triggering
 		xaxis.min = -5
 		xaxis.max = 5
-		xaxis.visibleMin = -0.125
-		xaxis.visibleMax = 0.125
+		
 		for lg in @timeseries_graphs
 			lg.showXgridZero = yes
 			
@@ -83,6 +84,7 @@ pixelpulse.toggleTrigger = ->
 		@data_listener.configureTrigger(pixelpulse.streams[0], default_trigger_level, 0.25, 0, 0.5)
 		@triggerOverlay = new livegraph.TriggerOverlay(@timeseries_graphs[0])
 		@triggerOverlay.position(default_trigger_level)
+		@fakeAutoset(false)
 	else
 		xaxis.min = -10
 		xaxis.max = 0
@@ -112,8 +114,6 @@ pixelpulse.updateTimeSeries = ->
 		if listener.trigger.offset != xaxis.visibleMin
 			listener.trigger.offset = xaxis.visibleMin
 			changed = yes
-		#xaxis.min = -xaxis.span()*2
-		#xaxis.max = xaxis.span()*2
 	else
 		min = Math.max(xaxis.visibleMin - 0.5*xaxis.span(), xaxis.min)
 		max = Math.min(xaxis.visibleMax + 0.5*xaxis.span(), xaxis.max)
@@ -128,8 +128,45 @@ pixelpulse.checkWindowChange = (min, max, done) ->
 	if ((pixelpulse.data_listener.xmax < max or pixelpulse.data_listener.xmin > min) \
 	and max <= pixelpulse.timeseries_x.max and min >= pixelpulse.timeseries_x.min)
 		pixelpulse.updateTimeSeries()
+		
+pixelpulse.cancelAllActions = ->
+	for lg in pixelpulse.timeseries_graphs
+		lg.startAction(null)
+
+# Set the timeseries view to the specified window
+pixelpulse.goToWindow = (min, max, animate=true) ->
+	if animate
+		opts = {time: 400} 
+		return new livegraph.AnimateXAction(opts, @timeseries_graphs[0], min, max, @timeseries_graphs)
+	else
+		@timeseries_x.window(min, max, true)
+
+pixelpulse.zoomCompletelyOut = (animate=true) ->
+	pixelpulse.goToWindow(pixelpulse.timeseries_x.min, pixelpulse.timeseries_x.max, animate)
 	
+pixelpulse.fakeAutoset = (animate = true) ->
+	# Fake autoset by assuming the CEE is sourcing the wave
+	# Just find out what frequency the source is
+	src = @data_listener.trigger.stream.parent.source
+	sampleTime = server.device.sampleTime
 	
+	timescale = switch src.source
+		when 'square'
+			(src.highSamples + src.lowSamples) * sampleTime
+		when 'sine', 'triangle'
+			src.period * sampleTime
+		else
+			0.125
+	
+	f = 3
+	pixelpulse.goToWindow(-timescale*f, timescale*f, animate)
+
+pixelpulse.autozoom = ->
+	if @triggering
+		@fakeAutoset()
+	else
+		@zoomCompletelyOut()
+
 		
 pixelpulse.destroyView = ->
 	$('#streams section.channel').remove()

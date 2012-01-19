@@ -784,21 +784,14 @@ class livegraph.DragScrollAction extends livegraph.Action
 		@lg.xaxis.window(@lg.xaxis.visibleMin, @lg.xaxis.visibleMax, true)
 		super()
 
-class livegraph.ZoomXAction extends livegraph.Action
-	constructor: (opts, lg, origPos, allTargets=null, doneCallback=null) ->
-		super(lg, origPos, allTargets, doneCallback)
+class livegraph.AnimateXAction extends livegraph.Action		
+	constructor: (opts, lg, @endMin, @endMax, allTargets=null, doneCallback=null) ->
+		super(lg, null, allTargets, doneCallback)
 		
 		@time = opts.time
 		
 		@origMin = @lg.xaxis.visibleMin
 		@origMax = @lg.xaxis.visibleMax
-		@startSpan = @lg.xaxis.span()
-		
-		@endSpan = @startSpan * opts.zoomFactor
-		@center = invTransform(@origPos[0], @origPos[1], makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis))[0]
-		
-		@endMin = @center - @endSpan/2
-		@endMax = @center + @endSpan/2
 		
 		tooMax = @endMax > @lg.xaxis.max
 		tooMin = @endMin < @lg.xaxis.min
@@ -834,6 +827,16 @@ class livegraph.ZoomXAction extends livegraph.Action
 		@lg.xaxis.window(@endMin, @endMax, true)
 		@redraw(true)
 		super()
+
+class livegraph.ZoomXAction extends livegraph.AnimateXAction
+	constructor: (opts, @lg, origPos, allTargets=null, doneCallback=null) ->
+		@startSpan = @lg.xaxis.span()
+		
+		@endSpan = @startSpan * opts.zoomFactor
+		@center = invTransform(origPos[0], origPos[1], makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis))[0]
+		
+		super(opts, lg, @center - @endSpan/2, @center + @endSpan/2, allTargets, doneCallback)
+
 			
 livegraph.arange = (lo, hi, step) ->
 	ret = new Float32Array(Math.ceil((hi-lo)/step+1))
