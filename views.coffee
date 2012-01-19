@@ -477,6 +477,11 @@ class pixelpulse.XYGraphView
 		@series.color = @color
 		@lg.series = [@series]
 		
+		@xstream.gainChanged.listen @xGainChanged	
+		@xGainChanged(@xstream.gain)
+		@ystream.gainChanged.listen @yGainChanged	
+		@yGainChanged(@ystream.gain)
+		
 		@series.updated.listen @updated
 		pixelpulse.layoutChanged.subscribe @relayout
 		
@@ -486,8 +491,19 @@ class pixelpulse.XYGraphView
 		if @series
 			@series.updated.unListen @updated
 		pixelpulse.layoutChanged.unListen @relayout
+		
+		if @xaxis then @xstream.gainChanged.unListen @xGainChanged
+		if @yaxis then @ystream.gainChanged.unListen @yGainChanged
 	
 	updated: => @lg.needsRedraw()
+	
+	xGainChanged: (g) =>
+		@xaxis.window(@xaxis.min/g, @xaxis.max/g, true)
+		@lg.needsRedraw(true)
+	
+	yGainChanged: (g) =>
+		@yaxis.window(@yaxis.min/g, @yaxis.max/g, true)
+		@lg.needsRedraw(true)
 	
 	relayout: =>
 		@lg.resized()
