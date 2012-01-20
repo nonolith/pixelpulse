@@ -32,8 +32,8 @@ class livegraph.Axis
 		else if err <= .75 then step *= 2
 
 		# Round start and stop values to step interval.
-		gridMin = Math.ceil(Math.max(@visibleMin, @min) / step) * step;
-		gridMax = Math.floor(Math.min(@visibleMax, @max) / step) * step + step * .5; # inclusive
+		gridMin = Math.ceil(Math.max(@visibleMin, @min) / step) * step
+		gridMax = Math.floor(Math.min(@visibleMax, @max) / step) * step # inclusive
 
 		livegraph.arange(gridMin, gridMax, step)
 		
@@ -342,6 +342,7 @@ class livegraph.canvas
 		
 	drawXAxis: (y) ->
 		xgrid = @xaxis.grid(@xgridticks)
+		console.log(xgrid)
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.beginPath()
@@ -374,7 +375,7 @@ class livegraph.canvas
 		@ctxa.lineWidth = 1
 		for x in grid
 			xp = snapPx(@xaxis.xtransform(x, @geom))
-			if xp > @geom.xright or xp < @geom.xleft then continue
+			if xp > @geom.xright+1 or xp < @geom.xleft then continue
 			@ctxa.beginPath()
 			@ctxa.moveTo(xp, @geom.ybottom)
 			@ctxa.lineTo(xp, @geom.ytop)
@@ -841,50 +842,8 @@ class livegraph.ZoomXAction extends livegraph.AnimateXAction
 
 			
 livegraph.arange = (lo, hi, step) ->
-	ret = new Float32Array(Math.ceil((hi-lo)/step+1))
+	ret = new Array(Math.ceil((hi-lo)/step+1))
 	for i in [0...ret.length]
 		ret[i] = lo + i*step
 	return ret
-		
-livegraph.demo = ->
-	xaxis = new livegraph.Axis(-20, 20)
-	xaxis.visibleMin = -5
-	xaxis.visibleMax = 5
-	yaxis = new livegraph.Axis(-1, 3)
-
-	xdata = livegraph.arange(-20, 20, 0.005)
-	ydata = new Float32Array(xdata.length)
-
-	updateData = ->
-		n = (Math.sin(+new Date()/1000)+2)*0.5
-
-		for i in [0...ydata.length]
-			x = xdata[i]
-			if x != 0
-				ydata[i] = Math.sin(x*Math.PI/n)/x
-			else
-				ydata[i] = Math.PI/n
-
-	updateData()
-
-	series = new livegraph.Series(xdata, ydata, 'blue')
-	lg = new livegraph.canvas(document.getElementById('demoDiv'), xaxis, yaxis, [series])
-	lg.needsRedraw()
 	
-	lg.start = ->
-		@iv = setInterval((->
-			updateData()
-			lg.needsRedraw()
-		), 10)
-		
-	lg.pause = -> 
-		clearInterval(@iv)
-		
-
-	lg.perfStat_enable(document.getElementById('statDiv'))
-	
-	lg.start()
-
-	window.lg = lg
-
-
