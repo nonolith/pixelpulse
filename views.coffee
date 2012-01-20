@@ -221,6 +221,8 @@ class pixelpulse.StreamView
 
 		@addReadingUI(@aside)
 		
+		@initTimeseries()
+		
 		pixelpulse.layoutChanged.subscribe @relayout
 
 		pixelpulse.meter_listener.updated.listen (m) =>
@@ -233,8 +235,6 @@ class pixelpulse.StreamView
 		
 		if @stream.parent.source
 			@sourceChanged(@stream.parent.source)
-		
-		@initTimeseries()
 		
 		@gainOpts = $("<select class='gainopts'>").appendTo(@aside).change =>
 			@stream.setGain(parseInt(@gainOpts.val()))
@@ -291,41 +291,26 @@ class pixelpulse.StreamView
 			return new livegraph.ZoomXAction(opts, @lg, pos,
 				pixelpulse.timeseries_graphs)
 		
-		@isSource = false
-		@dotFollowsStream = false
-		if @stream.outputMode
-			@dot = new livegraph.Dot(@lg, 'white', @lg.cssColor())
-			@stream.parent.outputChanged.listen (m) => @updateDot(m)
-			@updateDot(@stream.parent.source)
-		
 		@series.updated.listen =>
 			@lg.needsRedraw()
-			if @dotFollowsStream then @dot.position(@series.listener.lastData)
 			
 		@lg.needsRedraw()
 	
 	relayout: =>
 		@lg.resized()
 		
-	updateDot: (m) ->	
-		@isSource = (m.mode == @stream.outputMode)
-		@dotFollowsStream = false
-		@section.toggleClass('sourcing', @isSource)
-		
-		if m.source is 'constant'
-			@dot.fill = if @isSource then @lg.cssColor() else 'white'
-			@dot.render()
-			
-			if @isSource
-				@dot.position(m.value)
-			else
-				@dot.position(@series.listener.lastData)
-				@dotFollowsStream = true
-		else
-			@dot.position(null)
-		
 	sourceChanged: (m) =>
-		if m.mode == @stream.outputMode
+		isSource = (m.mode == @stream.outputMode)
+		
+		if isSource and m.source == 'constant'
+			unless @dot
+				@dot = new livegraph.Dot(@lg, @lg.cssColor(), @lg.cssColor())
+			@dot.position(m.value)
+		else
+			@dot.remove() if @dot
+			@dot = null
+		
+		if isSource
 			@source.empty()
 			
 			stream = @stream

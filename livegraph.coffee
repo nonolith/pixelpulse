@@ -342,7 +342,6 @@ class livegraph.canvas
 		
 	drawXAxis: (y) ->
 		xgrid = @xaxis.grid(@xgridticks)
-		console.log(xgrid)
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.beginPath()
