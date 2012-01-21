@@ -62,7 +62,7 @@ pixelpulse.initView = (dev) ->
 	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
 	lastGraph.resized()
 	
-	@timeseries_x.windowDoneAnimating = -> pixelpulse.updateTimeSeries()
+	#@timeseries_x.windowDoneAnimating = -> pixelpulse.updateTimeSeries()
 	@timeseries_x.windowChanged = pixelpulse.checkWindowChange
 	
 	@meter_listener.submit()
@@ -104,32 +104,43 @@ pixelpulse.toggleTrigger = ->
 	pixelpulse.triggeringChanged.notify(@triggering)
 	
 # run after a window changing operation to fetch new data from the server
-pixelpulse.updateTimeSeries = ->
+pixelpulse.updateTimeSeries = (min, max) ->
 	xaxis = pixelpulse.timeseries_x
 	lg = pixelpulse.timeseries_graphs[0]
 	listener = pixelpulse.data_listener
 	
-	if pixelpulse.triggering
-		min = -xaxis.span()
-		max = 0
-		pts = lg.width/2
-		if listener.trigger.offset != xaxis.visibleMin
-			listener.trigger.offset = xaxis.visibleMin
-			changed = yes
-	else
-		min = Math.max(xaxis.visibleMin - 0.5*xaxis.span(), xaxis.min)
-		max = Math.min(xaxis.visibleMax + 0.5*xaxis.span(), xaxis.max)
-		pts = lg.width / 2 * (max - min) / xaxis.span()
+	min ?= xaxis.visibleMin
+	max ?= xaxis.visibleMax
+	
+	span = max-min
+	
+	min = Math.max(min - 0.4*span, xaxis.min)
+	max = Math.min(max + 0.4*span, xaxis.max)
+	pts = lg.width / 2 * (max - min) / span
 	
 	console.log('configure', min, max, pts)
 	listener.configure(min, max, pts)
 	listener.submit()
 
 # As part of a x-axis changing action, check if we need to fetch new server data	
-pixelpulse.checkWindowChange = (min, max, done) ->
-	if ((pixelpulse.data_listener.xmax < max or pixelpulse.data_listener.xmin > min) \
-	and max <= pixelpulse.timeseries_x.max and min >= pixelpulse.timeseries_x.min)
-		pixelpulse.updateTimeSeries()
+pixelpulse.checkWindowChange = (min, max, done, target) ->
+	xaxis = pixelpulse.timeseries_x
+	lg = pixelpulse.timeseries_graphs[0]
+	l = pixelpulse.data_listener
+	
+	if target
+		if (target[1] - target[0]) < 0.5 * (max - min)
+			# if zooming in, wait until near the end to change the view
+			return
+		
+		[min, max] = target
+	
+	span = max-min
+
+	if ((l.xmax < max or l.xmin > min) \  # Off the edge of the data
+	and max <= xaxis.max and min >= xaxis.min) \ # But not off the edge of the available data
+	or span/(l.xmax - l.xmin)*l.requestedPoints < 0.45 * lg.width # or resolution too low
+		pixelpulse.updateTimeSeries(min, max)
 		
 pixelpulse.cancelAllActions = ->
 	for lg in pixelpulse.timeseries_graphs
@@ -138,7 +149,7 @@ pixelpulse.cancelAllActions = ->
 # Set the timeseries view to the specified window
 pixelpulse.goToWindow = (min, max, animate=true) ->
 	if animate
-		opts = {time: 400} 
+		opts = {time: 200} 
 		return new livegraph.AnimateXAction(opts, @timeseries_graphs[0], min, max, @timeseries_graphs)
 	else
 		@timeseries_x.window(min, max, true)

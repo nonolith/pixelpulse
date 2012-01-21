@@ -46,12 +46,12 @@ class livegraph.Axis
 	invYtransform: (ypx, geom) ->
 		(geom.ybottom - ypx)/geom.height * @span() + @visibleMin
 		
-	window: (min, max, done) ->
+	window: (min, max, done, target) ->
 		if min != @visibleMin or max != @visibleMax
 			@visibleMin = min
 			@visibleMax = max
 			@isAnimating = true
-			@windowChanged(min, max, done)
+			@windowChanged(min, max, done, target)
 		
 		if done and @isAnimating
 			@windowDoneAnimating(@visibleMin, @visibleMax)
@@ -821,7 +821,7 @@ class livegraph.AnimateXAction extends livegraph.Action
 		if ps > 1
 			@cancel()
 		else
-			@lg.xaxis.window(@origMin*pe + @endMin*ps, @origMax*pe + @endMax*ps)
+			@lg.xaxis.window(@origMin*pe + @endMin*ps, @origMax*pe + @endMax*ps, false, [@endMin, @endMax])
 			@redraw(true)
 			
 	cancel: ->

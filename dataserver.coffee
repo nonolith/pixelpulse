@@ -324,22 +324,23 @@ class server.DataListener extends server.Listener
 		time = @xmax - @xmin
 		requestedSampleTime = time/@requestedPoints
 		
-		super(@xmin, requestedSampleTime)
-		
-		@len = Math.ceil(time/@sampleTime)
-		
-		# At end of "recent" stream means get new data
-		@count = if @xmin < 0 and @xmax==0 and not @trigger then -1 else @len
+		if @trigger
+			super(-time, requestedSampleTime)
+			@trigger.offset = @xmin
+			@count = @len =  Math.ceil(time/@sampleTime)
+		else
+			super(@xmin, requestedSampleTime)
+			@len = Math.ceil(time/@sampleTime)
+			# At end of "recent" stream means get new data
+			@count = if @xmin < 0 and @xmax==0 then -1 else @len
 
 	onMessage: (m) ->
 		if m.idx == 0 and @needsReset
 			@needsReset = false
 			@xdata = new Float32Array(@len)
 			
-			min = if @trigger then @trigger.offset else @xmin
-			
 			for i in [0...@len]
-				@xdata[i] = min + i*@sampleTime
+				@xdata[i] = @xmin + i*@sampleTime
 			
 			@data = (new Float32Array(@len) for i in @streams)
 			@reset.notify()
