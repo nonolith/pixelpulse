@@ -248,6 +248,40 @@ numberWidget = (value, conv, changed) ->
 	span.set(value)
 	
 	return span
+	
+iconDropdown = (options, selectedOption, changed) ->
+	dropdown = false
+	el = $("<div class='icon-dropdown'>").click (e) ->
+		if not dropdown and e.target == el.get(0)
+			showDropdown()
+			return false
+		
+	iconFor = (option) -> 'icon-'+option.toLowerCase()
+		
+	select = (option) ->
+		el.removeClass(iconFor selectedOption)
+		el.addClass(iconFor option)
+		selectedOption = option
+		
+	hideDropdown = ->
+		if dropdown
+			dropdown.remove()
+			dropdown = false
+			
+	showDropdown = ->
+		$(document.body).one 'click', hideDropdown
+		
+		clickfunc = ->
+			o = $(this).data('option')
+			select(o)
+			changed(o)
+	
+		dropdown = $("<ul>").appendTo(el)
+		for i in options
+			$("<li>").text(i).addClass(iconFor i).data('option', i).click(clickfunc).appendTo(dropdown)
+	
+	select(selectedOption)
+	return el
 
 class pixelpulse.ChannelView
 	constructor: (@channel, @index) ->
@@ -379,12 +413,8 @@ class pixelpulse.StreamView
 				channel = stream.parent
 				sampleTime = channel.parent.sampleTime
 			
-				sel = $("<select>")
-				for i in ['constant', 'square', 'sine', 'triangle']
-					sel.append($("<option>").text(i))
-				sel.val(m.source)
-				
-				sel.change -> channel.guessSourceOptions(sel.val())
+				sel = iconDropdown ['Constant', 'Square', 'Sine', 'Triangle'], m.source, (o) ->
+					channel.guessSourceOptions(o.toLowerCase())
 			
 				$("<h2>Source </h2>").append(sel).appendTo(@source)
 			

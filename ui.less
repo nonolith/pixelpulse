@@ -332,14 +332,8 @@ body{
 		h2{
 			text-transform: uppercase;
 			white-space:nowrap;
-			
-			select{
-				border: none;
-				background: transparent;
-				font: inherit;
-				text-transform: capitalize;
-				width: 48px;	
-			}
+			font-weight: bold;
+			color: #444;
 		}
 		
 		span{
@@ -369,7 +363,7 @@ body{
 		right: 4px;
 		background: transparent;
 		font-size: 11px;
-		border: 1px solid #ccc;
+		border: 1px solid #ddd;
 	}
 	
 	&:first-of-type .gainopts{
@@ -503,6 +497,70 @@ body.layout-2side{
 	display:none;
 	z-index:21;
 }
+
+.icon-dropdown{
+	height: 16px;
+	width: 32px;
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+	padding-left: 16px;
+	
+	&:after{
+		margin-left: 4px;
+		color: #888;
+		content: "\25bc";
+		font-size: 8px;
+	}
+	
+	h2 &{
+		margin-left: 8px;
+	}
+	
+	ul{
+		position: absolute;
+		top: 22px;
+		right: 0;
+		z-index: 200;
+		background: rgba(0, 0, 0, 0.95);
+		-webkit-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+		color: #ccc;
+		border-radius: 4px;
+		
+		li{
+			padding-left: 20px;
+			height: 16px;
+			margin: 4px;
+			line-height: 16px;
+			vertical-align: middle;
+			font-size: 12px;
+			text-transform: none;
+			font-weight: bold;
+			
+			&:hover{
+				color: white;
+			}
+		}
+		
+		&:after {
+			content: "";
+			display: block;
+			position: absolute;
+			top: -6px;
+			right: 24px;
+			width: 0;
+			border-width: 0 6px 6px 6px;
+			border-style: solid;
+			border-color: rgba(0, 0, 0, 0.9) transparent;
+		}
+	}
+}
+
+
+.icon-constant{background:url('img/constant.png') no-repeat;}
+.icon-sine{background:url('img/sine.png') no-repeat;}
+.icon-triangle{background:url('img/triangle.png') no-repeat;}
+.icon-square{background:url('img/square.png') no-repeat;}
 
 
 
