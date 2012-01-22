@@ -239,8 +239,10 @@ class Stream
 		@onInfo(info)
 
 	onInfo: (info) ->
-		for i in ['id', 'displayName', 'units', 'min', 'max', 'outputMode', 'gain']
+		for i in ['id', 'displayName', 'units', 'min', 'max', 'outputMode', 'gain', 'uncertainty']
 			this[i] = info[i]
+			
+		@digits = Math.round(-Math.log(Math.max(@uncertainty, 0.0001)) / Math.LN10)
 			
 	onGain: (m) ->
 		@gain = m.gain

@@ -200,6 +200,54 @@ pixelpulse.destroyView = ->
 	for i in @channelviews then i.destroy()
 	pixelpulse.setLayout(0)
 	
+numberWidget = (value, conv, changed) ->
+	sampleTime = server.device.sampleTime
+	
+	switch conv
+		when 's'
+			min = sampleTime
+			max = 10
+			step = 0.1
+			unit = 's'
+			digits = 4
+		when 'hz'
+			min = 0.1
+			max = 1/sampleTime/5
+			step = 1
+			unit = 'Hz'
+			digits = 1
+		else
+			min = conv.min
+			max = conv.max
+			unit = conv.units
+			step = 0.1
+			digits = conv.digits
+
+	d = $('<input type=number>')
+			.attr({min, max, step})
+			.change ->
+				v = parseFloat(d.val())
+				
+				if conv is 's'
+					v /= sampleTime
+				else if conv is 'hz'
+					v = (1/v)/sampleTime
+					
+				changed(v)
+				
+	span = $("<span>").append(d).append(unit)
+				
+	span.set = (v) ->
+		switch conv
+			when 's'
+				v *= sampleTime
+			when 'hz'
+				v = 1/(v * sampleTime)
+		d.val(v.toFixed(digits))
+		
+	span.set(value)
+	
+	return span
 
 class pixelpulse.ChannelView
 	constructor: (@channel, @index) ->
@@ -262,7 +310,7 @@ class pixelpulse.StreamView
 			.append($("<span class='unit'>").text(@stream.units)))
 		
 	onValue: (v) ->
-		@value.text(if Math.abs(v)>1 then v.toPrecision(4) else v.toFixed(3))
+		@value.text(v.toFixed(@stream.digits))
 		if (v < 0)
 			@value.addClass('negative')
 		else
@@ -322,80 +370,59 @@ class pixelpulse.StreamView
 			@dot = null
 		
 		if isSource
-			@source.empty()
+			if m.source != @sourceType
+				@sourceType = m.source
+				@sourceInputs = sourceInputs = {}
+				@source.empty()
 			
-			stream = @stream
-			channel = stream.parent
-			sampleTime = channel.parent.sampleTime
+				stream = @stream
+				channel = stream.parent
+				sampleTime = channel.parent.sampleTime
 			
-			sel = $("<select>")
-			for i in ['constant', 'square', 'sine', 'triangle']
-				sel.append($("<option>").text(i))
-			sel.val(m.source)
+				sel = $("<select>")
+				for i in ['constant', 'square', 'sine', 'triangle']
+					sel.append($("<option>").text(i))
+				sel.val(m.source)
 				
-			sel.change -> channel.guessSourceOptions(sel.val())
+				sel.change -> channel.guessSourceOptions(sel.val())
 			
-			$("<h2>Source </h2>").append(sel).appendTo(@source)
+				$("<h2>Source </h2>").append(sel).appendTo(@source)
 			
-			ATTRS = ['value', 'high', 'low', 'highSamples', 'lowSamples', 'offset', 'amplitude', 'period']
+				ATTRS = ['value', 'high', 'low', 'highSamples', 'lowSamples', 'offset', 'amplitude', 'period']
 			
-			propInput = (prop, conv) ->
-				value = m[prop]
-				
-				switch conv
-					when 'val'
-						min = stream.min
-						max = stream.max
-						unit = stream.units
-						step = 0.1
-					when 's'
-						value *= sampleTime
-						min = sampleTime
-						max = 10
-						step = 0.1
-						unit = 's'
-					when 'hz'
-						value = 1/(value * sampleTime)
-						min = 0.1
-						max = 1/sampleTime/5
-						step = 1
-						unit = 'Hz'
+				propInput = (prop, conv) ->
+					if conv == 'val' then conv = stream
 					
-				inp = $('<input type=number>')
-					.attr({min, max, step})
-					.val(value)
-					.change =>
+					sourceInputs[prop] = numberWidget m[prop], conv, (v) =>
 						d = {}
 						for i in ATTRS
-							if m[i]? then d[i] = m[i]
-						d[prop] = parseFloat(inp.val())
-						
-						if conv is 's'
-							d[prop] /= channel.parent.sampleTime
-						else if conv is 'hz'
-							d[prop] = (1/d[prop])/channel.parent.sampleTime
-						
-						channel.set(m.mode, m.source, d)
-				
-				$("<span>").append(inp).append(unit)
+							if channel.source[i]? then d[i] = channel.source[i]
+						d[prop] = v
+					
+						channel.set(channel.source.mode, channel.source.source, d)
+					
 			
-			switch m.source
-				when 'constant'
-					@source.append propInput('value', 'val')
-				when 'square'
-					@source.append propInput('low', 'val')
-					@source.append ' for '
-					@source.append propInput('lowSamples', 's')
-					@source.append propInput('high', 'val')
-					@source.append ' for '
-					@source.append propInput('highSamples', 's')
-				when 'sine', 'triangle'
-					@source.append propInput('offset', 'val')
-					@source.append propInput('amplitude', 'val')
-					@source.append propInput('period', 'hz')
+				switch m.source
+					when 'constant'
+						@source.append propInput('value', 'val')
+					when 'square'
+						@source.append propInput('low', 'val')
+						@source.append ' for '
+						@source.append propInput('lowSamples', 's')
+						@source.append propInput('high', 'val')
+						@source.append ' for '
+						@source.append propInput('highSamples', 's')
+					when 'sine', 'triangle'
+						@source.append propInput('offset', 'val')
+						@source.append propInput('amplitude', 'val')
+						@source.append propInput('period', 'hz')
+			else
+				for prop, inp of @sourceInputs
+					inp.set(m[prop])
 			
 		else
 			@source.html("<h2>measure</h2>")
+			@sourceType = null
 			
 	gainChanged: (g) =>
 			@gainOpts.val(g)
