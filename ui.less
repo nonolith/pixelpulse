@@ -318,24 +318,25 @@ body{
 		color: #888;
 		font-size: 25px;
 	}
-
-	.state{
-		display: block;
+	
+	h2{
+		font-size: 12px;
 		text-transform: uppercase;
+		white-space:nowrap;
 		font-weight: bold;
-		font-size: 13px;
-		margin-top: 2px;
+		color: #444;
+		
+		section.limited &:not(.source):after{
+			color: #844;
+			content: "(limit)";
+			margin-left: 0.5em;
+		}
 	}
+		
+
 
 	.source{
 		font-size: 12px;
-		h2{
-			text-transform: uppercase;
-			white-space:nowrap;
-			font-weight: bold;
-			color: #444;
-		}
-		
 		span{
 			display: inline-block;
 			width: 50px;

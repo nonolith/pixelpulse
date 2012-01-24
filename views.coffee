@@ -300,7 +300,40 @@ class pixelpulse.ChannelView
 			@section.append(v.el)
 			v
 			
+		pixelpulse.meter_listener.updated.listen @onValues
+			
 	destroy: -> for i in @streamViews then i.destroy()
+	
+	onValues: (m) =>
+		# Use a heuristic to determine whether the output is limited by a rail
+		
+		source = @channel.source
+		
+		unless source.source is 'constant' then return
+		
+		for id, s of @channel.streams
+			if s.outputMode is source.mode
+				sourceStream = s
+			else
+				measureStream = s
+				
+		if not sourceStream and measureStream then return
+		
+		arr = m.data[pixelpulse.meter_listener.streamIndex(sourceStream)]
+		sourceValue = arr[arr.length - 1]
+		
+		arr = m.data[pixelpulse.meter_listener.streamIndex(measureStream)]
+		measureValue = arr[arr.length - 1]
+		
+		sourceChannelIsOff = Math.abs(sourceValue - source.value) > sourceStream.uncertainty * 50
+		measureChannelIsHiRail = Math.abs(measureValue - measureStream.max) < measureStream.uncertainty*200
+		measureChannelIsLoRail = Math.abs(measureValue - measureStream.min) < measureStream.uncertainty*100
+		
+		console.log(sourceStream, measureStream, sourceChannelIsOff, measureChannelIsHiRail, measureChannelIsLoRail)
+		
+		isLimited = sourceChannelIsOff and (measureChannelIsHiRail or measureChannelIsLoRail)
+		
+		@section.toggleClass('limited', isLimited)
 
 class pixelpulse.StreamView
 	constructor: (@channelView, @stream, @index)->
@@ -318,11 +351,14 @@ class pixelpulse.StreamView
 		
 		pixelpulse.layoutChanged.subscribe @relayout
 
+		@isLimited = false
+		
 		pixelpulse.meter_listener.updated.listen (m) =>
 			index = pixelpulse.meter_listener.streamIndex(@stream)
 			arr = m.data[index]
 			@onValue arr[arr.length - 1]
-					
+		
+		@sourceHead = $("<h2>").appendTo(@aside)
 		@source = $("<div class='source'>").appendTo(@aside)
 		@stream.parent.outputChanged.listen @sourceChanged
 		
@@ -349,6 +385,7 @@ class pixelpulse.StreamView
 			@value.addClass('negative')
 		else
 			@value.removeClass('negative')
+		
 
 	initTimeseries: ->
 		@xaxis = pixelpulse.timeseries_x
@@ -393,7 +430,7 @@ class pixelpulse.StreamView
 		@lg.resized()
 		
 	sourceChanged: (m) =>
-		isSource = (m.mode == @stream.outputMode)
+		@isSource = isSource = (m.mode == @stream.outputMode)
 		
 		if isSource and m.source == 'constant'
 			unless @dot
@@ -416,7 +453,7 @@ class pixelpulse.StreamView
 				sel = iconDropdown ['Constant', 'Square', 'Sine', 'Triangle'], m.source, (o) ->
 					channel.guessSourceOptions(o.toLowerCase())
 			
-				$("<h2>Source </h2>").append(sel).appendTo(@source)
+				@sourceHead.empty().text("source").append(sel).addClass('source')
 			
 				ATTRS = ['value', 'high', 'low', 'highSamples', 'lowSamples', 'offset', 'amplitude', 'period']
 			
@@ -451,7 +488,8 @@ class pixelpulse.StreamView
 					inp.set(m[prop])
 			
 		else
-			@source.html("<h2>measure</h2>")
+			@source.empty()
+			@sourceHead.text("measure").removeClass('source')
 			@sourceType = null
 			
 	gainChanged: (g) =>
