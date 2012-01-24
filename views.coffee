@@ -629,3 +629,34 @@ class DragTriggerAction extends DragYAction
 		pixelpulse.data_listener.trigger.level = @y
 		pixelpulse.data_listener.submit()
 
+btnPopup = (button, popup) ->
+	button = $(button)
+	popup = $(popup)
+	state = false
+	
+	showPopup = ->
+		popup.fadeIn().css(left: button.position().left, bottom: '42px')
+		$(document).one 'click', ->
+			hidePopup()
+		button.addClass('active')
+		state = true
+		pixelpulse.hidePopup = -> $(document).click()
+		
+	hidePopup = ->
+		popup.fadeOut()
+		button.removeClass('active')
+		state = false
+	
+	$(button).click (e)->
+		if not state
+			showPopup()
+			return false
+		
+	$(popup).click (e) -> false #block events
+		
+$(document).ready ->
+	btnPopup('#device-config', '#config-popup')	
+	$('#device-config-apply').click ->
+		pixelpulse.hidePopup()
+		
+		 

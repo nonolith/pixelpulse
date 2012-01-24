@@ -56,12 +56,34 @@ Pixelpulse
 	</div>
 	<div class='spacer'></div>
 	<div id='toolbar-right'>
-		<button id='zoomfit' title="Auto zoom" onclick='pixelpulse.autozoom()'>Auto-zoom</button>
-		<button id='device-config'>Configure</button>
+		<button id='zoomfit' title="Auto zoom" onclick='pixelpulse.autozoom()'>Auto-zoom</button><button id='device-config'>Configure</button>
 	</div>
 	<div id='device-info'>
 	</div>
 </div>
+
+<section id='config-popup' class='popup-dialog'>
+	<label>Mode</label>
+	<select>
+		<option>2 Channels source-measure</option>
+		<option>Bidirectional source-measure</option>
+		<option>2 Channels input</option>
+	</select>
+	
+	<label>Sample Rate</label>
+	<select>
+		<option>1k</option>
+		<option>5k</option>
+		<option>10k</option>
+		<option>20k</option>
+		<option>40k</option>
+	</select>
+	
+	<div class='actions'>
+	<div id='config-will-reset'>Applying these settings will clear collected data</div>
+	<button id='device-config-apply'>Apply</button>
+	</div>
+</section>
 
 <div id='perfstat'></div>
 

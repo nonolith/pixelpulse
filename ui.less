@@ -132,6 +132,7 @@ body{
 	
 	button{
 		background: rgba(255, 255, 255, 0.1);
+		background-repeat: no-repeat;
 		text-align: center;
 		font-size: 20px;
 		color: white;
@@ -145,7 +146,7 @@ body{
 	}
 		
 	#layout0, #layout1, #layout2,
-	#device-config,
+	#device-config, #triggerbtn,
 	#zoomfit{
 		width: 32px;
 		font-size: 0;
@@ -159,12 +160,9 @@ body{
 	#zoomfit{background: url('img/zoomfit.png');}
 	
 	button.active,
-	body.triggering & #triggerbtn{
-		background: -webkit-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
-		background: -moz-linear-gradient(270deg, rgba(255, 255, 255, 0.35) 0%, rgba(160,160,160, 0.45) 100%);
-	}
-	
-	body.layout-0side & #layout0, body.layout-1side & #layout1, body.layout-2side& #layout2{
+	body.triggering & #triggerbtn,
+	body.layout-0side & #layout0, body.layout-1side & #layout1, body.layout-2side & #layout2,
+	#device-config.active{
 		opacity: 1;
 		background-color: rgba(255, 255, 255, 0.2);
 	}
@@ -499,6 +497,16 @@ body.layout-2side{
 	z-index:21;
 }
 
+@popup-color: rgba(0, 0, 0, 0.95);
+
+.icon-dropdown ul, .popup-dialog{
+	position: absolute;
+	background: @popup-color;
+	-webkit-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+	color: #ccc;
+	border-radius: 4px;
+}
+
 .icon-dropdown{
 	height: 16px;
 	width: 32px;
@@ -519,14 +527,10 @@ body.layout-2side{
 	}
 	
 	ul{
-		position: absolute;
+		
 		top: 22px;
 		right: 0;
 		z-index: 200;
-		background: rgba(0, 0, 0, 0.95);
-		-webkit-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-		color: #ccc;
-		border-radius: 4px;
 		
 		li{
 			padding-left: 20px;
@@ -543,19 +547,74 @@ body.layout-2side{
 				background-color: #112;
 				-webkit-box-shadow: 0px 0px 10px #224;
 			}
+			
+			&:after {
+				content: "";
+				display: block;
+				position: absolute;
+				top: -6px;
+				right: 24px;
+				width: 0;
+				border-width: 0 6px 6px 6px;
+				border-style: solid;
+				border-color: @popup-color transparent;
+              }
+
 		}
-		
-		&:after {
-			content: "";
-			display: block;
-			position: absolute;
-			top: -6px;
-			right: 24px;
-			width: 0;
-			border-width: 0 6px 6px 6px;
-			border-style: solid;
-			border-color: rgba(0, 0, 0, 0.9) transparent;
+	}
+}
+
+.popup-dialog{
+	display: none;
+	position: absolute;
+	padding: 8px;
+	margin-left: -12px;
+	
+	&:after {
+		content: "";
+		display: block;
+		position: absolute;
+		bottom: -12px;
+		left: 16px;
+		width: 0;
+		border-width: 12px 12px 0 12px;
+		border-style: solid;
+		border-color: @popup-color transparent;
+	}
+	
+	label{
+		&:not(:first-child){
+			margin-top: 8px;
 		}
+	
+		font-weight: bold;
+		display: block;
+	}
+	
+	.actions{
+		margin-top: 8px;
+	}
+	
+}
+
+#config-popup{
+	width: 220px;
+
+	#config-will-reset{
+		font-size: 10px;
+		float: left;
+		color: #ccc;
+		width: 60%;
+	}
+	
+	button{
+		float: right;
+		width: 30%;
+	}
+	
+	margin-left: -120px;
+	&:after{
+		left: 123px;
 	}
 }
 
