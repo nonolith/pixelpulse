@@ -29,6 +29,34 @@ app.initCEE = (dev) ->
 		server.send 'enterBootloader'
 	$(document.body).empty().append("CEE: " ).append(b)
 	window.d = dev
+
+app.erase = (cb) ->
+	server.device.erase (m) ->
+		outLine("Erased")
+		if $.isFunction(cb) then cb()
+		
+app.checkCRC = (cb) ->
+	server.device.crcApp (m) ->
+		valid = (m.crc == app.fw.crc)
+		vs = if valid then 'Valid' else 'INVALID'
+		console.log(m.crc, app.fw.crc)
+		outLine("App CRC: #{m.crc} - #{vs}")
+		if valid and $.isFunction(cb) then cb()
+
+app.write = (cb) ->
+	server.device.write app.fw.data, (m) ->
+		outLine("Wrote flash, status #{m.result}")
+		if $.isFunction(cb) then cb()
+
+app.flash_and_check = ->
+	app.erase ->
+		app.write ->
+			app.checkCRC ->
+				server.device.reset()
+
+outdata = null
+outLine = (t) ->
+	$("<div>").text(t).appendTo(outdata)
 	
 app.initBL = (dev) ->
 	$(document.body).empty().append("Bootloader: " )
@@ -41,25 +69,25 @@ app.initBL = (dev) ->
 	te = $("<textarea>").appendTo(indata).change ->
 		app.fw = JSON.parse(te.val())
 		in_info.text("CRC: #{app.fw.crc}")
-	
-	in_info = $("<div>").appendTo(indata)
-	
+		
+	$.get 'cee.json', (data) ->
+		te.val(data)
+		te.change()
+		
+		if params.auto
+			app.flash_and_check()
+		
 	outdata = $("<div>").appendTo("body")
 	
-	outLine = (t) ->
-		$("<div>").text(t).appendTo(outdata)
+	in_info = $("<div>").appendTo(indata)
+
+	$("<button>App CRC</button>").appendTo(outdata).click(app.checkCRC)
 	
-	$("<button>App CRC</button>").appendTo(outdata).click ->
-		dev.crcApp (m) ->
-			outLine("App CRC: #{m.crc}")
-	
-	$("<button>Erase</button>").appendTo(outdata).click ->
-		dev.erase (m) ->
-			outLine("Erased")
+	$("<button>Erase</button>").appendTo(outdata).click(app.erase)
 			
-	$("<button>Write</button>").appendTo(outdata).click ->
-		dev.write app.fw.data, (m) ->
-			outLine("Wrote flash, status #{m.result}")
+	$("<button>Write</button>").appendTo(outdata).click(app.write)
+	
+	$("<button>Write, check, and reset</button>").appendTo(outdata).click(app.flash_and_check)
 			
 	dev.changed.listen ->
 		outLine("Connected: #{dev.hw_product} #{dev.hw_version}")
@@ -68,9 +96,9 @@ app.initBL = (dev) ->
 	
 #URL params
 params = {}
-for pair in document.location.search.slice(1).split('&')
-	[key,params[key]] = pair.split('=')
+for flag in document.location.hash.slice(1).split('&')
+	params[flag]=true
 
-$(document).ready ->
+$(document).ready ->		
 	app.init(server, params)
 
