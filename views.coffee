@@ -118,7 +118,7 @@ pixelpulse.updateTimeSeries = (min, max) ->
 	max = Math.min(max + 0.4*span, xaxis.max)
 	pts = lg.width / 2 * (max - min) / span
 	
-	console.log('configure', min, max, pts)
+	#console.log('configure', min, max, pts)
 	listener.configure(min, max, pts)
 	listener.submit()
 
@@ -186,7 +186,6 @@ pixelpulse.autozoom = ->
 pixelpulse.canChangeView = -> pixelpulse.triggering or not server.device.captureState
 
 pixelpulse.captureState.subscribe (s) ->
-	console.log(pixelpulse.canChangeView())
 	if not pixelpulse.canChangeView()
 		pixelpulse.zoomCompletelyOut(false)
 		
@@ -329,8 +328,6 @@ class pixelpulse.ChannelView
 		measureChannelIsHiRail = Math.abs(measureValue - measureStream.max) < measureStream.uncertainty*200
 		measureChannelIsLoRail = Math.abs(measureValue - measureStream.min) < measureStream.uncertainty*100
 		
-		console.log(sourceStream, measureStream, sourceChannelIsOff, measureChannelIsHiRail, measureChannelIsLoRail)
-		
 		isLimited = sourceChannelIsOff and (measureChannelIsHiRail or measureChannelIsLoRail)
 		
 		@section.toggleClass('limited', isLimited)
@@ -393,8 +390,6 @@ class pixelpulse.StreamView
 		@series =  pixelpulse.data_listener.series('time', @stream)
 		@series.color = COLORS[@channelView.index][@index]
 		
-		console.log(@series)
-		
 		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
 		
 		pixelpulse.timeseries_graphs.push(@lg)
@@ -405,7 +400,6 @@ class pixelpulse.StreamView
 				new DragToSetAction(this, pos)
 			else if x < 45 and pixelpulse.triggering
 				if pixelpulse.data_listener.trigger.stream != @stream
-					console.log('changing trigger stream')
 					pixelpulse.triggerOverlay.remove()
 					pixelpulse.triggerOverlay = new livegraph.TriggerOverlay(@lg)
 				new DragTriggerAction(this, pos)
