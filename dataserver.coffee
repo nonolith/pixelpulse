@@ -257,6 +257,14 @@ class Stream
 
 	onRemoved: ->
 		@removed.notify()
+		
+	getSample: (t = 0.01, cb) ->
+		l = new server.Listener(@parent.parent, [this])
+		l.configure(null, t, 1)
+		l.submit()
+		l.updated.subscribe (m) ->
+			cb(m.data[0][0])
+		
 
 window.server = new Dataserver('localhost:9003')
 

@@ -74,8 +74,8 @@ app.initBL = (dev) ->
 		te.val(data)
 		te.change()
 		
-		if params.auto
-			app.flash_and_check()
+		#if params.auto
+		#	app.flash_and_check()
 		
 	outdata = $("<div>").appendTo("body")
 	
