@@ -53,6 +53,10 @@ app.flash_and_check = ->
 		app.write ->
 			app.checkCRC ->
 				server.device.reset()
+				
+app.set_fw = (fw) ->
+	app.fw = fw
+	outLine("Loaded firmware, CRC = #{app.fw.crc}")
 
 outdata = null
 outLine = (t) ->
@@ -66,16 +70,7 @@ app.initBL = (dev) ->
 		
 	indata = $("<div>").appendTo("body")
 		
-	te = $("<textarea>").appendTo(indata).change ->
-		app.fw = JSON.parse(te.val())
-		in_info.text("CRC: #{app.fw.crc}")
-		
-	$.get 'cee.json', (data) ->
-		te.val(data)
-		te.change()
-		
-		#if params.auto
-		#	app.flash_and_check()
+	$.get('cee.json', app.set_fw, 'json')
 		
 	outdata = $("<div>").appendTo("body")
 	
