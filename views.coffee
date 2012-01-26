@@ -366,8 +366,10 @@ class pixelpulse.StreamView
 			@stream.setGain(parseInt(@gainOpts.val()))
 			
 		for i in GAIN_OPTIONS
-			@gainOpts.append($("<option>").html(i+'&times;').attr('value', i))
-			
+			if ((@stream.id == 'i') and (i < 16)) or (@stream.id == 'v')
+				@gainOpts.append($("<option>").html(i+'&times;').attr('value', i))
+
+
 		@stream.gainChanged.listen @gainChanged	
 		@gainChanged(@stream.gain)
 		
