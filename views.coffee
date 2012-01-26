@@ -168,9 +168,9 @@ pixelpulse.fakeAutoset = (animate = true) ->
 	f = 3
 	
 	timescale = switch src.source
-		when 'square'
+		when 'adv_square'
 			(src.highSamples + src.lowSamples) * sampleTime*f
-		when 'sine', 'triangle'
+		when 'sine', 'triangle', 'square'
 			src.period * sampleTime*f
 		else
 			0.125
@@ -461,6 +461,8 @@ class pixelpulse.StreamView
 						for i in ATTRS
 							if channel.source[i]? then d[i] = channel.source[i]
 						d[prop] = v
+						
+						console.log(channel.source.source)
 					
 						channel.set(channel.source.mode, channel.source.source, d)
 					
@@ -468,14 +470,14 @@ class pixelpulse.StreamView
 				switch m.source
 					when 'constant'
 						@source.append propInput('value', 'val')
-					when 'square'
+					when 'adv_square'
 						@source.append propInput('low', 'val')
 						@source.append ' for '
 						@source.append propInput('lowSamples', 's')
 						@source.append propInput('high', 'val')
 						@source.append ' for '
 						@source.append propInput('highSamples', 's')
-					when 'sine', 'triangle'
+					when 'sine', 'triangle', 'square'
 						@source.append propInput('offset', 'val')
 						@source.append propInput('amplitude', 'val')
 						@source.append propInput('period', 'hz')

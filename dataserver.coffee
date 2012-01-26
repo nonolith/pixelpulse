@@ -212,20 +212,20 @@ class Channel
 		switch @source.source
 			when 'constant'
 				value = @source.value
-			when 'sine', 'triangle'
+			when 'sine', 'triangle', 'square'
 				value = @source.offset
 				period = @source.period
 				amplitude = @source.amplitude
-			when 'square'
+			when 'adv_square'
 				value = (@source.high + @source.low)/2
 				period = @source.highSamples + @source.lowSamples
 				amplitude = (@source.high - @source.low)/2
 		switch sourceType
 			when 'constant'
 				@setConstant(m, value)
-			when 'sine', 'triangle'
+			when 'sine', 'triangle', 'square'
 				@set m, sourceType, {offset:value, amplitude, period}
-			when 'square'
+			when 'adv_square'
 				@set(m, sourceType, {high:value+amplitude, low: value-amplitude, highSamples:period/2, lowSamples:period/2})
 	
 	onOutputChanged: (m) ->
