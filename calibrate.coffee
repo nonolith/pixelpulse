@@ -81,6 +81,10 @@ onCEE = (dev) ->
 	dev.changed.subscribe ->
 		if changedCount == 0
 			startWithDevice(dev)
+			data.serial = dev.serial
+			data.hwVersion = dev.hwVersion
+			data.fwVersion = dev.hwVersion
+			data.time = new Date()
 			server.send 'tempCalibration'
 			log("Found CEE #{dev.hwVersion}, #{dev.fwVersion}")	
 			runNextTest()
@@ -228,7 +232,8 @@ onCEE = (dev) ->
 			
 	saveData = ->
 		console.log(data)
-		log("Did not save data", false)
+		$.post 'http://localhost:1337/save', JSON.stringify(data), ->
+			log("Saved data", true)
 	
 			
 				
