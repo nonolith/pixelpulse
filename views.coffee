@@ -376,16 +376,15 @@ class pixelpulse.StreamView
 		if @stream.parent.source
 			@sourceChanged(@stream.parent.source)
 		
-		@gainOpts = $("<select class='gainopts'>").appendTo(@aside).change =>
-			@stream.setGain(parseInt(@gainOpts.val()))
+		if @stream.id == 'v' # TODO: flag from server to make not CEE-specific
+			@gainOpts = $("<select class='gainopts'>").appendTo(@aside).change =>
+				@stream.setGain(parseInt(@gainOpts.val()))
 			
-		for i in GAIN_OPTIONS
-			if (@stream.id == 'v')
+			for i in GAIN_OPTIONS
 				@gainOpts.append($("<option>").html(i+'&times;').attr('value', i))
 
-
-		@stream.gainChanged.listen @gainChanged	
-		@gainChanged(@stream.gain)
+			@stream.gainChanged.listen @gainChanged	
+			@gainChanged(@stream.gain)
 		
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
