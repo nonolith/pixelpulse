@@ -81,6 +81,7 @@ onCEE = (dev) ->
 	dev.changed.subscribe ->
 		if changedCount == 0
 			startWithDevice(dev)
+			server.send 'tempCalibration'
 			log("Found CEE #{dev.hwVersion}, #{dev.fwVersion}")	
 			runNextTest()
 		else
@@ -129,7 +130,14 @@ onCEE = (dev) ->
 			(cb) -> offsetAt(2400, cb)
 			(cb) -> offsetAt(4096, cb)
 			
-		], runNextTest
+		], ->
+			server.send 'tempCalibration',
+				offset_a_v: -Math.round(data['a'].offset[0]['v'])
+				offset_a_i: -Math.round(data['a'].offset[0]['i'])
+				offset_b_v: -Math.round(data['b'].offset[0]['v'])
+				offset_b_i: -Math.round(data['b'].offset[0]['i'])
+				
+			runNextTest()
 		
 	measureCSAError = ->
 		runNextTest()
@@ -157,7 +165,7 @@ onCEE = (dev) ->
 							data[channel.id].iset[target] = dacval
 							return cb()
 						
-						nabove = d>target	
+						nabove = d > target
 						if above != nabove
 							stepsize /= 2
 							above = nabove
