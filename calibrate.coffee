@@ -107,7 +107,8 @@ onCEE = (dev) ->
 					success = Math.abs(d-target) < 100
 					log("Channel #{channel.id} #{stream.id} offset at #{setval} is #{d} (#{d-target})LSB", success)
 					data[channel.id].offset ?= {}
-					data[channel.id].offset[stream.id] = d
+					data[channel.id].offset[setval] ?= {}
+					data[channel.id].offset[setval][stream.id] = d
 					cb()
 					
 			dev.channels.a.setConstant 1, setval, ->
@@ -136,9 +137,9 @@ onCEE = (dev) ->
 		
 	calibrateIset = ->
 		calibrate = (channel, target, cb) ->
-			dacval = 2000
+			dacval = 3000
 			otherdac = 0
-			stepsize = 100
+			stepsize = 50
 			
 			above = false
 			count = 0
@@ -185,15 +186,24 @@ onCEE = (dev) ->
 			(cb) -> calibrate(dev.channels.b, 390, cb)
 		], runNextTest
 	
-	writeEEPROM = ->
-		log("Not writing eeprom", false)
-		runNextTest()
+	writeEEPROM = (cb) ->	
+		server.send 'writeCalibration',
+			offset_a_v: -Math.round(data['a'].offset[0]['v'])
+			offset_a_i: -Math.round(data['a'].offset[0]['i'])
+			offset_b_v: -Math.round(data['b'].offset[0]['v'])
+			offset_b_i: -Math.round(data['b'].offset[0]['i'])
+			dac200_a: data['a'].iset[200]
+			dac200_b: data['b'].iset[200]
+			dac400_a: data['a'].iset[390]
+			dac400_b: data['b'].iset[390]
+			id: server.createCallback  ->
+				log("Wrote EEPROM", true)
+				cb()
 		
 	tests = [
 		zeroOffset
 		measureCSAError
 		calibrateIset
-		writeEEPROM
 	]
 	
 	runNextTest = ->
@@ -202,6 +212,7 @@ onCEE = (dev) ->
 		else
 			testingDone()
 			log("Testing complete", true)
+			writeEEPROM(->)
 			saveData()
 			
 	testingDone = ->

@@ -338,9 +338,9 @@ class pixelpulse.ChannelView
 		arr = m.data[pixelpulse.meter_listener.streamIndex(measureStream)]
 		measureValue = arr[arr.length - 1]
 		
-		sourceChannelIsOff = Math.abs(sourceValue - source.value) > sourceStream.uncertainty * 50
-		measureChannelIsHiRail = Math.abs(measureValue - measureStream.max) < measureStream.uncertainty*200
-		measureChannelIsLoRail = Math.abs(measureValue - measureStream.min) < measureStream.uncertainty*100
+		sourceChannelIsOff = Math.abs(sourceValue - source.value) > sourceStream.uncertainty * 5
+		measureChannelIsHiRail = Math.abs(measureValue - measureStream.max) < measureStream.uncertainty*5
+		measureChannelIsLoRail = Math.abs(measureValue - measureStream.min) < measureStream.uncertainty*5
 		
 		isLimited = sourceChannelIsOff and (measureChannelIsHiRail or measureChannelIsLoRail)
 		
