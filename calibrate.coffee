@@ -55,7 +55,7 @@ onBootloaderDevice = (dev) ->
 
 	write = (cb) ->
 		server.device.write firmware.data, (m) ->
-			success = (m.result > 0)
+			success = (m.result == 0)
 			log("Wrote flash, status #{m.result}", success)
 			if $.isFunction(cb) and success then cb()
 
@@ -145,10 +145,10 @@ onCEE = (dev) ->
 			
 			step = ->
 				[daca, dacb] = if channel.id is 'a' then [dacval, otherdac] else [otherdac, dacval]
-				#console.log("setting", Math.round(daca), Math.round(dacb))
+				console.log("setting", Math.round(daca), Math.round(dacb))
 				dev.controlTransfer 0xC0, 0x15, Math.round(daca), Math.round(dacb), [], 0, ->
 					channel.streams.i.getSample 0.02, (d) ->
-						#console.log("got", d)
+						console.log("got", d)
 						
 						if stepsize <= 1
 							log("ISET DAC #{channel.id} #{target}ma is #{dacval}", true)
@@ -165,7 +165,7 @@ onCEE = (dev) ->
 						
 						count += 1
 						
-						if dacval < 1500 or count > 100
+						if dacval < 1300 or count > 100
 							log("DACVAL too far, #{count}", false)
 							cb()
 						else
@@ -178,11 +178,11 @@ onCEE = (dev) ->
 			(cb) -> dev.channels.b.setConstant(1, 0, cb)
 			(cb) -> dev.channels.a.setConstant(1, 5, cb)
 			(cb) -> calibrate(dev.channels.a, 200, cb)
-			(cb) -> calibrate(dev.channels.a, 400, cb)
+			(cb) -> calibrate(dev.channels.a, 390, cb)
 			(cb) -> dev.channels.a.setConstant(1, 0, cb)
 			(cb) -> dev.channels.b.setConstant(1, 5, cb)
 			(cb) -> calibrate(dev.channels.b, 200, cb)
-			(cb) -> calibrate(dev.channels.b, 400, cb)
+			(cb) -> calibrate(dev.channels.b, 390, cb)
 		], runNextTest
 	
 	writeEEPROM = ->
@@ -219,5 +219,5 @@ app.set_fw = (fw) ->
 	
 $(document).ready ->		
 	app.init(server)
-	$.get('cee.json', app.set_fw, 'json')
+	$.get('cee.json?'+new Date(), app.set_fw, 'json')
 
