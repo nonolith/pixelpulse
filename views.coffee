@@ -42,6 +42,8 @@ pixelpulse.initView = (dev) ->
 			@streams.push(stream)
 		
 	@meter_listener = new server.Listener(dev, @streams)
+	@meter_listener.configure()
+	
 	@data_listener = new server.DataListener(dev, @streams)
 	
 	i = 0
