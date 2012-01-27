@@ -66,7 +66,6 @@ pixelpulse.initView = (dev) ->
 	@timeseries_x.windowChanged = pixelpulse.checkWindowChange
 	
 	@meter_listener.submit()
-	setTimeout((->pixelpulse.updateTimeSeries()), 10)
 
 pixelpulse.toggleTrigger = ->
 	@triggering = !@triggering
@@ -83,7 +82,7 @@ pixelpulse.toggleTrigger = ->
 			lg.showXgridZero = yes
 			
 		default_trigger_level = 2.5
-		@data_listener.configureTrigger(pixelpulse.streams[0], default_trigger_level, 0.25, 0, 0.5)
+		@data_listener.configureTrigger(pixelpulse.streams[0], default_trigger_level, 0.25, 0, 1)
 		@triggerOverlay = new livegraph.TriggerOverlay(@timeseries_graphs[0])
 		@triggerOverlay.position(default_trigger_level)
 		@fakeAutoset(false)
@@ -99,15 +98,27 @@ pixelpulse.toggleTrigger = ->
 		@data_listener.disableTrigger()
 		
 	for i in @timeseries_graphs then i.needsRedraw(true)
-	pixelpulse.updateTimeSeries()
 			
 	pixelpulse.triggeringChanged.notify(@triggering)
+
+tsUpdateFlag = false	
+pixelpulse.timeseriesNeedsUpdate = ->
+	unless tsUpdateFlag
+		setTimeout(pixelpulse.updateTimeSeries, 10)
+		tsUpdateFlag = true
+
 	
 # run after a window changing operation to fetch new data from the server
-pixelpulse.updateTimeSeries = (min, max) ->
+pixelpulse.updateTimeSeries = (min, max) ->	
 	xaxis = pixelpulse.timeseries_x
 	lg = pixelpulse.timeseries_graphs[0]
 	listener = pixelpulse.data_listener
+	
+	unless lg.width
+		console.error('no width yet, retrying')
+		tsUpdateFlag=false
+		pixelpulse.timeseriesNeedsUpdate()
+		return
 	
 	min ?= xaxis.visibleMin
 	max ?= xaxis.visibleMax
@@ -121,6 +132,7 @@ pixelpulse.updateTimeSeries = (min, max) ->
 	#console.log('configure', min, max, pts)
 	listener.configure(min, max, pts)
 	listener.submit()
+	tsUpdateFlag = false
 
 # As part of a x-axis changing action, check if we need to fetch new server data	
 pixelpulse.checkWindowChange = (min, max, done, target) ->
@@ -416,11 +428,12 @@ class pixelpulse.StreamView
 			opts = {time: 200, zoomFactor:zf } 
 			return new livegraph.ZoomXAction(opts, @lg, pos,
 				pixelpulse.timeseries_graphs)
+				
+		@lg.onResized = ->
+			pixelpulse.timeseriesNeedsUpdate()
 		
 		@series.updated.listen =>
 			@lg.needsRedraw()
-			
-		@lg.needsRedraw()
 	
 	relayout: =>
 		@lg.resized()

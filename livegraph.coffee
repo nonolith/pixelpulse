@@ -142,7 +142,7 @@ class livegraph.canvas
 		
 		if (window.nowebgl or not @init_webgl()) then @init_canvas2d()
 		
-		@resized()
+		@needsRedraw()
 		
 	init_canvas2d: ->
 		@ctxg = @graphCanvas.getContext('2d')
@@ -298,8 +298,8 @@ class livegraph.canvas
 		
 	
 	resized: () ->
-		if @div.offsetWidth == 0 or @div.offsetHeight == 0 then return
-		if not (@xaxis and @yaxis) then return
+		unless @div.offsetWidth > 0 and @div.offsetHeight > 0 and @xaxis and @yaxis
+			return
 			
 		@width = @div.offsetWidth
 		@height = @div.offsetHeight
@@ -325,9 +325,6 @@ class livegraph.canvas
 		@refreshViewParams()
 		
 		@needsRedraw(true)
-		
-		for overlay in @overlays
-			overlay.resized()
 		
 		return
 			

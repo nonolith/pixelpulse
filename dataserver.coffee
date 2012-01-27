@@ -145,6 +145,8 @@ class CEEDevice
 		@channels = {}
 		for chanId, chanInfo of info.channels
 			@channels[chanId] = new Channel(chanInfo, this)
+			
+		@listenersById = {}
 
 		@changed.notify(this)
 
@@ -200,8 +202,14 @@ class Channel
 		dict['channel'] = @id
 		server.send 'set', dict
 
-	setConstant: (mode, val) ->
+	setConstant: (mode, val, cb) ->
 		@set mode, 'constant', {value:val}
+		if cb
+			fn = (s) =>
+				if s.effective
+					@outputChanged.unListen fn
+					cb()
+			@outputChanged.subscribe fn
 		
 	# switch to a source type, picking appropriate parameters
 	guessSourceOptions:  (sourceType) ->
@@ -260,7 +268,7 @@ class Stream
 		
 	getSample: (t = 0.01, cb) ->
 		l = new server.Listener(@parent.parent, [this])
-		l.configure(null, t, 1)
+		l.configure(false, t, 1)
 		l.submit()
 		l.updated.subscribe (m) ->
 			cb(m.data[0][0])
@@ -276,16 +284,23 @@ class server.Listener
 		@id = nextListenerId++
 		@updated = new Event()
 		@reset = new Event()
-		@configure()
 		@disableTrigger()
 		
 	streamIndex: (stream) -> @streams.indexOf(stream)
 
 	configure: (startTime=null, requestedSampleTime=0.1, @count=-1) ->
 		@device.listenersById[@id] = this
+		
+		unless requestedSampleTime > 0
+			return console.error("Invalid sample time", requestedSampleTime)
+		
 		[@decimateFactor, @sampleTime] = @device.calcDecimate(requestedSampleTime)
+		console.assert(@decimateFactor)
 		if startTime?
-			@startSample = Math.floor(startTime/@device.sampleTime)-@decimateFactor
+			if startTime is false
+				@startSample = -1
+			else
+				@startSample = Math.floor(startTime/@device.sampleTime)-@decimateFactor
 		else
 			@startSample = -@decimateFactor-2
 			
@@ -324,11 +339,11 @@ class server.Listener
 			
 class server.DataListener extends server.Listener
 	constructor: (device, streams) ->
-		super(device, streams)
 		@timedata = []
 		@xdata = []
 		@data = ([] for i in streams)
 		@requestedPoints = 0
+		super(device, streams)
 	
 	configure: (@xmin, @xmax, @requestedPoints) ->
 		time = @xmax - @xmin
@@ -346,6 +361,7 @@ class server.DataListener extends server.Listener
 
 	onMessage: (m) ->
 		if m.idx == 0 and @needsReset
+			console.assert(@len)
 			@needsReset = false
 			@xdata = new Float32Array(@len)
 			
@@ -395,7 +411,7 @@ class BootloaderDevice
 				@onInfo(m)
 	
 	onInfo: (info) ->
-		for i in ["magic", "version", "devid","page_size", "app_section_end", "hw_product", "hw_version"]
+		for i in ["serial", "magic", "version", "devid","page_size", "app_section_end", "hw_product", "hw_version"]
 			this[i] = info[i]
 		@changed.notify(this)
 		
