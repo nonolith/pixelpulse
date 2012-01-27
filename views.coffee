@@ -383,8 +383,8 @@ class pixelpulse.StreamView
 			for i in GAIN_OPTIONS
 				@gainOpts.append($("<option>").html(i+'&times;').attr('value', i))
 
-			@stream.gainChanged.listen @gainChanged	
-			@gainChanged(@stream.gain)
+		@stream.gainChanged.listen @gainChanged	
+		@gainChanged(@stream.gain)
 		
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
@@ -505,7 +505,7 @@ class pixelpulse.StreamView
 			@sourceType = null
 			
 	gainChanged: (g) =>
-			@gainOpts.val(g)
+			if @gainOpts then @gainOpts.val(g)
 			@yaxis.window(@yaxis.min/g, @yaxis.max/g, true)
 			@lg.needsRedraw(true)
 			

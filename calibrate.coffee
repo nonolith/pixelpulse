@@ -99,6 +99,7 @@ onCEE = (dev) ->
 		changedCb = cb
 	
 	data = {a:{}, b:{}}
+	window.data = data
 	
 	zeroOffset = ->
 		offsetAt = (setval, cb) ->
@@ -130,10 +131,7 @@ onCEE = (dev) ->
 			(cb) -> dev.channels.b.setConstant(3, 0, cb)
 			(cb) -> setTimeout(cb, 100)
 			(cb) -> offsetAt(0, cb)
-			(cb) -> offsetAt(800, cb)
-			(cb) -> offsetAt(2400, cb)
-			(cb) -> offsetAt(4096, cb)
-			
+			(cb) -> offsetAt(3000, cb)
 		], ->
 			server.send 'tempCalibration',
 				offset_a_v: -Math.round(data['a'].offset[0]['v'])
@@ -144,7 +142,43 @@ onCEE = (dev) ->
 			runNextTest()
 		
 	measureCSAError = ->
-		runNextTest()
+		async.series [
+			(cb) -> changeRaw(false, cb)
+			(cb) -> 
+				dev.channels.a.streams.i.setGain(32)
+				dev.channels.b.streams.i.setGain(32)
+				dev.channels.b.setConstant(3, 0)
+				dev.channels.a.setPeriodic(1, 'triangle', 5, 2.5, 2.5, cb)
+			(cb) ->
+				log("Measuring 9919 error")
+				streams = []
+				streamLabels = []
+				
+				for chId, channel of dev.channels
+					for sId, stream of channel.streams
+						streams.push(stream)
+						streamLabels.push("#{chId}_#{sId}")
+						
+				l = new server.DataListener(dev, streams)
+				l.configure(0, 0.4, 2000, false)
+				l.submit()
+				dev.startCapture()
+				l.done.subscribe ->
+					dev.channels.a.streams.i.setGain(1)
+					dev.channels.b.streams.i.setGain(1)
+				
+					data.sweep = {}
+					
+					unFloat = (a) ->
+						for i in [0...a.length]
+							a[i]
+					
+					for i in [0...streamLabels.length]
+						data.sweep[streamLabels[i]] = unFloat(l.data[i])
+					data.sweep.time = unFloat(l.xdata)
+					log("done", true)
+					cb()
+		], runNextTest
 		
 		
 	calibrateIset = ->
@@ -187,7 +221,7 @@ onCEE = (dev) ->
 							
 		
 		async.series [
-			(cb) -> changeRaw(false, cb)
+			#(cb) -> changeRaw(false, cb)
 			(cb) -> dev.channels.b.setConstant(1, 0, cb)
 			(cb) -> dev.channels.a.setConstant(1, 5, cb)
 			(cb) -> calibrate(dev.channels.a, 200, cb)

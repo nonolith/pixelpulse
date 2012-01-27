@@ -196,20 +196,23 @@ class Channel
 			stream.onRemoved()
 		@removed.notify(this)
 		
-	set: (mode, source, dict) ->
+	set: (mode, source, dict, cb) ->
 		dict['mode'] = mode
 		dict['source'] = source
 		dict['channel'] = @id
 		server.send 'set', dict
-
-	setConstant: (mode, val, cb) ->
-		@set mode, 'constant', {value:val}
 		if cb
 			fn = (s) =>
 				if s.effective
 					@outputChanged.unListen fn
 					cb()
 			@outputChanged.subscribe fn
+
+	setConstant: (mode, val, cb) ->
+		@set mode, 'constant', {value:val}, cb
+		
+	setPeriodic: (mode, source, freq, offset, amplitude, cb) ->
+		@set mode, source, {period:1/freq/@parent.sampleTime, offset, amplitude}, cb
 		
 	# switch to a source type, picking appropriate parameters
 	guessSourceOptions:  (sourceType) ->
@@ -284,6 +287,7 @@ class server.Listener
 		@id = nextListenerId++
 		@updated = new Event()
 		@reset = new Event()
+		@done = new Event()
 		@disableTrigger()
 		
 	streamIndex: (stream) -> @streams.indexOf(stream)
@@ -330,6 +334,9 @@ class server.Listener
 	
 	onMessage: (m) ->
 		@updated.notify(m)
+		if m.done
+			console.log("Listener done!")
+			@done.notify()
 	
 	cancel: ->
 		@server.send 'cancelListen'
@@ -339,13 +346,12 @@ class server.Listener
 			
 class server.DataListener extends server.Listener
 	constructor: (device, streams) ->
-		@timedata = []
 		@xdata = []
 		@data = ([] for i in streams)
 		@requestedPoints = 0
 		super(device, streams)
 	
-	configure: (@xmin, @xmax, @requestedPoints) ->
+	configure: (@xmin, @xmax, @requestedPoints, @continuous = true) ->
 		time = @xmax - @xmin
 		requestedSampleTime = time/@requestedPoints
 		
@@ -357,7 +363,7 @@ class server.DataListener extends server.Listener
 			super(@xmin, requestedSampleTime)
 			@len = Math.ceil(time/@sampleTime)
 			# At end of "recent" stream means get new data
-			@count = if @xmin < 0 and @xmax==0 then -1 else @len
+			@count = if @xmin < 0 and @xmax==0 and @continuous then -1 else @len
 
 	onMessage: (m) ->
 		if m.idx == 0 and @needsReset
@@ -383,7 +389,7 @@ class server.DataListener extends server.Listener
 			for j in src
 				dest[idx++] = j
 		
-		super()
+		super(m)
 		
 	series: (x, y) -> new DataSeries(this, x, y)
 
