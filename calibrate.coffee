@@ -95,7 +95,7 @@ onCEE = (dev) ->
 	
 	changeRaw = (raw, cb) ->
 		console.log('changeRaw', raw, cb)
-		dev.configure(0, 0.00004, 250000, true, raw)
+		dev.configure({raw})
 		changedCb = cb
 	
 	data = {a:{}, b:{}}
@@ -160,7 +160,7 @@ onCEE = (dev) ->
 						streamLabels.push("#{chId}_#{sId}")
 						
 				l = new server.DataListener(dev, streams)
-				l.configure(0, 0.4, 2000, false)
+				l.configure({raw:false})
 				l.submit()
 				dev.startCapture()
 				l.done.subscribe ->

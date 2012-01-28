@@ -63,20 +63,22 @@ Pixelpulse
 </div>
 
 <section id='config-popup' class='popup-dialog'>
+	<!--
 	<label>Mode</label>
 	<select>
 		<option>2 Channels source-measure</option>
 		<option>Bidirectional source-measure</option>
 		<option>2 Channels input</option>
 	</select>
+	-->
 	
 	<label>Sample Rate</label>
-	<select>
-		<option>1k</option>
-		<option>5k</option>
-		<option>10k</option>
-		<option>20k</option>
-		<option>40k</option>
+	<select id='config-sample-rate'>
+		<option value=0.001>1k</option>
+		<option value=0.0002>5k</option>
+		<option value=0.0001>10k</option>
+		<option value=0.00005>20k</option>
+		<option value=0.000025>40k</option>
 	</select>
 	
 	<div class='actions'>

@@ -138,8 +138,8 @@ class CEEDevice
 				stream.onGain(m)	
 
 	onInfo: (info) ->
-		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial',
-		          'sampleTime', 'captureState', 'captureDone']
+		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial', 'length', 'continuous',
+		          'sampleTime', 'captureState', 'captureDone', 'mode', 'samples', 'raw']
 			this[i] = info[i]
 		
 		@channels = {}
@@ -155,8 +155,15 @@ class CEEDevice
 			channel.onRemoved()
 		@removed.notify(this)
 		
-	configure: (mode=0, sampleTime=0.00004, samples=250000, continuous=false, raw=false) ->
-		@parent.send 'configure', {mode, sampleTime, samples, continuous, raw}
+	configure: (setopts = {}) ->
+		opts = {mode:0, @sampleTime, @continuous, @raw}
+		console.log(opts, setopts)
+		for k, v of setopts
+			opts[k] = v
+			
+		opts.samples ?= @length / opts.sampleTime
+		
+		@parent.send 'configure', opts
 		
 	startCapture: ->
 		@parent.send 'startCapture'

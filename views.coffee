@@ -662,8 +662,13 @@ btnPopup = (button, popup) ->
 	$(popup).click (e) -> false #block events
 		
 $(document).ready ->
-	btnPopup('#device-config', '#config-popup')	
-	$('#device-config-apply').click ->
-		pixelpulse.hidePopup()
+	btnPopup('#device-config', '#config-popup')
+	
+	$('#device-config').click ->
+		$('#config-sample-rate').val(server.device.sampleTime)
 		
+		
+	$('#device-config-apply').click ->
+		pixelpulse.hidePopup()	
+		server.device.configure({sampleTime:parseFloat($('#config-sample-rate').val())})
 		 
