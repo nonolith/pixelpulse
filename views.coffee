@@ -91,13 +91,14 @@ pixelpulse.toggleTrigger = ->
 	else
 		xaxis.min = -10
 		xaxis.max = 0
-		xaxis.visibleMin = -10
-		xaxis.visibleMax = 0
+		xaxis.window(-10, 0, true)
 		for lg in @timeseries_graphs
 			lg.showXgridZero = no
 		@triggerOverlay.remove()
 		@triggerOverlay = null
 		@data_listener.disableTrigger()
+		
+	pixelpulse.updateTimeSeries()
 		
 	for i in @timeseries_graphs then i.needsRedraw(true)
 			
@@ -116,11 +117,7 @@ pixelpulse.updateTimeSeries = (min, max) ->
 	lg = pixelpulse.timeseries_graphs[0]
 	listener = pixelpulse.data_listener
 	
-	unless lg.width
-		console.error('no width yet, retrying')
-		tsUpdateFlag=false
-		pixelpulse.timeseriesNeedsUpdate()
-		return
+	return unless lg.width
 	
 	min ?= xaxis.visibleMin
 	max ?= xaxis.visibleMax
@@ -475,8 +472,6 @@ class pixelpulse.StreamView
 						for i in ATTRS
 							if channel.source[i]? then d[i] = channel.source[i]
 						d[prop] = v
-						
-						console.log(channel.source.source)
 					
 						channel.set(channel.source.mode, channel.source.source, d)
 					
