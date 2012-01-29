@@ -252,7 +252,7 @@ class Channel
 
 class Stream
 	constructor: (info, @parent) ->
-		@onRemoved = new Event()
+		@removed = new Event()
 		@gainChanged = new Event()
 		@onInfo(info)
 

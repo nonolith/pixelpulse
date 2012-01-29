@@ -13,8 +13,9 @@ pixelpulse.overlay = (message) ->
 	if not message
 		$("#error-overlay").hide()
 	else
+		$("#error-overlay").children().hide()
+		$("#error-status").show().text(message)
 		$("#error-overlay").fadeIn(300)
-		$("#error-status").text(message)
 		
 pixelpulse.reset = ->
 	pixelpulse.triggering = false
@@ -22,16 +23,34 @@ pixelpulse.reset = ->
 	pixelpulse.destroyView()
 	
 pixelpulse.chooseDevice = ->
-	ndevices = server.devices.length
-	for dev in server.devices
-		# select the "first" device
-		if dev.model == "com.nonolithlabs.cee"
-			dev = server.selectDevice(dev)
-			return pixelpulse.deviceSelected(dev)
-	pixelpulse.overlay "No devices found"
+	if server.ceeDevs.length == 1
+		pixelpulse.initDevice(server.ceeDevs[0])
+	else if server.ceeDevs.length > 1
+		pixelpulse.showDeviceChooser()
+	else
+		pixelpulse.overlay "No devices found"
 		
-pixelpulse.deviceSelected = (dev) ->
+pixelpulse.showDeviceChooser = ->
+	$("#error-overlay").children().hide()
+	$('#chooseDevices').show()
+	
+	ul = $('#chooseDevices ul').empty()
+	for d in server.ceeDevs then do (d) ->
+		ul.append $("<li>").text(d.serial).click ->
+			pixelpulse.initDevice(d)
+	
+	$('#error-overlay').fadeIn(300)
+	
+pixelpulse.updateDevsMenu = (l) ->
+	$('#switchDev').toggle(l.length>1)
+		
+pixelpulse.initDevice = (dev) ->
+	if server.device and dev.id == server.device.id
+		pixelpulse.overlay()
+		return
+		
 	pixelpulse.overlay("Loading Device...")
+	dev = server.selectDevice(dev)
 	dev.changed.listen ->
 		pixelpulse.overlay()
 		pixelpulse.reset()
@@ -64,6 +83,8 @@ pixelpulse.init = (server, params) ->
 
 	server.devicesChanged.listen (l) ->
 		console.info "Device list changed", l
+		server.ceeDevs = (d for d in server.devices when d.model == 'com.nonolithlabs.cee')
+		pixelpulse.updateDevsMenu(server.ceeDevs)
 		
 		if not server.device
 			pixelpulse.chooseDevice()

@@ -27,7 +27,14 @@ Pixelpulse
 </head>
 <body class='layout-0side'>
 
-<div id='error-overlay'><div id='error-status'>Loading...</div></div>
+<div id='error-overlay'>
+<div id='error-status'>Loading...</div>
+
+<div id='chooseDevices' style='display:none'>
+<h1>Choose a device</h1><ul></ul>
+</div>
+
+</div>
 
 <div id='topbar'></div>
 
@@ -59,6 +66,7 @@ Pixelpulse
 		<button id='zoomfit' title="Auto zoom" onclick='pixelpulse.autozoom()'>Auto-zoom</button><button id='device-config'>Configure</button>
 	</div>
 	<div id='device-info'>
+		<button id='switchDev' onclick='pixelpulse.showDeviceChooser()'>Switch</button>
 	</div>
 </div>
 
