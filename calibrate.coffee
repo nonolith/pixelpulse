@@ -81,9 +81,12 @@ onCEE = (dev) ->
 	dev.changed.subscribe ->
 		if changedCount == 0
 			startWithDevice(dev)
+			if dev.fwVersion isnt firmware.fwVersion
+				return server.send 'enterBootloader'
+			
 			data.serial = dev.serial
 			data.hwVersion = dev.hwVersion
-			data.fwVersion = dev.hwVersion
+			data.fwVersion = dev.fwVersion
 			data.time = new Date()
 			server.send 'tempCalibration'
 			log("Found CEE #{dev.hwVersion}, #{dev.fwVersion}")	
@@ -160,7 +163,7 @@ onCEE = (dev) ->
 						streamLabels.push("#{chId}_#{sId}")
 						
 				l = new server.DataListener(dev, streams)
-				l.configure({raw:false})
+				l.configure(0, 0.4, 2000, false)
 				l.submit()
 				dev.startCapture()
 				l.done.subscribe ->
@@ -273,9 +276,11 @@ onCEE = (dev) ->
 				
 app.set_fw = (fw) ->
 	window.firmware = fw
-	log("Loaded firmware for #{firmware.device} #{firmware.hwversion}, CRC = #{firmware.crc}", true)
+	log("Loaded firmware for #{firmware.device} #{firmware.hwVersion}, CRC = #{firmware.crc}", true)
 	
 $(document).ready ->		
 	app.init(server)
 	$.get('cee.json?'+new Date(), app.set_fw, 'json')
+	$(document.body).ajaxError (e) ->
+		log("Server request failed", false)
 

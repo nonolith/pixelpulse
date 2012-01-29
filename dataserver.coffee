@@ -342,7 +342,6 @@ class server.Listener
 	onMessage: (m) ->
 		@updated.notify(m)
 		if m.done
-			console.log("Listener done!")
 			@done.notify()
 	
 	cancel: ->
