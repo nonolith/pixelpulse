@@ -276,7 +276,7 @@ onCEE = (dev) ->
 				
 app.set_fw = (fw) ->
 	window.firmware = fw
-	log("Loaded firmware for #{firmware.device} #{firmware.hwVersion}, CRC = #{firmware.crc}", true)
+	log("Loaded firmware #{firmware.fwVersion} for #{firmware.device} #{firmware.hwVersion}, CRC = #{firmware.crc}", true)
 	
 $(document).ready ->		
 	app.init(server)
