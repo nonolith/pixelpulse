@@ -22,11 +22,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="5.35"
-     inkscape:cx="124.76636"
-     inkscape:cy="16.504562"
+     inkscape:zoom="16"
+     inkscape:cx="175.96798"
+     inkscape:cy="16.027372"
      inkscape:document-units="px"
-     inkscape:current-layer="layer5"
+     inkscape:current-layer="layer3"
      showgrid="true"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -291,7 +291,7 @@
        style="display:inline">
       <path
          style="fill:#ffffff;fill-opacity:1;stroke:none"
-         d="M 141.59375 3.96875 C 136.29348 3.96875 132 8.2622295 132 13.5625 C 132 18.86277 136.29348 23.15625 141.59375 23.15625 C 146.89402 23.15625 151.1875 18.86277 151.1875 13.5625 C 151.1875 8.2622295 146.89402 3.96875 141.59375 3.96875 z M 136.5 8.46875 L 137.40625 8.46875 L 145.78125 8.46875 L 146.6875 8.46875 L 146.6875 9.375 L 146.6875 17.78125 L 146.6875 18.65625 L 145.78125 18.65625 L 137.40625 18.65625 L 136.5 18.65625 L 136.5 17.78125 L 136.5 9.375 L 136.5 8.46875 z M 138.3125 10.28125 L 138.3125 16.875 L 144.90625 16.875 L 144.90625 10.28125 L 138.3125 10.28125 z "
+         d="M 141.59375,3.96875 C 136.29348,3.96875 132,8.2622295 132,13.5625 c 0,5.30027 4.29348,9.59375 9.59375,9.59375 5.30027,0 9.59375,-4.29348 9.59375,-9.59375 0,-5.3002705 -4.29348,-9.59375 -9.59375,-9.59375 z m -5.09375,4.5 0.90625,0 8.375,0 0.90625,0 0,0.90625 0,8.40625 0,0.875 -0.90625,0 -8.375,0 -0.90625,0 0,-0.875 0,-8.40625 0,-0.90625 z m 1.8125,1.8125 0,6.59375 6.59375,0 0,-6.59375 -6.59375,0 z"
          transform="matrix(1.6671896,0,0,1.6671896,-216.06903,-2.620322)"
          id="path4119" />
       <path
@@ -311,7 +311,7 @@
        id="path4465"
        title="sin(x)"
        d="m 0.9999996,1060.3623 c 0.4242429,-1.333 0.8484848,-2.6634 1.2727277,-3.7851 0.4242428,-1.1216 0.8484847,-2.0292 1.2727266,-2.5834 0.4242429,-0.5541 0.8484858,-0.7508 1.2727268,-0.5614 0.4242429,0.1893 0.8484848,0.7661 1.2727267,1.6387 0.4242437,0.8727 0.8484858,2.0398 1.2727277,3.3188 0.4242428,1.2789 0.8484848,2.6656 1.2727284,3.9449 0.424242,1.2792 0.8484841,2.4455 1.2727267,3.3186 0.4242418,0.8733 0.8484848,1.4489 1.2727278,1.6388 0.424241,0.1901 0.848483,-0.01 1.272725,-0.5614 0.424244,-0.5534 0.848485,-1.4622 1.272728,-2.5833 0.424242,-1.1212 0.848485,-2.4521 1.272729,-3.7852"
-       style="fill:none;fill-opacity:1;stroke:#535353;stroke-width:1.99999988000000006;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:none;stroke:#535353;stroke-width:1.99999988;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        inkscape:export-filename="/home/km/Projects/nonolith/pixelpulse/img/sine.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90" />
@@ -342,12 +342,25 @@
          height="16"
          width="16"
          id="rect5208"
-         style="fill:#ffffff;fill-opacity:0.04017857;stroke:none" />
+         style="fill:#ffffff;fill-opacity:0.04017855;stroke:none" />
       <path
          d="m 51.8,1063.3622 -2.8,-3 2.8,-3 m 8.4,0 2.8,3 -2.8,3 m -11.2,-3 13.066666,0"
          style="fill:none;stroke:#535353;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline"
          id="path5204" />
     </g>
+    <path
+       style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:4;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Charter;-inkscape-font-specification:Bitstream Charter"
+       d="M 170.5 3 C 170.0389 3 169.57647 3.10755 169.1875 3.28125 C 168.40956 3.62885 167.86577 4.1499 167.40625 4.75 C 166.49011 5.9468 165.82143 7.50245 165.125 9.34375 C 164.42928 11.18315 163.76065 13.2796 163.09375 15.375 A 2.0012889 2.0012889 0 0 0 166.90625 16.59375 C 167.57269 14.49975 168.23736 12.4359 168.875 10.75 C 169.47142 9.1732 170.0498 8.00765 170.46875 7.40625 C 170.60925 7.58905 170.76727 7.6981 171.1875 8.5625 C 171.7768 9.7747 172.43803 11.55455 173.09375 13.53125 C 173.74984 15.50915 174.41657 17.67655 175.09375 19.71875 C 175.7715 21.76225 176.44392 23.6572 177.1875 25.1875 C 177.93223 26.7206 178.59906 27.9765 180.1875 28.6875 C 180.98703 29.0457 182.03689 29.0356 182.8125 28.6875 C 183.58811 28.3394 184.13529 27.81435 184.59375 27.21875 C 185.4539 26.096723 186.10024 24.686201 186.75 23 L 185 23 L 185 21 L 187 21 L 187 22.3125 C 187.65205 20.550621 188.27856 18.566159 188.90625 16.59375 A 2.0012889 2.0012889 0 0 0 185.09375 15.375 C 184.42729 17.4693 183.76246 19.53395 183.125 21.21875 C 183.08326 21.329051 183.04177 21.425053 183 21.53125 L 183 23 L 182.375 23 C 182.04714 23.689095 181.73973 24.220181 181.5 24.5625 C 181.34331 24.365 181.21922 24.2748 180.8125 23.4375 C 180.22276 22.2238 179.56186 20.44555 178.90625 18.46875 C 178.25011 16.49005 177.58348 14.2916 176.90625 12.25 C 176.22861 10.2072 175.55652 8.3429 174.8125 6.8125 C 174.06811 5.2813 173.40656 3.99265 171.8125 3.28125 C 171.41486 3.10375 170.9611 2.9983 170.5 3 z M 182.375 23 C 182.57818 22.572966 182.78672 22.073519 183 21.53125 L 183 21 L 181 21 L 181 23 L 182.375 23 z M 187 22.3125 C 186.95931 22.422452 186.91588 22.548226 186.875 22.65625 C 186.83096 22.772649 186.79388 22.886127 186.75 23 L 187 23 L 187 22.3125 z M 161 21 L 161 23 L 163 23 L 163 21 L 161 21 z M 165 21 L 165 23 L 167 23 L 167 21 L 165 21 z M 169 21 L 169 23 L 171 23 L 171 21 L 169 21 z M 173 21 L 173 23 L 175 23 L 175 21 L 173 21 z M 177 21 L 179 21 L 179 23 L 177 23 L 177 21 z M 189 21 L 189 23 L 191 23 L 191 21 L 189 21 z "
+       transform="translate(0,1020.3622)"
+       id="path2872" />
+    <path
+       id="path3663"
+       title="sin(x)"
+       d="m 165,1036.3622 c 0.66667,-2.0947 1.33333,-4.1853 2.00001,-5.948 0.66666,-1.7625 1.33332,-3.1888 1.99999,-4.0597 0.66668,-0.8707 1.33334,-1.1798 2,-0.8822 0.66666,0.2975 1.33334,1.2039 2.00001,2.5752 0.66666,1.3713 1.33332,3.2054 2,5.2152 0.66666,2.0097 1.33333,4.1888 1.99999,6.1992 0.66668,2.0102 1.33334,3.8429 2,5.2149 0.66667,1.3724 1.33333,2.2769 2.00001,2.5753 0.66666,0.2987 1.33332,-0.016 1.99999,-0.8822 0.66667,-0.8696 1.33334,-2.2977 2,-4.0595 0.66666,-1.7619 1.33334,-3.8533 2,-5.9482"
+       style="fill:none;stroke:#ffffff;stroke-width:4;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;opacity:0"
+       inkscape:export-filename="/home/km/Projects/nonolith/pixelpulse/img/sine.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
   </g>
   <g
      style="display:inline"
@@ -426,6 +439,16 @@
        height="32"
        width="32"
        id="rect3891"
+       style="fill:#000000;fill-opacity:0;stroke:#ffff4d;stroke-width:0;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    <rect
+       inkscape:export-ydpi="90"
+       inkscape:export-xdpi="90"
+       inkscape:export-filename="/home/km/Projects/nonolith/pixelpulse/img/gear.png"
+       y="0"
+       x="160"
+       height="32"
+       width="32"
+       id="trigger"
        style="fill:#000000;fill-opacity:0;stroke:#ffff4d;stroke-width:0;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
   </g>
 </svg>
