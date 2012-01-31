@@ -325,7 +325,7 @@ body{
 		font-weight: bold;
 		color: #444;
 		
-		section.limited &:not(.source):after{
+		section.limited &:not(.isDriving):after{
 			color: #844;
 			content: "(limit)";
 			margin-left: 0.5em;
@@ -336,6 +336,11 @@ body{
 
 	.source{
 		font-size: 12px;
+		
+		div{
+			display: inline-block;
+		}
+		
 		span{
 			display: inline-block;
 			width: 50px;
@@ -508,7 +513,7 @@ body.layout-2side{
 
 @popup-color: rgba(0, 0, 0, 0.95);
 
-.icon-dropdown ul, .popup-dialog{
+.select-dropdown ul, .popup-dialog{
 	position: absolute;
 	background: @popup-color;
 	-webkit-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
@@ -516,23 +521,22 @@ body.layout-2side{
 	border-radius: 4px;
 }
 
-.icon-dropdown{
-	height: 16px;
-	width: 32px;
+.select-dropdown{
 	position: relative;
 	display: inline-block;
 	vertical-align: middle;
-	padding-left: 16px;
+	height: 16px;
+	
+	&.icon-dropdown{
+		width: 32px;
+		padding-left: 16px;
+	}
 	
 	&:after{
 		margin-left: 4px;
 		color: #888;
 		content: "\25bc";
 		font-size: 8px;
-	}
-	
-	h2 &{
-		margin-left: 8px;
 	}
 	
 	ul{
@@ -571,6 +575,10 @@ body.layout-2side{
 
 		}
 	}
+}
+
+.select-dropdown + .icon-dropdown{
+	margin-left: 12px;
 }
 
 .popup-dialog{

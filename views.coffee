@@ -259,24 +259,34 @@ numberWidget = (value, conv, changed) ->
 	
 	return span
 	
-iconDropdown = (options, selectedOption, changed) ->
+selectDropdown = (options, selectedOption, showText, changed) ->
 	dropdown = false
-	el = $("<div class='icon-dropdown'>").click (e) ->
+	el = $("<div class='select-dropdown'>").click (e) ->
 		if not dropdown and e.target == el.get(0)
 			showDropdown()
 			return false
+			
+	if showText
+		el.addClass('text-dropdown')
+	else
+		el.addClass('icon-dropdown')
 		
 	iconFor = (option) -> 'icon-'+option.toLowerCase()
 		
 	select = (option) ->
-		el.removeClass(iconFor selectedOption)
+		if showText
+			el.text(option)
+		if selectedOption
+			el.removeClass(iconFor selectedOption)
 		el.addClass(iconFor option)
 		selectedOption = option
+	el.select = select
 		
 	hideDropdown = ->
 		if dropdown
 			dropdown.remove()
 			dropdown = false
+	el.hideDropdown = hideDropdown
 			
 	showDropdown = ->
 		$(document.body).one 'click', hideDropdown
@@ -290,7 +300,7 @@ iconDropdown = (options, selectedOption, changed) ->
 		for i in options
 			$("<li>").text(i).addClass(iconFor i).data('option', i).click(clickfunc).appendTo(dropdown)
 	
-	select(selectedOption)
+	select(selectedOption) if selectedOption
 	return el
 
 class pixelpulse.ChannelView
@@ -367,6 +377,27 @@ class pixelpulse.StreamView
 			@onValue arr[arr.length - 1]
 		
 		@sourceHead = $("<h2>").appendTo(@aside)
+		
+		modeOpts = ['Source', 'Measure']
+		if @stream.id == 'i' then modeOpts.push("Disable") #TODO: not cee-specific
+		
+		@sourceModeSel = selectDropdown modeOpts, null, true, (o)=>
+			m = switch o
+				when "Disable" then 0
+				when "Source" then @stream.outputMode
+				when "Measure"
+					if @stream.id is 'v' then 2
+					else if @stream.id is 'i' then 1  #TODO: not CEE-specific
+					else 0
+			console.log("setting mode", m, o, @stream.outputMode)
+			@stream.parent.setConstant(m, 0)
+					
+		@sourceModeSel.appendTo(@sourceHead)
+		
+		@sourceTypeSel = selectDropdown ['Constant', 'Square', 'Sine', 'Triangle'], null, false, (o) ->
+			@stream.parent.guessSourceOptions(o.toLowerCase())
+		@sourceTypeSel.appendTo(@sourceHead)			
+	
 		@source = $("<div class='source'>").appendTo(@aside)
 		@stream.parent.outputChanged.listen @sourceChanged
 		
@@ -439,6 +470,17 @@ class pixelpulse.StreamView
 	sourceChanged: (m) =>
 		@isSource = isSource = (m.mode == @stream.outputMode)
 		
+		if m.mode != @lastSourceMode
+			@lastSourceMode = m.mode
+			@sourceHead.toggleClass('isDriving', isSource)
+			
+			opt = if isSource then "Source" else "Measure"
+			opt = if @stream.id is'i' and m.mode == 0 then "Disable" else opt
+								
+			@sourceModeSel.select(opt)
+			
+			@sourceTypeSel.toggle(isSource) #hide sourceType if not source
+			
 		if isSource and m.source == 'constant'
 			unless @dot
 				@dot = new livegraph.Dot(@lg, @lg.cssColor(), @lg.cssColor())
@@ -450,17 +492,13 @@ class pixelpulse.StreamView
 		if isSource
 			if m.source != @sourceType
 				@sourceType = m.source
+				@sourceTypeSel.select(@sourceType)
+				
 				@sourceInputs = sourceInputs = {}
 				@source.empty()
 			
 				stream = @stream
 				channel = stream.parent
-				sampleTime = channel.parent.sampleTime
-			
-				sel = iconDropdown ['Constant', 'Square', 'Sine', 'Triangle'], m.source, (o) ->
-					channel.guessSourceOptions(o.toLowerCase())
-			
-				@sourceHead.empty().text("source").append(sel).addClass('source')
 			
 				ATTRS = ['value', 'high', 'low', 'highSamples', 'lowSamples', 'offset', 'amplitude', 'period']
 			
@@ -496,7 +534,6 @@ class pixelpulse.StreamView
 			
 		else
 			@source.empty()
-			@sourceHead.text("measure").removeClass('source')
 			@sourceType = null
 			
 	gainChanged: (g) =>
