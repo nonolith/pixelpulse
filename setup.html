@@ -71,7 +71,7 @@ article{
 	margin: 40px auto;
 	border-radius: 8px;
 	border: 1px solid #888;
-	height: 600px;
+	height: 550px;
 	-webkit-box-shadow: 4px 4px 16px rgba(0,0,0,0.4);
 	-moz-box-shadow: 4px 4px 16px rgba(0,0,0,0.4);
 	background: white;
@@ -502,8 +502,18 @@ function tryConnect(){
 }
 
 #install-note{
-	width: 50%;
-	margin: 20px 0;
+	margin: 0 -20px;
+	margin-top: -20px;
+	vertical-align: top;
+	
+	line-height: 1.1em;
+}
+
+#install-note div{
+	width: 43%;
+	display: inline-block;
+	
+	margin: 20px;
 	font-size: 12px;
 	color: #888;
 }
@@ -534,14 +544,18 @@ function tryConnect(){
 </div>
 
 <div id='install-note'>
-	<h2>Nonolith Connect was not found on this computer. Installation will progress to the next page when detected.</h2>
-	<h2>Already installed Nonolith Connect?</h2>
-	<p>It doesn't seem to be working. Check your firewall settings to make sure it was allowed to listen on localhost, port 9003. <a href='http://where'>Help &raquo;</a></p>
+	<div>
+		<h2>Nonolith Connect was not found on this computer. Installation will progress to the next page when detected.</h2>
+	</div>
+	<div>
+		<h2>Already installed Nonolith Connect?</h2>
+		<p>Make sure it is running & check your firewall settings to make sure it was allowed to listen on localhost, port 9003. <a href='http://where'>Help &raquo;</a></p>
+	</div>
 </div>
 </div>
 
 <div id='install-success'>
-<p>Nonolith Connect was installed successfully.</p>
+<p>Nonolith Connect is installed and running.</p>
 </div>
 
 </section>

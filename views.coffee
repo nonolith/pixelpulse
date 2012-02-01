@@ -394,7 +394,7 @@ class pixelpulse.StreamView
 					
 		@sourceModeSel.appendTo(@sourceHead)
 		
-		@sourceTypeSel = selectDropdown ['Constant', 'Square', 'Sine', 'Triangle'], null, false, (o) ->
+		@sourceTypeSel = selectDropdown ['Constant', 'Square', 'Sine', 'Triangle'], null, false, (o) =>
 			@stream.parent.guessSourceOptions(o.toLowerCase())
 		@sourceTypeSel.appendTo(@sourceHead)			
 	
