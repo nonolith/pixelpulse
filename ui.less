@@ -94,6 +94,26 @@ body{
 	.box(vertical, center, stretch);
 }
 
+code{
+	font-family: 'monospace';
+}
+
+.osspec{
+	display: none;
+}
+
+body.os-windows .osspec.windows{
+	display: block;
+}
+
+body.os-linux .osspec.linux{
+	display: block;
+}
+
+body.os-mac .osspec.mac{
+	display: block;
+}
+
 #topbar{
 	height: 16px;
 	background: linear-gradient(270deg, #cfcfcf 0%, #ddd 20%, #cacaca 100%);
@@ -390,14 +410,22 @@ body{
 }
 
 #error-overlay div{
+	-webkit-user-select: text;
 	background: rgba(255, 255, 255, 0.5);
 	padding: 20px;
 	border-radius: 20px;
 	
 	h1{
-		font-size: 30px;
-		margin-bottom: 5px;
+		font-size: 40px;
+		margin-bottom: 8px;
 	}
+	
+	p{
+		font-size: 12px;
+		line-height: 16px;
+		margin-bottom: 8px;
+	}
+	
 }
 
 #error-status{

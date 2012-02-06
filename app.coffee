@@ -76,10 +76,9 @@ pixelpulse.init = (server, params) ->
 		hasConnected = yes
 
 	server.disconnected.listen ->
-		if not hasConnected
-			pixelpulse.overlay "Dataserver not detected"
-		else
-			pixelpulse.overlay "Connection lost"
+		$("#error-overlay").children().hide()
+		$('#connectError').show()
+		$('#error-overlay').fadeIn(300)
 
 	server.devicesChanged.listen (l) ->
 		console.info "Device list changed", l
@@ -95,6 +94,11 @@ pixelpulse.channelviews = []
 params = {}
 for flag in document.location.hash.slice(1).split('&')
 	params[flag]=true
+
+console.log('l', navigator.userAgent.indexOf("Linux") >= 0)
+if navigator.userAgent.indexOf("Windows") >= 0 then $(document.body).addClass('os-windows')
+if navigator.userAgent.indexOf("Linux") >= 0  then $(document.body).addClass('os-linux')
+if navigator.userAgent.indexOf("Mac") >= 0 then $(document.body).addClass('os-mac')
 
 $(document).ready ->
 	if params.perfstat
