@@ -73,11 +73,11 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 
 <div id='toolbar'>
 	<div id='toolbar-layouts'>
-		<div id='layout-sel'><button id='layout0' onclick="pixelpulse.setLayout(0)">0</button><button id='layout1' onclick="pixelpulse.setLayout(1)">1</button><button id='layout2' onclick="pixelpulse.setLayout(2)">2</button>
+		<div id='layout-sel'><button title="Close side pane" id='layout0' onclick="pixelpulse.setLayout(0)">0</button><button id='layout1' onclick="pixelpulse.setLayout(1)" title="Side pane: 1 custom plot">1</button><button id='layout2' onclick="pixelpulse.setLayout(2)" title="Side pane: 2 custom plots">2</button>
 		</div>
 	</div>
 	<div id='toolbar-left'>
-		<button name="Toggle triggering" onclick="pixelpulse.toggleTrigger()" id='triggerbtn'>Trigger</button>
+		<button title="Toggle triggering (for repeating signals)" onclick="pixelpulse.toggleTrigger()" id='triggerbtn'>Trigger</button>
 	</div>
 	<div class='spacer'></div>
 	<div id='toolbar-center'>
@@ -85,7 +85,7 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 	</div>
 	<div class='spacer'></div>
 	<div id='toolbar-right'>
-		<button id='zoomfit' title="Auto zoom" onclick='pixelpulse.autozoom()'>Auto-zoom</button><button id='device-config'>Configure</button>
+		<button id='zoomfit' title="Auto zoom" onclick='pixelpulse.autozoom()'>Auto-zoom</button><button id='device-config' title="Configure device">Configure</button>
 	</div>
 	<div id='device-info'>
 		<button id='switchDev' onclick='pixelpulse.showDeviceChooser()'>Switch</button>
