@@ -1,11 +1,21 @@
 #!/bin/sh
-DIR="$( cd "$( dirname "$0" )" && pwd )"
-APPURL="file://$DIR/index.html"
+
+case "$1" in
+	local)
+	   	APPURL="http://localhost:8000/pixelpulse.html"
+		;;
+	 
+	edge)
+		APPURL="http://apps.nonolithlabs.com/edge/pixelpulse"
+		;;
+	*)
+		APPURL="http://apps.nonolithlabs.com/pixelpulse"
+		;;
+esac
 
 CHROME=$(
        which chromium-browser \
 	|| which google-chrome \
-	|| (test -d "/Applications/Google Chrome.app/" && echo "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome") \
 )
 
 if [ -n "$CHROME" ]
