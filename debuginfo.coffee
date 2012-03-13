@@ -15,6 +15,7 @@ app.init = (server, params) ->
 		<h1>Nonolith Connect not found</h1>
 		<p>Make sure it is running or
 		<a href='http://apps.nonolithlabs.cee/start'>Install it</a></p>
+		<p>Platform: #{window.navigator.userAgent}</p>
 		")
 
 	server.connected.listen app.update
@@ -59,6 +60,11 @@ app.update = ->
 		$("<h2>").text("No devices found").appendTo(e)
 		
 
-$(document).ready ->		
+$(document).ready ->
+	$(document.body).append("<p>Platform: #{window.navigator.userAgent}</p>");
+	if not window.WebSocket
+		$(document.body).append("<p>Your browser does not support webSocket</p>")
+	else
+		$(document.body).append("<p>Loading....</p>")
 	app.init(server)
 
