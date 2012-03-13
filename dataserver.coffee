@@ -46,6 +46,9 @@ class Dataserver
 			m = JSON.parse(evt.data)
 			
 			switch m._action
+				when "serverHello"
+					@version = m.version
+					
 				when "devices"
 					# note that this only refreshes the device list, not
 					# the active device
