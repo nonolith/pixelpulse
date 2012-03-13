@@ -49,9 +49,11 @@ app.update = ->
 		$("<p>").text("fwVersion: #{app.device.fwVersion}").appendTo(e)
 		$("<p>").text("serial: #{app.device.serial}").appendTo(e)
 		$("<p>").text("EEPROM data:").appendTo(e)
-		eeprom = $("<pre>loading</pre>").appendTo(e)
+		eepromStatus = $("<pre>loading</pre>").appendTo(e)
+		eeprom = $("<pre></pre>").appendTo(e)
 		
 		app.device.controlTransfer 0xC0, 0xE0, 0, 0, data=[], wLength=64, (m) ->
+			eepromStatus.text("Status #{m.status}")
 			l = for i in [0...8]
 				"#{hex(i*8)}: " + (hex(j) for j in m.data.slice(i*8, i*8+8)).join(" ")
 			eeprom.text(l.join '\n')
