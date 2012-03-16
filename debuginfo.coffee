@@ -14,7 +14,7 @@ app.init = (server, params) ->
 		$(document.body).html("
 		<h1>Nonolith Connect not found</h1>
 		<p>Make sure it is running or
-		<a href='http://apps.nonolithlabs.cee/start'>Install it</a></p>
+		<a href='http://www.nonolithlabs.com/connect/'>Install it</a></p>
 		<p>Platform: #{window.navigator.userAgent}</p>
 		")
 
