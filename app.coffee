@@ -109,6 +109,9 @@ $(document).ready ->
 		
 	if params.nowebgl
 		window.nowebgl=true
+		
+	if params.enableigain
+		window.enableigain=true
 	
 	pixelpulse.init(server, params)
 

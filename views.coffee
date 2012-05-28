@@ -404,7 +404,7 @@ class pixelpulse.StreamView
 		if @stream.parent.source
 			@sourceChanged(@stream.parent.source)
 		
-		if @stream.id == 'v' # TODO: flag from server to make not CEE-specific
+		if @stream.id == 'v' or window.enableigain # TODO: flag from server to make not CEE-specific
 			@gainOpts = $("<select class='gainopts'>").appendTo(@aside).change =>
 				@stream.setGain(parseInt(@gainOpts.val()))
 			
