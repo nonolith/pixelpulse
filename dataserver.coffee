@@ -142,8 +142,10 @@ class CEEDevice
 
 	onInfo: (info) ->
 		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial', 'length', 'continuous',
-		          'sampleTime', 'captureState', 'captureDone', 'mode', 'samples', 'raw']
+		          'sampleTime', 'captureState', 'captureDone', 'mode', 'samples', 'raw', 'minSampleTime']
 			this[i] = info[i]
+
+		@minSampleTime ?= 1/40e3
 		
 		@channels = {}
 		for chanId, chanInfo of info.channels

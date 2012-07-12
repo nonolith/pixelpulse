@@ -702,6 +702,11 @@ $(document).ready ->
 	btnPopup('#device-config', '#config-popup')
 	
 	$('#device-config').click ->
+		$('#config-sample-rate option')
+			.hide()
+			.filter(-> parseFloat($(this).attr('value')) >= server.device.minSampleTime)
+				.show()
+
 		$('#config-sample-rate').val(server.device.sampleTime)
 		
 		
