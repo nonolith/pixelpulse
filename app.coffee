@@ -107,7 +107,7 @@ $(document).ready ->
 	if params.demohint
 		$('#info').show()
 		
-	if params.nowebgl
+	if not params.webgl
 		window.nowebgl=true
 		
 	if params.enableigain
