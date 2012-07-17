@@ -23,6 +23,8 @@ class window.Event
 
 window.WebSocket ?= window.MozWebSocket
 
+removeNull = (val) -> val.replace(/\0/g, '') if val?
+
 class Dataserver
 	constructor: (@host) ->
 		@connected = new Event()
@@ -94,8 +96,11 @@ class Dataserver
 
 class Device
 	constructor: (info) ->
-		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial']
+		for i in ['id', 'model', 'serial']
 			this[i] = info[i]
+
+		for i in ['hwVersion', 'fwVersion', 'gitVersion']
+			this[i] = removeNull(info[i])
 	
 	makeActiveObj: (parent) ->
 		return switch @model
@@ -141,9 +146,12 @@ class CEEDevice
 				stream.onGain(m)	
 
 	onInfo: (info) ->
-		for i in ['id', 'model', 'hwVersion', 'fwVersion', 'serial', 'length', 'continuous',
+		for i in ['id', 'model', 'serial', 'length', 'continuous',
 		          'sampleTime', 'captureState', 'captureDone', 'mode', 'samples', 'raw', 'minSampleTime']
 			this[i] = info[i]
+
+		for i in ['hwVersion', 'fwVersion', 'gitVersion']
+			this[i] = removeNull(info[i])
 
 		@minSampleTime ?= 1/40e3
 		
@@ -428,8 +436,11 @@ class BootloaderDevice
 				@onInfo(m)
 	
 	onInfo: (info) ->
-		for i in ["serial", "magic", "version", "devid","page_size", "app_section_end", "hw_product", "hw_version"]
+		for i in ["serial", "magic", "version", "devid","page_size", "app_section_end"]
 			this[i] = info[i]
+
+		for i in ["hw_product", "hw_version"]
+			this[i] = removeNull(info[i])
 		@changed.notify(this)
 		
 	onRemoved: ->
