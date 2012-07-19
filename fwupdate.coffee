@@ -48,7 +48,11 @@ class FirmwareUpdateApp
 	firmwareLoaded: (@firmware) =>
 		console.log("firmwareLoaded", @firmware)
 
-		$('#available-version').text(@firmware.fwVersion)
+		version = @firmware.fwVersion
+		if @firmware.gitVersion
+			version = "#{version} (git #{@firmware.gitVersion})"
+
+		$('#available-version').text(version)
 
 		@startDevicePage()
 
@@ -90,11 +94,14 @@ class FirmwareUpdateApp
 	selectDevice: (@device) ->
 		if @device.model == 'com.nonolithlabs.cee'
 			hardwareDevice = "Nonolith CEE #{@device.hwVersion}"
-			firmwareVersion = @device.fwVersion
-			if @device.gitVersion
+			[firmwareVersion, gitVersion] = @device.fwVersion.split('/')
+			if gitVersion
 				firmwareVersion = "#{firmwareVersion} (git #{gitVersion})"
 		else if @device.model = 'com.nonolithlabs.bootloader'
-			hardwareDevice = "Bootloader"
+			if device.hwVersion == 'unknown'
+				hardwareDevice = "Bootloader"
+			else
+				hardwareDevice = device.hwVersion
 			#hardwareDevice = @device.hw_product
 			#hardwareVersion = @device.hw_version
 			firmwareVersion = 'Unknown (already in bootloader mode)'

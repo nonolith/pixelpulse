@@ -99,7 +99,7 @@ class Device
 		for i in ['id', 'model', 'serial']
 			this[i] = info[i]
 
-		for i in ['hwVersion', 'fwVersion', 'gitVersion']
+		for i in ['hwVersion', 'fwVersion']
 			this[i] = removeNull(info[i])
 	
 	makeActiveObj: (parent) ->
@@ -150,7 +150,7 @@ class CEEDevice
 		          'sampleTime', 'captureState', 'captureDone', 'mode', 'samples', 'raw', 'minSampleTime']
 			this[i] = info[i]
 
-		for i in ['hwVersion', 'fwVersion', 'gitVersion']
+		for i in ['hwVersion', 'fwVersion']
 			this[i] = removeNull(info[i])
 
 		@minSampleTime ?= 1/40e3
