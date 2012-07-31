@@ -84,7 +84,8 @@ pixelpulse.toggleTrigger = ->
 			lg.showXgridZero = yes
 			
 		default_trigger_level = 2.5
-		@data_listener.configureTrigger(pixelpulse.streams[0], default_trigger_level, 0.25, 0, 1)
+		tp = if flags.outputTrigger then 'out' else 'in'
+		@data_listener.configureTrigger(pixelpulse.streams[0], default_trigger_level, 0.1, 0, 0.5, tp)
 		@triggerOverlay = new livegraph.TriggerOverlay(@timeseries_graphs[0])
 		@triggerOverlay.position(default_trigger_level)
 		@fakeAutoset(false)

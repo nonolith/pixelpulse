@@ -330,8 +330,8 @@ class server.Listener
 			
 	disableTrigger: -> @trigger = false
 	
-	configureTrigger: (stream, level, holdoff=0, offset=0, force=0) ->
-		@trigger = {stream, level, holdoff, offset, force}
+	configureTrigger: (stream, level, holdoff=0, offset=0, force=0, type='in') ->
+		@trigger = {stream, level, holdoff, offset, force, type}
 	
 	submit: ->
 		@server.send 'listen'
@@ -341,11 +341,12 @@ class server.Listener
 			start: @startSample
 			count: @count
 			trigger: if @trigger
+				type: @trigger.type ? 'in'
 				channel: @trigger.stream.parent.id
 				stream: @trigger.stream.id
 				level: @trigger.level
 				holdoff: Math.round(@trigger.holdoff / @device.sampleTime)
-				offset: Math.round(@trigger.offset / @device.sampleTime)
+				offset: Math.ceil(@trigger.offset / @device.sampleTime)
 				force: Math.round(@trigger.force / @device.sampleTime)
 		@needsReset = true
 
@@ -378,6 +379,8 @@ class server.DataListener extends server.Listener
 			super(-time, requestedSampleTime)
 			@trigger.offset = @xmin
 			@count = @len =  Math.ceil(time/@sampleTime)
+			@xmin = Math.ceil(@xmin/@sampleTime)*@sampleTime
+			@xmax = @xmin + time
 		else
 			super(@xmin, requestedSampleTime)
 			@len = Math.ceil(time/@sampleTime)
@@ -385,16 +388,19 @@ class server.DataListener extends server.Listener
 			@count = if @xmin < 0 and @xmax==0 and @continuous then -1 else @len
 
 	onMessage: (m) ->
-		if m.idx == 0 and @needsReset
-			console.assert(@len)
-			@needsReset = false
-			@xdata = new Float32Array(@len)
+		if m.idx == 0
+			@subsample = (m.subsample - 1.5)*@device.sampleTime || 0
 			
-			for i in [0...@len]
-				@xdata[i] = @xmin + i*@sampleTime
+			if @needsReset
+				console.assert(@len)
+				@needsReset = false
+				@xdata = new Float32Array(@len)
 			
-			@data = (new Float32Array(@len) for i in @streams)
-			@reset.notify()
+				for i in [0...@len]
+					@xdata[i] = @xmin + i*@sampleTime - @subsample
+			
+				@data = (new Float32Array(@len) for i in @streams)
+				@reset.notify()
 		
 		for i in [0...@streams.length]
 			src = m.data[i]
@@ -407,6 +413,9 @@ class server.DataListener extends server.Listener
 
 			for j in src
 				dest[idx++] = j
+				
+		for j in [m.idx...m.idx + m.data[0].length]
+			@xdata[j] = @xmin + j*@sampleTime - @subsample
 		
 		super(m)
 		
