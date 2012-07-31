@@ -182,7 +182,7 @@ pixelpulse.fakeAutoset = (animate = true) ->
 	timescale = switch src.source
 		when 'adv_square'
 			(src.highSamples + src.lowSamples) * sampleTime*f
-		when 'sine', 'triangle', 'square'
+		when 'sine', 'triangle', 'square', 'arb'
 			src.period * sampleTime*f
 		else
 			0.125
