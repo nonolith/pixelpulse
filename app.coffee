@@ -91,9 +91,9 @@ pixelpulse.init = (server, params) ->
 pixelpulse.channelviews = []
 
 #URL params
-params = {}
+window.flags = flags = {}
 for flag in document.location.hash.slice(1).split('&')
-	params[flag]=true
+	flags[flag]=true
 
 console.log('l', navigator.userAgent.indexOf("Linux") >= 0)
 if navigator.userAgent.indexOf("Windows") >= 0 then $(document.body).addClass('os-windows')
@@ -101,17 +101,14 @@ if navigator.userAgent.indexOf("Linux") >= 0  then $(document.body).addClass('os
 if navigator.userAgent.indexOf("Mac") >= 0 then $(document.body).addClass('os-mac')
 
 $(document).ready ->
-	if params.perfstat
+	if flags.perfstat
 		$('#perfstat').show()
 		
-	if params.demohint
+	if flags.demohint
 		$('#info').show()
 		
-	if not params.webgl
+	if not flags.webgl
 		window.nowebgl=true
-		
-	if params.enableigain
-		window.enableigain=true
 	
-	pixelpulse.init(server, params)
+	pixelpulse.init(server, flags)
 
