@@ -145,6 +145,9 @@ class CEEDevice
 				stream = channel.streams[m.stream]
 				stream.onGain(m)	
 
+			when "packetDrop"
+				console.log("dropped packet")
+
 	onInfo: (info) ->
 		for i in ['id', 'model', 'serial', 'length', 'continuous',
 		          'sampleTime', 'captureState', 'captureDone', 'mode', 'samples', 'raw', 'minSampleTime']
