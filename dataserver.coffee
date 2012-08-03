@@ -257,6 +257,8 @@ class Channel
 				value = (@source.high + @source.low)/2
 				period = @source.highSamples + @source.lowSamples
 				amplitude = (@source.high - @source.low)/2
+			when 'arb'
+				period = @source.period
 		switch sourceType
 			when 'constant'
 				@setConstant(m, value)
