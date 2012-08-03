@@ -45,7 +45,10 @@ class Dataserver
 
 		@ws.onmessage = (evt) =>
 			#console.log 'm', evt.data
-			m = JSON.parse(evt.data)
+			try
+				m = JSON.parse(evt.data)
+			catch e
+				console.log("Invalid JSON frame:", evt.data)
 			
 			switch m._action
 				when "serverHello"
