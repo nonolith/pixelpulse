@@ -243,7 +243,7 @@ class Channel
 	# switch to a source type, picking appropriate parameters
 	guessSourceOptions:  (sourceType) ->
 		m = @source.mode
-		value = 0
+		value = 2.5
 		period = Math.round(1/@parent.sampleTime)
 		amplitude = 1
 		switch @source.source
@@ -397,7 +397,7 @@ class server.DataListener extends server.Listener
 
 	onMessage: (m) ->
 		if m.idx == 0
-			@subsample = (m.subsample - 1.5)*@device.sampleTime || 0
+			@subsample = (m.subsample + 2.0)*@device.sampleTime || 0
 			
 			if @needsReset
 				console.assert(@len)
