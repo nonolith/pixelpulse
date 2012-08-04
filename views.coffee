@@ -114,6 +114,7 @@ pixelpulse.timeseriesNeedsUpdate = ->
 	
 # run after a window changing operation to fetch new data from the server
 pixelpulse.updateTimeSeries = (min, max) ->	
+	tsUpdateFlag = false
 	xaxis = pixelpulse.timeseries_x
 	lg = pixelpulse.timeseries_graphs[0]
 	listener = pixelpulse.data_listener
@@ -132,7 +133,6 @@ pixelpulse.updateTimeSeries = (min, max) ->
 	#console.log('configure', min, max, pts)
 	listener.configure(min, max, pts)
 	listener.submit()
-	tsUpdateFlag = false
 
 # As part of a x-axis changing action, check if we need to fetch new server data	
 pixelpulse.checkWindowChange = (min, max, done, target) ->

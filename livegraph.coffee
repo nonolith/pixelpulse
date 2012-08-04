@@ -142,7 +142,7 @@ class livegraph.canvas
 		
 		if (window.nowebgl or not @init_webgl()) then @init_canvas2d()
 		
-		@needsRedraw()
+		#@needsRedraw()
 		
 	init_canvas2d: ->
 		@ctxg = @graphCanvas.getContext('2d')
