@@ -60,8 +60,8 @@ pixelpulse.initView = (dev) ->
 	lastGraph.showXbottom = yes
 	
 	# push the bottom out into the space reserved by #timeaxis
-	$(lastGraph.div).css('margin-bottom', -livegraph.AXIS_SPACING)
-	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING)
+	$(lastGraph.div).css('margin-bottom', -livegraph.AXIS_SPACING+5)
+	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING+5)
 	lastGraph.resized()
 	
 	#@timeseries_x.windowDoneAnimating = -> pixelpulse.updateTimeSeries()
