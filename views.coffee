@@ -33,6 +33,7 @@ GAIN_OPTIONS = [1, 2, 4, 8, 16, 32, 64]
 
 pixelpulse.initView = (dev) ->
 	@timeseries_x = new livegraph.Axis(-10, 0)
+	@timeseries_x.unit = 's'
 	@timeseries_graphs = []
 	@channelviews = []
 	

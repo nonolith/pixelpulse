@@ -21,22 +21,6 @@ class livegraph.Axis
 	
 	span: -> @visibleMax - @visibleMin
 		
-	grid: (countHint = 10) ->
-		# Based on code from d3.js
-		step = Math.pow(10, Math.floor(Math.log(@span() / countHint) / Math.LN10))
-		err = countHint / @span() * step;
-
-		# Filter ticks to get closer to the desired count.
-		if err <= .15 then step *= 10
-		else if err <= .35 then step *= 5
-		else if err <= .75 then step *= 2
-
-		# Round start and stop values to step interval.
-		gridMin = Math.ceil(Math.max(@visibleMin, @min) / step) * step
-		gridMax = Math.floor(Math.min(@visibleMax, @max) / step) * step # inclusive
-
-		livegraph.arange(gridMin, gridMax, step)
-		
 	xtransform: (x, geom) ->
 		(x - @visibleMin) * geom.width / @span() + geom.xleft
 		
@@ -330,15 +314,24 @@ class livegraph.canvas
 			
 	redrawAxis: ->
 		@ctxa.clearRect(0,0,@width, @height)
+
+		if @showXgrid or @showXbottom
+			xgrid = unitlib.gridLabels(@xaxis.visibleMin, @xaxis.visibleMax,
+				                       @xaxis.unit, @xgridticks, true,
+				                       @xaxis.min, @xaxis.max)
+
+		if @showYgrid or @showYleft or @showYright
+			ygrid = unitlib.gridLabels(@yaxis.visibleMin, @yaxis.visibleMax,
+				                       @yaxis.unit, @ygridticks, false,
+				                       @yaxis.min, @yaxis.max)
+
+		if @showXgrid or @showXgridZero	then @drawXgrid(xgrid)
+		if @showXbottom then @drawXAxis(xgrid, @geom.ybottom)	
+		if @showYgrid   then @drawYgrid(ygrid)	
+		if @showYleft   then @drawYAxis(ygrid, @geom.xleft,  'right', -5)
+		if @showYright  then @drawYAxis(ygrid, @geom.xright, 'left',   8)
 		
-		if @showXgrid or @showXgridZero	then @drawXgrid()
-		if @showXbottom then @drawXAxis(@geom.ybottom)	
-		if @showYgrid   then @drawYgrid()	
-		if @showYleft   then @drawYAxis(@geom.xleft,  'right', -5)
-		if @showYright  then @drawYAxis(@geom.xright, 'left',   8)
-		
-	drawXAxis: (y) ->
-		xgrid = @xaxis.grid(@xgridticks)
+	drawXAxis: (xgrid, y) ->
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.beginPath()
@@ -350,26 +343,21 @@ class livegraph.canvas
 		@ctxa.textAlign = 'center'
 		@ctxa.textBaseline = 'top'
 			
-		digits = Math.max(Math.ceil(-Math.log(Math.abs(xgrid[1]-xgrid[0]))/Math.LN10), 0)
-		
-		for x in xgrid
+		for [x, label] in xgrid
 			@ctxa.beginPath()
 			xp = snapPx(@xaxis.xtransform(x, @geom))
 			@ctxa.moveTo(xp,y-4)
 			@ctxa.lineTo(xp,y+4)
 			@ctxa.stroke()
-			@ctxa.fillText(x.toFixed(digits), xp ,y+textoffset)
+			@ctxa.fillText(label, xp ,y+textoffset)
 			
-	drawXgrid: ->
-		if @showXgrid
-			grid = @xaxis.grid(@xgridticks)
-		else if @showXgridZero
-			grid = [0]
-		else
-			return
+	drawXgrid: (grid) ->
+		if @showXgridZero and not @showXgrid
+			grid = [0, '0']
+		
 		@ctxa.strokeStyle = @gridcolor
 		@ctxa.lineWidth = 1
-		for x in grid
+		for [x, label] in grid
 			xp = snapPx(@xaxis.xtransform(x, @geom))
 			if xp > @geom.xright+1 or xp < @geom.xleft then continue
 			@ctxa.beginPath()
@@ -377,8 +365,7 @@ class livegraph.canvas
 			@ctxa.lineTo(xp, @geom.ytop)
 			@ctxa.stroke()
 		
-	drawYAxis: (x, align, textoffset) =>
-		grid = @yaxis.grid(@ygridticks)
+	drawYAxis: (grid, x, align, textoffset) =>
 		@ctxa.strokeStyle = 'black'
 		@ctxa.lineWidth = 1
 		@ctxa.textAlign = align
@@ -389,7 +376,7 @@ class livegraph.canvas
 		@ctxa.lineTo(snapPx(x), snapPx(@geom.ybottom))
 		@ctxa.stroke()
 		
-		for y in grid
+		for [y, label] in grid
 			yp = snapPx(@yaxis.ytransform(y, @geom))
 			
 			#draw side axis ticks and labels
@@ -397,13 +384,12 @@ class livegraph.canvas
 			@ctxa.moveTo(x-4, yp)
 			@ctxa.lineTo(x+4, yp)
 			@ctxa.stroke()
-			@ctxa.fillText(Math.round(y*10)/10, x+textoffset, yp)
+			@ctxa.fillText(label, x+textoffset, yp)
 			
-	drawYgrid: ->
-		grid = @yaxis.grid(@ygridticks)
+	drawYgrid: (grid) ->
 		@ctxa.strokeStyle = @gridcolor
 		@ctxa.lineWidth = 1
-		for y in grid
+		for [y, label] in grid
 			yp = snapPx(@yaxis.ytransform(y, @geom))
 			@ctxa.beginPath()
 			@ctxa.moveTo(@geom.xleft, yp)
@@ -835,11 +821,3 @@ class livegraph.ZoomXAction extends livegraph.AnimateXAction
 		@center = invTransform(origPos[0], origPos[1], makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis))[0]
 		
 		super(opts, lg, @center - @endSpan/2, @center + @endSpan/2, allTargets, doneCallback)
-
-			
-livegraph.arange = (lo, hi, step) ->
-	ret = new Array(Math.ceil((hi-lo)/step+1))
-	for i in [0...ret.length]
-		ret[i] = lo + i*step
-	return ret
-	
