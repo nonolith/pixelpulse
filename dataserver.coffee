@@ -322,7 +322,7 @@ class server.Listener
 		@updated = new Event()
 		@reset = new Event()
 		@done = new Event()
-		@disableTrigger()
+		@trigger = false
 		
 	streamIndex: (stream) -> @streams.indexOf(stream)
 

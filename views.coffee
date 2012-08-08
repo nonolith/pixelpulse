@@ -34,8 +34,6 @@ COLORS = [
 GAIN_OPTIONS = [1, 2, 4, 8, 16, 32, 64]
 
 pixelpulse.initView = (dev) ->
-	@timeseries_x = new livegraph.Axis(-10, 0)
-	@timeseries_x.unit = 's'
 	@timeseries_graphs = []
 	@channelviews = []
 	
@@ -47,8 +45,9 @@ pixelpulse.initView = (dev) ->
 	@meter_listener = new server.Listener(dev, @streams)
 	@meter_listener.configure()
 	
-	@data_listener = new server.DataListener(dev, @streams)
-	
+	@timeseries = new pixelpulse.TimeseriesGraphListener(dev, @streams)
+	@timeseries.queueWindowUpdate()
+
 	i = 0
 	for chId, channel of dev.channels
 		s = new pixelpulse.ChannelView(channel, i++)
@@ -59,7 +58,7 @@ pixelpulse.initView = (dev) ->
 	@sidegraph2 = new pixelpulse.XYGraphView(document.getElementById('sidegraph2'))
 	
 	# show the x-axis ticks on the last stream
-	lastGraph = @timeseries_graphs[@timeseries_graphs.length-1]
+	lastGraph = @timeseries.graphs[@timeseries.graphs.length-1]
 	lastGraph.showXbottom = yes
 	
 	# push the bottom out into the space reserved by #timeaxis
@@ -67,153 +66,41 @@ pixelpulse.initView = (dev) ->
 	$(lastGraph.div).siblings('aside').css('margin-bottom', -livegraph.AXIS_SPACING+5)
 	lastGraph.resized()
 	
-	#@timeseries_x.windowDoneAnimating = -> pixelpulse.updateTimeSeries()
-	@timeseries_x.windowChanged = pixelpulse.checkWindowChange
-	
 	@meter_listener.submit()
 
 pixelpulse.toggleTrigger = ->
-	@triggering = !@triggering
-	$(document.body).toggleClass('triggering', pixelpulse.triggering)
+	triggering = not @timeseries.isTriggerEnabled()
+	$(document.body).toggleClass('triggering', triggering)
 	
-	@cancelAllActions()
+	@timeseries.cancelAllActions()
 	
 	xaxis = pixelpulse.timeseries_x
-	if @triggering
-		xaxis.min = -5
-		xaxis.max = 5
-		
-		for lg in @timeseries_graphs
-			lg.showXgridZero = yes
-			
-		default_trigger_level = 2.5
-		tp = if flags.outputTrigger then 'out' else 'in'
-		@data_listener.configureTrigger(pixelpulse.streams[0], default_trigger_level, 0.1, 0, 0.5, tp)
-		@triggerOverlay = new livegraph.TriggerOverlay(@timeseries_graphs[0])
-		@triggerOverlay.position(default_trigger_level)
-		@fakeAutoset(false)
+	if triggering
+		@timeseries.enableTrigger()
 	else
-		xaxis.min = -10
-		xaxis.max = 0
-		xaxis.window(-10, 0, true)
-		for lg in @timeseries_graphs
-			lg.showXgridZero = no
-		@triggerOverlay.remove()
-		@triggerOverlay = null
-		@data_listener.disableTrigger()
+		@timeseries.disableTrigger()
 		
-	pixelpulse.updateTimeSeries()
-		
-	for i in @timeseries_graphs then i.needsRedraw(true)
+	@timeseries.updateWindow()
 			
 	pixelpulse.triggeringChanged.notify(@triggering)
 
 	track_feature("trigger")
 
-tsUpdateFlag = false	
-pixelpulse.timeseriesNeedsUpdate = ->
-	unless tsUpdateFlag
-		setTimeout(pixelpulse.updateTimeSeries, 10)
-		tsUpdateFlag = true
-
-	
-# run after a window changing operation to fetch new data from the server
-pixelpulse.updateTimeSeries = (min, max) ->	
-	tsUpdateFlag = false
-	xaxis = pixelpulse.timeseries_x
-	lg = pixelpulse.timeseries_graphs[0]
-	listener = pixelpulse.data_listener
-	
-	return unless lg.width
-	
-	min ?= xaxis.visibleMin
-	max ?= xaxis.visibleMax
-	
-	span = max-min
-	
-	min = Math.max(min - 0.4*span, xaxis.min)
-	max = Math.min(max + 0.4*span, xaxis.max)
-	pts = lg.width / 2 * (max - min) / span
-	
-	#console.log('configure', min, max, pts)
-	listener.configure(min, max, pts)
-	listener.submit()
-
-# As part of a x-axis changing action, check if we need to fetch new server data	
-pixelpulse.checkWindowChange = (min, max, done, target) ->
-	xaxis = pixelpulse.timeseries_x
-	lg = pixelpulse.timeseries_graphs[0]
-	l = pixelpulse.data_listener
-	
-	if target
-		if (target[1] - target[0]) < 0.5 * (max - min)
-			# if zooming in, wait until near the end to change the view
-			return
-		
-		[min, max] = target
-	
-	span = max-min
-
-	if ((l.xmax < max or l.xmin > min) \  # Off the edge of the data
-	and max <= xaxis.max and min >= xaxis.min) \ # But not off the edge of the available data
-	or span/(l.xmax - l.xmin)*l.requestedPoints < 0.45 * lg.width # or resolution too low
-		pixelpulse.updateTimeSeries(min, max)
-		
-pixelpulse.cancelAllActions = ->
-	for lg in pixelpulse.timeseries_graphs
-		lg.startAction(null)
-
-# Set the timeseries view to the specified window
-pixelpulse.goToWindow = (min, max, animate=true) ->
-	if animate
-		opts = {time: 200} 
-		return new livegraph.AnimateXAction(opts, @timeseries_graphs[0], min, max, @timeseries_graphs)
-	else
-		@timeseries_x.window(min, max, true)
-		for lg in @timeseries_graphs
-			lg.needsRedraw(true)
-
-pixelpulse.zoomCompletelyOut = (animate=true) ->
-	pixelpulse.goToWindow(pixelpulse.timeseries_x.min, pixelpulse.timeseries_x.max, animate)
-	
-pixelpulse.fakeAutoset = (animate = true) ->
-	# Fake autoset by assuming the CEE is sourcing the wave
-	# Just find out what frequency the source is
-	src = @data_listener.trigger.stream.parent.source
-	sampleTime = server.device.sampleTime
-	
-	f = 3
-	
-	timescale = switch src.source
-		when 'adv_square'
-			(src.highSamples + src.lowSamples) * sampleTime*f
-		when 'sine', 'triangle', 'square', 'arb'
-			src.period * sampleTime*f
-		else
-			0.125
-			
-	pixelpulse.goToWindow(-timescale, timescale, animate)
-
-pixelpulse.autozoom = ->
-	if @triggering
-		@fakeAutoset()
-	else
-		@zoomCompletelyOut()
+pixelpulse.autozoom = =>
+	@timeseries.autozoom()
 	track_feature("autoset")
-		
-pixelpulse.canChangeView = -> pixelpulse.triggering or not server.device.captureState
 
 pixelpulse.captureState.subscribe (s) ->
-	if not pixelpulse.canChangeView()
-		pixelpulse.zoomCompletelyOut(false)
+	if not pixelpulse.timeseries.canChangeView()
+		pixelpulse.timeseries.zoomCompletelyOut(false)
 		
 pixelpulse.destroyView = ->
 	$('#streams section.channel').remove()
 	$('#sidegraphs > section').empty()
 	if @meter_listener
 		@meter_listener.cancel()
-	if @data_listener
-		@data_listener.cancel()
+	if @timeseries
+		@timeseries.cancel()
 	for i in @channelviews then i.destroy()
 	pixelpulse.setLayout(0)
 	
@@ -372,9 +259,9 @@ class pixelpulse.StreamView
 
 		@addReadingUI(@aside)
 		
-		@initTimeseries()
-		
-		pixelpulse.layoutChanged.subscribe @relayout
+		graphElem = @timeseriesElem.get(0)
+		color = COLORS[@channelView.index][@index]
+		@lg = pixelpulse.timeseries.makeGraph(@stream, graphElem, color)
 
 		@isLimited = false
 		
@@ -433,49 +320,8 @@ class pixelpulse.StreamView
 		else
 			@value.removeClass('negative')
 		
-
-	initTimeseries: ->
-		@xaxis = pixelpulse.timeseries_x
-		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
-		@series =  pixelpulse.data_listener.series('time', @stream)
-		@series.color = COLORS[@channelView.index][@index]
-		
-		@lg = new livegraph.canvas(@timeseriesElem.get(0), @xaxis, @yaxis, [@series])
-		
-		pixelpulse.timeseries_graphs.push(@lg)
-				
-		@lg.onClick = (pos, e) =>
-			[x,y] = pos
-			if x > @lg.width - 45
-				new DragToSetAction(this, pos)
-			else if x < 45 and pixelpulse.triggering
-				if pixelpulse.data_listener.trigger.stream != @stream
-					pixelpulse.triggerOverlay.remove()
-					pixelpulse.triggerOverlay = new livegraph.TriggerOverlay(@lg)
-				new DragTriggerAction(this, pos)
-			else if pixelpulse.canChangeView()
-				new livegraph.DragScrollAction(@lg, pos,
-					pixelpulse.timeseries_graphs)
-				
-				
-		@lg.onDblClick = (e, pos, btn) =>
-			if not pixelpulse.canChangeView() then return
-			zf = if e.shiftKey or btn==2 then 2 else 0.5
-			opts = {time: 200, zoomFactor:zf } 
-			return new livegraph.ZoomXAction(opts, @lg, pos,
-				pixelpulse.timeseries_graphs)
-				
-		@lg.onResized = ->
-			pixelpulse.timeseriesNeedsUpdate()
-		
-		@series.updated.listen =>
-			@lg.needsRedraw()
-	
-	relayout: =>
-		@lg.resized()
-		
 	sourceChanged: (m) =>
-		@isSource = isSource = (m.mode == @stream.outputMode)
+		isSource = (m.mode == @stream.outputMode)
 		
 		if m.mode != @lastSourceMode
 			@lastSourceMode = m.mode
@@ -488,13 +334,7 @@ class pixelpulse.StreamView
 			
 			@sourceTypeSel.toggle(isSource) #hide sourceType if not source
 			
-		if isSource and m.source == 'constant'
-			unless @dot
-				@dot = new livegraph.Dot(@lg, @lg.cssColor(), @lg.cssColor())
-			@dot.position(m.value)
-		else
-			@dot.remove() if @dot
-			@dot = null
+		@lg.sourceChanged(isSource, m)
 		
 		if isSource
 			if m.source != @sourceType
@@ -544,12 +384,10 @@ class pixelpulse.StreamView
 			@sourceType = null
 			
 	gainChanged: (g) =>
-			if @gainOpts then @gainOpts.val(g)
-			@yaxis.window(@yaxis.min/g, @yaxis.max/g, true)
-			@lg.needsRedraw(true)
-			
+		if @gainOpts then @gainOpts.val(g)
+		@lg.gainChanged(g)
+
 	destroy: ->
-		pixelpulse.layoutChanged.unListen @relayout
 
 pixelpulse.setLayout = (l) ->
 	$(document.body).removeClass('layout-0side').removeClass('layout-1side').removeClass('layout-2side')
@@ -569,6 +407,9 @@ pixelpulse.setLayout = (l) ->
 	pixelpulse.layoutChanged.notify()
 
 	if l != 0 then track_feature("set-layout")
+
+pixelpulse.layoutChanged.subscribe ->
+	pixelpulse.timeseries.redrawAll() if pixelpulse.timeseries
 	
 pixelpulse.makeStreamSelect = ->
 	s = $("<select>")
@@ -618,7 +459,7 @@ class pixelpulse.XYGraphView
 		
 		@hidden()
 		
-		@series = pixelpulse.data_listener.series(@xstream, @ystream)
+		@series = pixelpulse.timeseries.series(@xstream, @ystream)
 		@series.color = @color
 		@lg.series = [@series]
 		
@@ -653,35 +494,6 @@ class pixelpulse.XYGraphView
 	relayout: =>
 		@lg.resized()
 		
-
-
-class DragYAction extends livegraph.Action
-	constructor: (@view, pos) ->
-		super(@view.lg, pos)
-		@view.lg.startDrag(pos)
-		@transform = livegraph.makeTransform(@view.lg.geom, @view.lg.xaxis, @view.lg.yaxis)
-		@onDrag(pos)
-	
-	onDrag: ([x, y]) ->
-		[x, y] = livegraph.invTransform(x,y,@transform)
-		y = Math.min(Math.max(y, @view.stream.min), @view.stream.max)
-		@withPos(y)
-		
-	withPos: (y) ->
-
-class DragToSetAction extends DragYAction
-	withPos: (y) ->
-		@view.stream.parent.setConstant(@view.stream.outputMode, y)
-			
-class DragTriggerAction extends DragYAction
-	withPos: (@y) ->
-		pixelpulse.triggerOverlay.position(@y)
-	
-	onRelease: ->
-		pixelpulse.data_listener.trigger.stream = @view.stream
-		pixelpulse.data_listener.trigger.level = @y
-		pixelpulse.data_listener.submit()
-
 btnPopup = (button, popup) ->
 	button = $(button)
 	popup = $(popup)
