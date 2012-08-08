@@ -13,6 +13,7 @@ class FirmwareUpdateApp
 		server.disconnected.listen ->
 			$('#no-devices,#multi-device-note,#device-info').hide()
 			$('#no-connect').show()
+			track_feature('disconnected')
 
 		if params['image'] == 'custom'
 			@startFirmwareSelPage()
@@ -115,6 +116,7 @@ class FirmwareUpdateApp
 		$('#btn_install').one 'click', @startInstall
 
 	startInstall: =>
+		track_feature('firmware-update-start')
 		server.devicesChanged.unListen(@updateDevices)
 
 		$('.opened').removeClass('opened')
@@ -197,6 +199,7 @@ class FirmwareUpdateApp
 									logDone()
 									log("Success!", 'ok')
 									$("#btn_done").show()
+									track_feature('firmware-update-success')
 
 		startBootloader(@device)
 	
@@ -209,4 +212,7 @@ for param in document.location.search.slice(1).split('&')
 console.log(params)
 
 $(document).ready ->
+	if not params.noga
+		init_ga()
+
 	app = new FirmwareUpdateApp(params)

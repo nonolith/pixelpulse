@@ -79,6 +79,7 @@ pixelpulse.init = (server, params) ->
 		$("#error-overlay").children().hide()
 		$('#connectError').show()
 		$('#error-overlay').fadeIn(300)
+		track_feature("disconnected")
 
 	server.devicesChanged.listen (l) ->
 		console.info "Device list changed", l
@@ -110,5 +111,8 @@ $(document).ready ->
 	if not flags.webgl
 		window.nowebgl=true
 	
+	if not flags.noga
+		init_ga()
+
 	pixelpulse.init(server, flags)
 

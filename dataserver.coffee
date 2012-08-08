@@ -53,6 +53,12 @@ class Dataserver
 			switch m._action
 				when "serverHello"
 					@version = m.version
+					@gitVersion = m.gitVersion
+
+					if ga_event?
+						ga_event("server", "connect-version", @version)
+
+					console.log("server", @version)
 					
 				when "devices"
 					# note that this only refreshes the device list, not

@@ -16,8 +16,10 @@ $ ->
 	$('#startpause').click ->
 		if server.device.captureState
 			server.device.pauseCapture()
+			track_feature("pause")
 		else
 			server.device.startCapture()
+			track_feature("start")
 
 	pixelpulse.captureState.subscribe (s) ->
 		$('#startpause').attr('title', if s then 'Pause' else 'Start')
@@ -105,6 +107,8 @@ pixelpulse.toggleTrigger = ->
 	for i in @timeseries_graphs then i.needsRedraw(true)
 			
 	pixelpulse.triggeringChanged.notify(@triggering)
+
+	track_feature("trigger")
 
 tsUpdateFlag = false	
 pixelpulse.timeseriesNeedsUpdate = ->
@@ -195,6 +199,7 @@ pixelpulse.autozoom = ->
 		@fakeAutoset()
 	else
 		@zoomCompletelyOut()
+	track_feature("autoset")
 		
 pixelpulse.canChangeView = -> pixelpulse.triggering or not server.device.captureState
 
@@ -562,6 +567,8 @@ pixelpulse.setLayout = (l) ->
 			@sidegraph2.hidden()
 		
 	pixelpulse.layoutChanged.notify()
+
+	if l != 0 then track_feature("set-layout")
 	
 pixelpulse.makeStreamSelect = ->
 	s = $("<select>")
@@ -715,4 +722,6 @@ $(document).ready ->
 	$('#device-config-apply').click ->
 		pixelpulse.hidePopup()	
 		server.device.configure({sampleTime:parseFloat($('#config-sample-rate').val())})
+		track_feature("config-apply")
+
 		 
