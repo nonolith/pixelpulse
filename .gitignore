@@ -1,4 +1,1 @@
-*.py[co]
-auth.p
-*.js
-tornado/*
+firmware/
