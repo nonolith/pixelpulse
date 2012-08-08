@@ -5,27 +5,6 @@
 
 pixelpulse = (window.pixelpulse ?= {})
 
-pixelpulse.captureState.subscribe (s) ->
-	$(document.body).toggleClass('capturing', s)
-
-## Bottom toolbar
-$ ->
-# Start/pause button
-	$(window).resize -> pixelpulse.layoutChanged.notify()
-	
-	$('#startpause').click ->
-		if server.device.captureState
-			server.device.pauseCapture()
-			track_feature("pause")
-		else
-			server.device.startCapture()
-			track_feature("start")
-
-	pixelpulse.captureState.subscribe (s) ->
-		$('#startpause').attr('title', if s then 'Pause' else 'Start')
-
-
-
 COLORS = [
 	[[0x32, 0x00, 0xC7], [00, 0x32, 0xC7]]
 	[[00, 0x7C, 0x16], [0x6f, 0xC7, 0x00]]
@@ -418,4 +397,17 @@ $(document).ready ->
 		server.device.configure({sampleTime:parseFloat($('#config-sample-rate').val())})
 		track_feature("config-apply")
 
-		 
+	$(window).resize -> pixelpulse.layoutChanged.notify()
+	
+	# Start/pause button
+	$('#startpause').click ->
+		if server.device.captureState
+			server.device.pauseCapture()
+			track_feature("pause")
+		else
+			server.device.startCapture()
+			track_feature("start")
+
+	pixelpulse.captureState.subscribe (s) ->
+		$('#startpause').attr('title', if s then 'Pause' else 'Start')
+		$(document.body).toggleClass('capturing', s)
