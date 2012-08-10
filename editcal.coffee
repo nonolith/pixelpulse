@@ -11,7 +11,7 @@ app.init = (server, params) ->
 	server.connect()
 
 	server.disconnected.listen ->
-		$(document.body).html("
+		$("section").html("
 		<h1>Nonolith Connect not found</h1>
 		<p>Make sure it is running or
 		<a href='http://www.nonolithlabs.com/connect/'>Install it</a></p>
@@ -37,43 +37,37 @@ hex = (n) ->
 		t = '0'+t
 	return t
 
-SCALE = 100000
-
 app.update = ->
-	e = $(document.body)
+	e = $("section")
 	e.empty()
 	if app.device
-		$("<h2>").text("Edit EEPROM").appendTo(e)
-		$("<p>").text("hwVersion: #{app.device.hwVersion}").appendTo(e)
-		$("<p>").text("fwVersion: #{app.device.fwVersion}").appendTo(e)
-		$("<p>").text("serial: #{app.device.serial}").appendTo(e)
+		$("#p1").addClass("opened")
+		$("<h1>").text("Edit Resistor Values").appendTo(e)
+		$("<div>").append( \
+		$("<p>").text("hwVersion: #{app.device.hwVersion}")).append( \
+		$("<p>").text("fwVersion: #{app.device.fwVersion}")).append( \
+		$("<p>").text("serial: #{app.device.serial}")).appendTo(e)
 
 		$("""
 		
 		<div>
-			<h3>Channel A</h3>
-			<p>Currently: <output id=now_a></p>
-			<label for=csa_a>CSA gain: </label><input type=text id=csa_a value=45 /> &times;
-			<label for=res_a>Resistor value:</label> <input type=text id=res_a value=.07 /> &times #{SCALE} =
-			<input type=text id=out_a />
+			<p>Channel A</p>
+			<p><span>Currently: <output id=now_a></span>&Omega;</p>
+			<p><label for=res_a>Resistor value:</label> <input type=text id=res_a value=.07 /></p>
 		</div>
 		
 		<div>
-			<h3>Channel B</h3>
-			<p>Currently: <output id=now_b></p>
-			<label for=csa_b>CSA gain: </label><input type=text id=csa_b value=45 /> &times;
-			<label for=res_b>Resistor value:</label> <input type=text id=res_b value=.07 /> &times #{SCALE} = 
-			<input type=text id=out_b />
+			<p>Channel B</p>
+			<p><span>Currently: <output id=now_b></span>&Omega;</p>
+			<p><label for=res_b>Resistor value:</label> <input type=text id=res_b value=.07 /></p>
 		</div>
 		
 		<div>
-			<h3>Power</h3>
-			<input type=checkbox id=extpower /> <label for=extpower>Device has external power</label>
+			<p>Power</p>
+			<p><input type=checkbox id=extpower /> <label for=extpower>Device has cleared solder jumper and external power</label></p>
 		</div>
 		
-		<p>
-		<button id='savebtn'>Save to device</button>
-		</p>
+		<nav><button class="btn primary" id="savebtn">Save to device</button></nav>
 		
 		""").appendTo(e)
 		
@@ -81,24 +75,22 @@ app.update = ->
 			server.send 'readCalibration'
 				id: server.createCallback (e) ->
 					app.device.eeprom = e
-					$("#now_a").text(app.device.eeprom.current_gain_a)
-					$("#now_b").text(app.device.eeprom.current_gain_a)
+					$("#now_a").text(app.device.eeprom.current_gain_a/45/100000)
+					$("#now_b").text(app.device.eeprom.current_gain_b/45/100000)
 					$("#extpower").get(0).checked = !(app.device.eeprom.flags&1)
 		
 		
 		update = ->
 			console.log('update')
-			$("#out_a").val(Math.round(parseFloat($('#csa_a').val(),10)*parseFloat($('#res_a').val(),10)*SCALE))
-			$("#out_b").val(Math.round(parseFloat($('#csa_b').val(),10)*parseFloat($('#res_b').val(),10)*SCALE))
+			console.log(Math.round(parseFloat($('#res_a').val(),10)*45*100000,10))
+			console.log(Math.round(parseFloat($('#res_b').val(),10)*45*100000,10))
 		
 		read()
 		update()
 		
-		$("#csa_a,#csa_b,#res_a,#res_b").change(update)
-		
 		write = ->
-			app.device.eeprom.current_gain_a = Math.round(parseFloat($("#out_a").val()), 10)
-			app.device.eeprom.current_gain_b = Math.round(parseFloat($("#out_a").val()), 10)
+			app.device.eeprom.current_gain_a = Math.round(parseFloat($("#res_a").val())*45*100000, 10)
+			app.device.eeprom.current_gain_b = Math.round(parseFloat($("#res_b").val())*45*100000, 10)
 			usbpower = not $("#extpower").is(':checked')
 			app.device.eeprom.flags = app.device.eeprom.flags&(~1) | usbpower
 			
@@ -113,14 +105,14 @@ app.update = ->
 				
 			
 	else
-		$("<h2>").text("No devices found").appendTo(e)
+		$("<h1>").text("No devices found").appendTo(e)
 		
 
 $(document).ready ->
-	$(document.body).append("<p>Platform: #{window.navigator.userAgent}</p>");
+	$("section").append("<p>Platform: #{window.navigator.userAgent}</p>");
 	if not window.WebSocket
-		$(document.body).append("<p>Your browser does not support webSocket</p>")
+		$("section").append("<p>Your browser does not support webSocket</p>")
 	else
-		$(document.body).append("<p>Loading....</p>")
+		$("section").append("<p>Loading....</p>")
 	app.init(server)
 
