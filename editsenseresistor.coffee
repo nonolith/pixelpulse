@@ -1,5 +1,5 @@
-# EEPROM editor
 # (C) 2012 Nonolith Labs
+# Author: Ian Daniher <ian@nonolithlabs.com> 
 # Author: Kevin Mehall <km@kevinmehall.net>
 # Distributed under the terms of the GNU GPLv3
 
@@ -13,9 +13,8 @@ app.init = (server, params) ->
 	server.disconnected.listen ->
 		$("section").html("
 		<h1>Nonolith Connect not found</h1>
-		<p>Make sure it is running or
-		<a href='http://www.nonolithlabs.com/connect/'>Install it</a></p>
-		<p>Platform: #{window.navigator.userAgent}</p>
+		<div> <p>Make sure it is running or
+		<a href='http://www.nonolithlabs.com/connect/'>Install it</a></p> </div>
 		")
 
 	server.connected.listen app.update
@@ -41,8 +40,7 @@ app.update = ->
 	e = $("section")
 	e.empty()
 	if app.device
-		$("#p1").addClass("opened")
-		$("<h1>").text("Edit Resistor Values").appendTo(e)
+		$("<h1>").text("Edit Sense Resistor Values").appendTo(e)
 		$("<div>").append( \
 		$("<p>").text("hwVersion: #{app.device.hwVersion}")).append( \
 		$("<p>").text("fwVersion: #{app.device.fwVersion}")).append( \
@@ -105,7 +103,7 @@ app.update = ->
 				
 			
 	else
-		$("<h1>").text("No devices found").appendTo(e)
+		$("<h1>").text("No Devices Found").appendTo(e)
 		
 
 $(document).ready ->
