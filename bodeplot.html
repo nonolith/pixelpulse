@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='utf-8'>
+
+<title>Bode Plot</title>
+<script src='lib/coffee-script.js'></script>
+
+<script src='lib/jquery-1.7.1.min.js'></script>
+<script src='dataserver.coffee' type='text/coffeescript'></script>
+
+<script src='human_units.coffee' type='text/coffeescript'></script>
+<script src='livegraph.coffee' type='text/coffeescript'></script>
+
+<script src='bodeplot.coffee' type='text/coffeescript'></script>
+
+<style>
+
+.livegraph{
+	position: relative;
+}
+
+.livegraph canvas{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+
+#response_graphs{
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 33%;
+}
+
+#response_graphs div{
+	width: 100%;
+	height: 300px;
+}
+
+#controls{
+	position: absolute;
+	bottom: 0;
+}
+
+
+
+</style>
+
+<body>
+
+<div id='with_device' style='display:none'>
+
+<section id='response_graphs'>
+	<div id='step_plot' class='livegraph'> </div>
+	<div id='impulse_plot' class='livegraph'></div>
+</section>
+
+<section id='controls'>
+<button id='start'>Start</button>
+<button id='stop'>Stop</button>
+</section>
+
+</div>
+</body>
+</html>

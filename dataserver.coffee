@@ -237,7 +237,7 @@ class Channel
 			fn = (s) =>
 				if s.effective
 					@outputChanged.unListen fn
-					cb()
+					cb(s)
 			@outputChanged.subscribe fn
 
 	setConstant: (mode, val, cb) ->
@@ -323,12 +323,11 @@ class server.Listener
 		@reset = new Event()
 		@done = new Event()
 		@trigger = false
+		@device.listenersById[@id] = this
 		
 	streamIndex: (stream) -> @streams.indexOf(stream)
 
 	configure: (startTime=null, requestedSampleTime=0.1, @count=-1) ->
-		@device.listenersById[@id] = this
-		
 		unless requestedSampleTime > 0
 			return console.error("Invalid sample time", requestedSampleTime)
 		
@@ -383,6 +382,7 @@ class server.DataListener extends server.Listener
 		@xdata = []
 		@data = ([] for i in streams)
 		@requestedPoints = 0
+		@sweepDone = new Event()
 		super(device, streams)
 	
 	configure: (@xmin, @xmax, @requestedPoints, @continuous = true) ->
@@ -430,6 +430,9 @@ class server.DataListener extends server.Listener
 				
 		for j in [m.idx...m.idx + m.data[0].length]
 			@xdata[j] = @xmin + j*@sampleTime - @subsample
+
+		if idx >= @len
+			@sweepDone.notify()
 		
 		super(m)
 		

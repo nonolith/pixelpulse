@@ -2,7 +2,7 @@
 # Distributed under the terms of the BSD License
 # (C) 2011 Kevin Mehall (Nonolith Labs) <km@kevinmehall.net>
 
-livegraph = if exports? then exports else (this.livegraph = {})
+livegraph = window.livegraph = {}
 
 PADDING = livegraph.PADDING = 10
 AXIS_SPACING = livegraph.AXIS_SPACING = 25
@@ -59,6 +59,8 @@ livegraph.digitalAxis = new DigitalAxis()
 
 class livegraph.Series
 	constructor: (@xdata, @ydata, @color, @style) ->
+
+	cssColor: -> "rgb(#{@color[0]},#{@color[1]},#{@color[2]})"
 
 
 window.requestAnimFrame = 
@@ -425,8 +427,6 @@ class livegraph.canvas
 		@perfStat(new Date()-startTime)
 		return
 		
-	cssColor: -> "rgb(#{@series[0].color[0]},#{@series[0].color[1]},#{@series[0].color[2]})"		
-			
 	redrawGraph_canvas2d: ->
 		@ctxg.clearRect(0,0,@width, @height)
 		@ctxg.lineWidth = 2
@@ -434,7 +434,7 @@ class livegraph.canvas
 		[sx, sy, dx, dy] = makeTransform(@geom, @xaxis, @yaxis)
 		
 		for series in @series
-			@ctxg.strokeStyle = @cssColor()
+			@ctxg.strokeStyle = series.cssColor()
 			 
 			@ctxg.save()
 			

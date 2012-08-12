@@ -22,7 +22,7 @@ exports.unitPrefixScale = unitPrefixScale = (v) ->
 
 	return [unit, Math.pow(10, m)]
 
-arange = (lo, hi, step) ->
+window.arange = arange = (lo, hi, step) ->
 	ret = new Array(Math.ceil((hi-lo)/step+1))
 	for i in [0...ret.length]
 		ret[i] = lo + i*step
