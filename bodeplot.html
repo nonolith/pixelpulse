@@ -7,6 +7,7 @@
 <script src='lib/coffee-script.js'></script>
 
 <script src='lib/jquery-1.7.1.min.js'></script>
+<script src='lib/dsp.js'></script>
 <script src='dataserver.coffee' type='text/coffeescript'></script>
 
 <script src='human_units.coffee' type='text/coffeescript'></script>
@@ -39,6 +40,19 @@
 	height: 300px;
 }
 
+#bode_graphs{
+	position: absolute;
+	left: 33%;
+	top: 0;
+	bottom: 0;
+	right: 0;
+}
+
+#bode_graphs div{
+	width: 100%;
+	height: 300px;
+}
+
 #controls{
 	position: absolute;
 	bottom: 0;
@@ -55,6 +69,11 @@
 <section id='response_graphs'>
 	<div id='step_plot' class='livegraph'> </div>
 	<div id='impulse_plot' class='livegraph'></div>
+</section>
+
+<section id='bode_graphs'>
+	<div id='bode_magnitude_plot' class='livegraph'> </div>
+	<div id='bode_phase_plot' class='livegraph'> </div>
 </section>
 
 <section id='controls'>
