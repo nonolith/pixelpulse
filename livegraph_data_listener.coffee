@@ -136,13 +136,26 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@triggerOverlay = null
 		super()
 
+class DataSeries extends livegraph.Series
+	constructor: (@listener, @xseries, @yseries) ->
+		@updated = @listener.updated
+		@listener.reset.listen @reset
+		@reset()
+	
+	reset: =>
+		@xdata = (if @xseries == 'time'
+			@listener.xdata
+		else
+			@listener.data[@listener.streamIndex(@xseries)])
+		@ydata = @listener.data[@listener.streamIndex(@yseries)]
+
 class TimeseriesGraph extends livegraph.canvas
 	constructor: (@timeseries, @stream, elem, color) ->
 		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
-		@series = @timeseries.series('time', @stream)
-		@series.color = color
+		@dseries = new DataSeries(@timeseries, 'time', @stream)
+		@dseries.color = color
 
-		super(elem, @timeseries.xaxis, @yaxis, [@series])
+		super(elem, @timeseries.xaxis, @yaxis, [@dseries])
 			
 	onClick: (pos, e) =>
 		[x,y] = pos
@@ -166,7 +179,7 @@ class TimeseriesGraph extends livegraph.canvas
 	sourceChanged: (isSource, m) ->
 		if isSource and m.source == 'constant'
 			unless @dot
-				@dot = new livegraph.Dot(this, @cssColor(), @cssColor())
+				@dot = new livegraph.Dot(this, @dseries.cssColor(), @dseries.cssColor())
 			@dot.position(m.value)
 		else
 			@dot.remove() if @dot

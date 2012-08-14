@@ -435,21 +435,6 @@ class server.DataListener extends server.Listener
 			@sweepDone.notify()
 		
 		super(m)
-		
-	series: (x, y) -> new DataSeries(this, x, y)
-
-class DataSeries
-	constructor: (@listener, @xseries, @yseries) ->
-		@updated = @listener.updated
-		@listener.reset.listen @reset
-		@reset()
-	
-	reset: =>
-		@xdata = (if @xseries == 'time'
-			@listener.xdata
-		else
-			@listener.data[@listener.streamIndex(@xseries)])
-		@ydata = @listener.data[@listener.streamIndex(@yseries)] 
 
 class BootloaderDevice
 	constructor: (@server) ->

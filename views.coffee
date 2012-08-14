@@ -66,7 +66,7 @@ pixelpulse.toggleTrigger = ->
 	track_feature("trigger")
 
 pixelpulse.autozoom = =>
-	@timeseries.autozoom()
+	pixelpulse.timeseries.autozoom()
 	track_feature("autoset")
 
 pixelpulse.captureState.subscribe (s) ->
