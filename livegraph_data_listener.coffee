@@ -128,7 +128,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@fakeAutoset(false)
 
 	dragTrigger: (stream, level) ->
-		if stream.isSource()
+		if stream.isSource() and @device.hasOutTrigger
 			@trigger.level = level = stream.sourceLevel()
 
 		@triggerOverlay.position(level) if level?
@@ -136,8 +136,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 	updateTriggerForOutput:  ->
 		stream = @trigger.stream
 
-		if stream.isSource() != (@trigger.type == 'out')
-			console.log('updateTriggerForOutput changed trigger type', stream.isSource(), @trigger.type == 'in', @trigger.type)
+		if stream.isSource() != (@trigger.type == 'out') and @device.hasOutTrigger
 			@setTrigger(stream, @trigger.level)
 
 		@dragTrigger(stream)
@@ -146,7 +145,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@trigger.stream = stream
 		@trigger.level = level
 
-		@trigger.type = if stream.isSource() then 'out' else 'in'
+		@trigger.type = if stream.isSource() and @device.hasOutTrigger then 'out' else 'in'
 
 		@dragTrigger(stream, level)
 

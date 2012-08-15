@@ -52,7 +52,7 @@ class Dataserver
 			
 			switch m._action
 				when "serverHello"
-					@version = m.version
+					@version = m.version.replace(/^V/, '')
 					@gitVersion = m.gitVersion
 
 					if ga_event?
@@ -172,6 +172,8 @@ class CEEDevice
 			@channels[chanId] = new Channel(chanInfo, this)
 			
 		@listenersById = {}
+
+		@hasOutTrigger = @parent.version >= '1.2' and @fwVersion >= '1.2'
 
 		@changed.notify(this)
 
