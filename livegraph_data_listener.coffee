@@ -109,6 +109,9 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 	canChangeView: ->
 		@trigger or not server.device.captureState
 
+	updateDotsAll: ->
+		i.updateDots() for i in @graphs
+
 	isTriggerEnabled: -> return if @trigger then true else false
 
 	enableTrigger: ->
@@ -152,6 +155,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@submit() if submit
 
 		@triggerOverlay.showBorder(@trigger.type == 'in')
+		@updateDotsAll()
 
 	disableTrigger: ->
 		@xaxis.min = -10
@@ -162,6 +166,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@triggerOverlay.remove()
 		@triggerOverlay = null
 		super()
+		@updateDotsAll()
 		@redrawAll(true)
 
 class DataSeries extends livegraph.Series
@@ -183,12 +188,23 @@ class TimeseriesGraph extends livegraph.canvas
 		@dseries = new DataSeries(@timeseries, 'time', @stream)
 		@dseries.color = color
 
+		@dots = {}
+		@dotConfig = ''
+
 		super(elem, @timeseries.xaxis, @yaxis, [@dseries])
 			
 	onClick: (pos, e) =>
 		[x,y] = pos
-		if x > @width - 45
-			new DragToSetAction(this, pos)
+
+		if @dotConfig is 'wave' and @dots.offset.isNear(x, y, 10)
+			new DragOffsetAction(this, pos)
+
+		else if @dotConfig is 'wave' and @dots.period.isNear(x, y, 10)
+			new DragPeriodAmplitudeAction(this, pos)
+
+		else if x > @width - 45
+			new DragConstantAction(this, pos)
+
 		else if x < 45 and @timeseries.trigger
 			if @timeseries.trigger.stream != @stream
 				@timeseries.triggerOverlay.remove() if @timeseries.triggerOverlay
@@ -205,14 +221,36 @@ class TimeseriesGraph extends livegraph.canvas
 		return new livegraph.ZoomXAction(opts, this, pos,
 			@timeseries.graphs)
 
-	sourceChanged: (isSource, m) ->
-		if isSource and m.source == 'constant'
-			unless @dot
-				@dot = new livegraph.Dot(this, @dseries.cssColor(), @dseries.cssColor())
-			@dot.position(m.value)
+	resetDots: (t) ->
+		unless @dotConfig is t
+			for i, v of @dots
+				v.remove()
+			@dots = {}
+			@dotConfig = t
+			return true
+
+	updateDots: ->
+		isTriggerStream = @timeseries.trigger?.stream == @stream
+		isSource = @stream.isSource()
+		s = @stream.parent.source
+
+		if isSource and s.source == 'constant' and not @timeseries.trigger
+			if @resetDots('constant')
+				@dots.d = new livegraph.Dot(this, @dseries.cssColor(), 5, 'r')
+			@dots.d.position(null, s.value)
+		else if isSource and server.device.hasOutTrigger and isTriggerStream
+			if s.source in ['sine', 'triangle', 'square']
+				if @resetDots('wave')
+					@dots.offset = new livegraph.Dot(this, @dseries.cssColor(), 5, '')
+					@dots.period = new livegraph.Dot(this, @dseries.cssColor(), 5, '')
+				@dots.offset.position(0, s.offset)
+				@dots.period.position(s.period*server.device.sampleTime/4, s.offset+s.amplitude)
 		else
-			@dot.remove() if @dot
-			@dot = null
+			@resetDots('')
+
+
+	sourceChanged: (isSource, m) ->
+		@updateDots()
 
 		if @timeseries.trigger.stream is @stream
 			@timeseries.updateTriggerForOutput()
@@ -234,16 +272,26 @@ class DragYAction extends livegraph.Action
 	onDrag: ([x, y]) ->
 		[x, y] = livegraph.invTransform(x,y,@transform)
 		y = Math.min(Math.max(y, @lg.stream.min), @lg.stream.max)
-		@withPos(y)
+		@withPos(x, y)
 		
-	withPos: (y) ->
+	withPos: (x, y) ->
 
-class DragToSetAction extends DragYAction
-	withPos: (y) ->
+class DragConstantAction extends DragYAction
+	withPos: (x, y) ->
 		@lg.stream.parent.setConstant(@lg.stream.outputMode, y)
+
+class DragOffsetAction extends DragYAction
+	withPos: (x, y) ->
+		@lg.stream.parent.setAdjust {offset:y}
+
+class DragPeriodAmplitudeAction extends DragYAction
+	withPos: (x, y) ->
+		amplitude = y - @lg.stream.parent.source.offset
+		period = x * 4 / server.device.sampleTime
+		@lg.stream.parent.setAdjust {amplitude, period}
 			
 class DragTriggerAction extends DragYAction
-	withPos: (@y) ->
+	withPos: (x, @y) ->
 		pixelpulse.timeseries.dragTrigger(@lg.stream, @y)
 	
 	onRelease: ->

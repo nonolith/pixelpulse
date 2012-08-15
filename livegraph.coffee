@@ -507,19 +507,21 @@ class livegraph.Overlay
 		@lg.overlays.splice(i, 1)
 	
 class livegraph.Dot extends livegraph.Overlay
-	constructor: (@lg, @fill, @stroke, @radius=5) ->
+	constructor: (@lg, @fill, @radius=5, @xpos='r') ->
 		@dot = document.createElement('canvas')
 		@dot.width = 2*@radius + 4
 		@dot.height = 2*@radius + 4
 		@center = @radius+2
-		@dot.fill = fill
-		@dot.stroke = stroke
+
+		@x = PADDING+AXIS_SPACING
+		@y = 0
+
 		$(@dot).css
 			position: 'absolute'
 			'margin-top':-@center
 			'margin-right':-@center
+			'margin-left':-@center
 		@ctx = @dot.getContext('2d')
-		@positionRight(PADDING+AXIS_SPACING)
 		$(@dot).appendTo(@lg.div)
 		super()
 		
@@ -530,15 +532,24 @@ class livegraph.Dot extends livegraph.Overlay
 		super()
 	
 	resized: ->
-		@position(@y)
+		@position(@x, @y)
 	
-	position: (@y) ->
+	position: (x, @y) ->
+		@x = x if x?
+
 		if not @lg.geom then return
 	
-		# Update visibility, if it has changed
-		v =  if !isNaN(@y) and @y? then 'visible' else 'hidden'
+		# Hide if value is invalid
+		v = !isNaN(@y) and @y?
+
+		# Hide if off to the side
+		if not @xpos and @x > @lg.xaxis.visibleMax or @x < @lg.xaxis.visibleMin
+			v = false
+
+		# If visibility has changed, update it
+		v = if v then 'visible' else 'hidden'
 		if @dot.style.visibility != v then @dot.style.visibility=v
-	
+		
 		if @y > @lg.yaxis.visibleMax
 			@y = @lg.yaxis.visibleMax
 			shape = 'up'
@@ -550,30 +561,33 @@ class livegraph.Dot extends livegraph.Overlay
 		
 		# Find pixel position
 		[sx, sy, dx, dy] = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)
-		ty = Math.round(dy+@y*sy)
+		@ty = ty = Math.round(dy+@y*sy)
 	
 		# Bail out if it hasn't changed
-		if not @lastY==@ty then return
-		@lastY = @ty
+		#if not @lastY==@ty and not @xpos then return
+		#@lastY = @ty
 		
 		if @shape != shape
 			@shape = shape
 			@render()
 	
-		@dot.style.top = "#{ty}px"
-	
-	positionLeft: (x)->
-		@dot.style.left = "#{x}px"
-		@dot.style.right = "auto"
-		
-	positionRight: (x)->
-		@dot.style.right = "#{x}px"
-		@dot.style.left = "auto"
+		@dot.style.top = ty + 'px'
+
+		if @xpos is 'r'
+			@dot.style.right = @x + 'px'
+			@dot.style.left = "auto"
+		else if @xpos is 'l'
+			@dot.style.left = @x + 'px'
+			@dot.style.right = "auto"
+		else
+			@tx = tx = Math.round(dx + @x*sx)
+			@dot.style.left = tx + 'px'
+			@dot.style.right = "auto"
 	
 	render: ->
 		@dot.width = @dot.width
 		@ctx.fillStyle = @fill
-		@ctx.strokeStyle = @stroke
+		@ctx.strokeStyle = @fill
 		@ctx.lineWidth = 2
 		
 		switch @shape
@@ -592,6 +606,9 @@ class livegraph.Dot extends livegraph.Overlay
 				
 		@ctx.fill()
 		@ctx.stroke()
+
+	isNear: (x, y, r) ->
+		return (Math.pow(x-@tx, 2) + Math.pow(y-@ty, 2)) < r*r
 		
 class livegraph.TriggerOverlay extends livegraph.Overlay
 	constructor: (@lg, color, border) ->
