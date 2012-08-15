@@ -67,10 +67,10 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 			return new livegraph.AnimateXAction(opts, @graphs[0], min, max, @graphs)
 		else
 			@xaxis.window(min, max, true)
-			@redrawAll()
+			@redrawAll(true)
 
-	redrawAll: ->
-		for lg in @graphs then lg.needsRedraw(true)
+	redrawAll: (full=false)->
+		for lg in @graphs then lg.needsRedraw(full)
 
 	onMessage: (m) ->
 		super(m)
@@ -162,6 +162,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@triggerOverlay.remove()
 		@triggerOverlay = null
 		super()
+		@redrawAll(true)
 
 class DataSeries extends livegraph.Series
 	constructor: (@listener, @xseries, @yseries) ->
