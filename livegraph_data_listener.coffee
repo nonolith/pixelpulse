@@ -124,7 +124,35 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@configureTrigger(@streams[0], default_trigger_level, 0.1, 0, 0.5, tp)
 		@triggerOverlay = new livegraph.TriggerOverlay(@graphs[0])
 		@triggerOverlay.position(default_trigger_level)
+		@setTrigger(@streams[0], default_trigger_level, false)
 		@fakeAutoset(false)
+
+	dragTrigger: (stream, level) ->
+		if stream.isSource()
+			@trigger.level = level = stream.sourceLevel()
+
+		@triggerOverlay.position(level) if level?
+
+	updateTriggerForOutput:  ->
+		stream = @trigger.stream
+
+		if stream.isSource() != (@trigger.type == 'out')
+			console.log('updateTriggerForOutput changed trigger type', stream.isSource(), @trigger.type == 'in', @trigger.type)
+			@setTrigger(stream, @trigger.level)
+
+		@dragTrigger(stream)
+
+	setTrigger: (stream, level=0, submit=true) ->
+		@trigger.stream = stream
+		@trigger.level = level
+
+		@trigger.type = if stream.isSource() then 'out' else 'in'
+
+		@dragTrigger(stream, level)
+
+		@submit() if submit
+
+		@triggerOverlay.showBorder(@trigger.type == 'in')
 
 	disableTrigger: ->
 		@xaxis.min = -10
@@ -163,8 +191,9 @@ class TimeseriesGraph extends livegraph.canvas
 			new DragToSetAction(this, pos)
 		else if x < 45 and @timeseries.trigger
 			if @timeseries.trigger.stream != @stream
-				@triggerOverlay.remove()
-				@triggerOverlay = new livegraph.TriggerOverlay(this)
+				@timeseries.triggerOverlay.remove() if @timeseries.triggerOverlay
+				@timeseries.triggerOverlay = new livegraph.TriggerOverlay(this)
+				@timeseries.setTrigger(@stream, null, false)
 			new DragTriggerAction(this, pos)
 		else if @timeseries.canChangeView()
 			new livegraph.DragScrollAction(this, pos, @timeseries.graphs)
@@ -184,6 +213,9 @@ class TimeseriesGraph extends livegraph.canvas
 		else
 			@dot.remove() if @dot
 			@dot = null
+
+		if @timeseries.trigger.stream is @stream
+			@timeseries.updateTriggerForOutput()
 
 	gainChanged: (g) ->
 		@yaxis.window(@yaxis.min/g, @yaxis.max/g, true)
@@ -212,9 +244,7 @@ class DragToSetAction extends DragYAction
 			
 class DragTriggerAction extends DragYAction
 	withPos: (@y) ->
-		pixelpulse.timeseries.triggerOverlay.position(@y)
+		pixelpulse.timeseries.dragTrigger(@lg.stream, @y)
 	
 	onRelease: ->
-		pixelpulse.timeseries.trigger.stream = @lg.stream
-		pixelpulse.timeseries.trigger.level = @y
-		pixelpulse.timeseries.submit()
+		pixelpulse.timeseries.setTrigger(@lg.stream, @y)

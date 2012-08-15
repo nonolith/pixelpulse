@@ -594,14 +594,20 @@ class livegraph.Dot extends livegraph.Overlay
 		@ctx.stroke()
 		
 class livegraph.TriggerOverlay extends livegraph.Overlay
-	constructor: (@lg, color='#ffaa00') ->
+	constructor: (@lg, color, border) ->
 		super()
 		@div = $('<div>')
 		@triangle = document.createElement('canvas')
 		@triangle.width = 10
 		@triangle.height = 11
-		
+
+		@style(color, border)
+
+		@div.append(@triangle).appendTo(@lg.div)
+
+	style: (color='#ffaa00', border=1) ->
 		ctx = @triangle.getContext('2d')
+		ctx.clearRect(0, 0, @triangle.width, @triangle.height)
 		ctx.fillStyle = color
 		ctx.moveTo(0, 0)
 		ctx.lineTo(10, 5.5)
@@ -613,14 +619,16 @@ class livegraph.TriggerOverlay extends livegraph.Overlay
 			position: 'absolute'
 			left: PADDING + AXIS_SPACING
 			right: PADDING + AXIS_SPACING
-			'border-top': "1px solid #{color}"
+			'border-top': "#{border}px solid #{color}"
 			height: 0
 			
 		$(@triangle).css
 			'margin-top':-6
 			'margin-left':-3
-			
-		@div.append(@triangle).appendTo(@lg.div)
+
+	showBorder: (border) ->
+		$(@div).css
+			'border-top-width': if border then 1 else 0
 	
 	remove: ->
 		$(@div).remove()

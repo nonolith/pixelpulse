@@ -309,6 +309,21 @@ class Stream
 		l.submit()
 		l.updated.subscribe (m) ->
 			cb(m.data[0][0])
+
+	isSource: -> (@parent.source.mode == @outputMode)
+
+	sourceLevel: ->
+		# get the center of the source. assumes @isSource()
+		source = @parent.source
+		switch source.source
+			when 'constant'
+				source.value
+			when 'sine', 'triangle', 'square'
+				source.offset
+			when 'adv_square'
+				(source.high + source.low)/2
+			else
+				(@min + @max) / 2
 		
 
 window.server = new Dataserver('localhost:9003')
