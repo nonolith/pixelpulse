@@ -163,8 +163,8 @@ class TimeseriesGraph extends livegraph.canvas
 			new DragToSetAction(this, pos)
 		else if x < 45 and @timeseries.trigger
 			if @timeseries.trigger.stream != @stream
-				@timeserietriggerOverlay.remove()
-				pixelpulse.triggerOverlay = new livegraph.TriggerOverlay(this)
+				@triggerOverlay.remove()
+				@triggerOverlay = new livegraph.TriggerOverlay(this)
 			new DragTriggerAction(this, pos)
 		else if @timeseries.canChangeView()
 			new livegraph.DragScrollAction(this, pos, @timeseries.graphs)
@@ -212,9 +212,9 @@ class DragToSetAction extends DragYAction
 			
 class DragTriggerAction extends DragYAction
 	withPos: (@y) ->
-		pixelpulse.triggerOverlay.position(@y)
+		pixelpulse.timeseries.triggerOverlay.position(@y)
 	
 	onRelease: ->
-		pixelpulse.data_listener.trigger.stream = @lg.stream
-		pixelpulse.data_listener.trigger.level = @y
-		pixelpulse.data_listener.submit()
+		pixelpulse.timeseries.trigger.stream = @lg.stream
+		pixelpulse.timeseries.trigger.level = @y
+		pixelpulse.timeseries.submit()
