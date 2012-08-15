@@ -233,20 +233,12 @@ class pixelpulse.StreamView
 				stream = @stream
 				channel = stream.parent
 			
-				ATTRS = ['value', 'high', 'low', 'highSamples', 'lowSamples', 'offset', 'amplitude', 'period']
-			
 				propInput = (prop, conv) ->
 					if conv == 'val' then conv = stream
 					
 					sourceInputs[prop] = numberWidget m[prop], conv, (v) =>
-						d = {}
-						for i in ATTRS
-							if channel.source[i]? then d[i] = channel.source[i]
-						d[prop] = v
+						channel.setAdjust(prop, v)
 					
-						channel.set(channel.source.mode, channel.source.source, d)
-					
-			
 				switch m.source
 					when 'constant'
 						@source.append propInput('value', 'val')

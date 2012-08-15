@@ -233,6 +233,9 @@ class Channel
 	set: (mode, source, dict, cb) ->
 		dict['mode'] = mode
 		dict['source'] = source
+		@setDirect dict, cb
+
+	setDirect: (dict, cb) ->
 		dict['channel'] = @id
 		server.send 'set', dict
 		if cb
@@ -242,11 +245,24 @@ class Channel
 					cb(s)
 			@outputChanged.subscribe fn
 
+	setAdjust: (dict, val) ->
+		KEEP_ATTRS = ['mode', 'source', 'value', 'high', 'low', 'highSamples', 'lowSamples', 'offset', 'amplitude', 'period']
+		d = {}
+		for i in KEEP_ATTRS
+			if @source[i]? then d[i] = @source[i]
+
+		if val
+			d[dict] = val
+		else
+			d[i] = v for i, v of dict
+			
+		@setDirect d
+
 	setConstant: (mode, val, cb) ->
-		@set mode, 'constant', {value:val}, cb
+		@setDirect {mode, source:'constant', value:val}, cb
 		
 	setPeriodic: (mode, source, freq, offset, amplitude, cb) ->
-		@set mode, source, {period:1/freq/@parent.sampleTime, offset, amplitude}, cb
+		@setDirect {mode, source, period:1/freq/@parent.sampleTime, offset, amplitude}, cb
 		
 	# switch to a source type, picking appropriate parameters
 	guessSourceOptions:  (sourceType) ->
