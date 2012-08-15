@@ -296,3 +296,72 @@ class DragTriggerAction extends DragYAction
 	
 	onRelease: ->
 		pixelpulse.timeseries.setTrigger(@lg.stream, @y)
+
+
+class pixelpulse.XYGraphView
+	constructor: (@el) ->
+		@graphdiv = $("<div class='livegraph'>").appendTo(@el)
+		
+		@xlabel = pixelpulse.makeStreamSelect()
+		@xlabel.addClass('xaxislabel').appendTo(@el).change(@axisSelectChanged)
+		@ylabel = pixelpulse.makeStreamSelect()
+		@ylabel.addClass('yaxislabel').appendTo(@el).change(@axisSelectChanged)
+		
+		@color = [255, 0, 0]
+		
+		@lg = new livegraph.canvas(@graphdiv.get(0), false, false, [false], 
+			{xbottom:true, yright:false, xgrid:true})
+		
+	axisSelectChanged: =>
+		xaxis = @xlabel.stream()
+		yaxis = @ylabel.stream()
+		
+		if xaxis != @xaxis or yaxis != @yaxis
+			@configure(xaxis, yaxis)
+	
+	configure: (@xstream, @ystream) ->	
+		@xaxis = new livegraph.Axis(@xstream.min, @xstream.max)
+		@yaxis = new livegraph.Axis(@ystream.min, @ystream.max)
+		
+		@lg.xaxis = @xaxis
+		@lg.yaxis = @yaxis
+		
+		@xlabel.selectStream(@xstream)
+		@ylabel.selectStream(@ystream)
+		
+		@hidden()
+		
+		@series = new DataSeries(pixelpulse.timeseries, @xstream, @ystream)
+		@series.color = @color
+		@lg.series = [@series]
+		
+		@xstream.gainChanged.listen @xGainChanged	
+		@xGainChanged(@xstream.gain)
+		@ystream.gainChanged.listen @yGainChanged	
+		@yGainChanged(@ystream.gain)
+		
+		@series.updated.listen @updated
+		pixelpulse.layoutChanged.subscribe @relayout
+		
+		@lg.needsRedraw(true)
+		
+	hidden: ->
+		if @series
+			@series.updated.unListen @updated
+		pixelpulse.layoutChanged.unListen @relayout
+		
+		if @xaxis then @xstream.gainChanged.unListen @xGainChanged
+		if @yaxis then @ystream.gainChanged.unListen @yGainChanged
+	
+	updated: => @lg.needsRedraw()
+	
+	xGainChanged: (g) =>
+		@xaxis.window(@xaxis.min/g, @xaxis.max/g, true)
+		@lg.needsRedraw(true)
+	
+	yGainChanged: (g) =>
+		@yaxis.window(@yaxis.min/g, @yaxis.max/g, true)
+		@lg.needsRedraw(true)
+	
+	relayout: =>
+		@lg.resized()
