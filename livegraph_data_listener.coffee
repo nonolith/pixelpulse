@@ -88,7 +88,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		src = @trigger.stream.parent.source
 		sampleTime = @device.sampleTime
 		
-		f = 3
+		f = 2
 		
 		timescale = switch src.source
 			when 'adv_square'
@@ -98,7 +98,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 			else
 				0.125
 				
-		@goToWindow(-timescale, timescale, animate)
+		@goToWindow(Math.max(@xaxis.min, -timescale), Math.min(@xaxis.max, timescale), animate)
 
 	autozoom: ->
 		if @trigger
@@ -115,8 +115,8 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 	isTriggerEnabled: -> return if @trigger then true else false
 
 	enableTrigger: ->
-		@xaxis.min = -5
-		@xaxis.max = 5
+		@xaxis.min = -1
+		@xaxis.max = 1
 		
 		for lg in @graphs
 			lg.showXgridZero = yes
