@@ -149,7 +149,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@trigger.level = level
 
 		@trigger.type = if stream.isSource() and @device.hasOutTrigger
-			@trigger.force = 0
+			@trigger.force = if stream.parent.source.source is 'constant' then 0.5 else 10
 			'out'
 		else
 			@trigger.force = 0.5
