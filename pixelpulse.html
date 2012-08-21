@@ -69,6 +69,7 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 	</div>
 	<div id='toolbar-left'>
 		<button title="Toggle triggering (for repeating signals)" onclick="pixelpulse.toggleTrigger()" id='triggerbtn'>Trigger</button>
+		<button id='zoomfit' title="Auto zoom" onclick='pixelpulse.autozoom()'>Auto-zoom</button>
 	</div>
 	<div class='spacer'></div>
 	<div id='toolbar-center'>
@@ -76,7 +77,7 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 	</div>
 	<div class='spacer'></div>
 	<div id='toolbar-right'>
-		<button id='zoomfit' title="Auto zoom" onclick='pixelpulse.autozoom()'>Auto-zoom</button><button id='device-config' title="Configure device">Configure</button>
+		<button id='device-config' title="Configure device">Configure</button>
 	</div>
 	<div id='device-info'>
 		<button id='switchDev' onclick='pixelpulse.showDeviceChooser()'>Switch</button>
