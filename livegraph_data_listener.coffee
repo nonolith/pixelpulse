@@ -34,8 +34,8 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		
 		span = max-min
 		
-		min = Math.max(min - 0.4*span, @xaxis.min)
-		max = Math.min(max + 0.4*span, @xaxis.max)
+		min = Math.max(min - 0.2*span, @xaxis.min)
+		max = Math.min(max + 0.2*span, @xaxis.max)
 		pts = lg.width / 2 * (max - min) / span
 		
 		@configure(min, max, pts)
@@ -101,7 +101,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@goToWindow(-timescale, timescale, animate)
 
 	autozoom: ->
-		if @triggering
+		if @trigger
 			@fakeAutoset()
 		else
 			@zoomCompletelyOut()
@@ -148,7 +148,12 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@trigger.stream = stream
 		@trigger.level = level
 
-		@trigger.type = if stream.isSource() and @device.hasOutTrigger then 'out' else 'in'
+		@trigger.type = if stream.isSource() and @device.hasOutTrigger
+			@trigger.force = 0
+			'out'
+		else
+			@trigger.force = 0.5
+			'in'
 
 		@dragTrigger(stream, level)
 
@@ -245,6 +250,8 @@ class TimeseriesGraph extends livegraph.canvas
 					@dots.period = new livegraph.Dot(this, @dseries.cssColor(), 5, '')
 				@dots.offset.position(0, s.offset)
 				@dots.period.position(s.period*server.device.sampleTime/4, s.offset+s.amplitude)
+			else
+				@resetDots('')
 		else
 			@resetDots('')
 
