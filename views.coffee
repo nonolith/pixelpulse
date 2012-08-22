@@ -235,15 +235,13 @@ class pixelpulse.StreamView
 				stream = @stream
 				channel = stream.parent
 			
-				propInput = (filter) ->
-					w = numberWidget filter
+				propInput = (filter, title, cssClass) ->
+					w = numberWidget filter, title, cssClass
 					sourceInputs.push(w)
 					return w
 
 				valFilter = (prop) ->
-					changedfn: (v) =>
-						console.log('set', v)
-						channel.setAdjust(prop, v)
+					changedfn: (v) => channel.setAdjust(prop, v)
 					valuefn: (m) -> m[prop]
 					min: stream.min
 					max: stream.max
@@ -292,16 +290,16 @@ class pixelpulse.StreamView
 					
 				switch m.source
 					when 'constant'
-						@source.append propInput(valFilter('value'))
+						@source.append propInput(valFilter('value'), "Value", 'inp-value')
 					when 'adv_square'
-						@source.append propInput(valFilter('low'))
-						@source.append propInput(valFilter('high'))
-						@source.append propInput(freqFilterSquare)
-						@source.append propInput(dutyCycleFilter)
+						@source.append propInput(valFilter('low'), "Value 1", 'inp-value1')
+						@source.append propInput(valFilter('high'), "Value 2", 'inp-value2')
+						@source.append propInput(freqFilterSquare, "Frequency", 'inp-freq')
+						@source.append propInput(dutyCycleFilter, "Duty Cycle", 'inp-duty')
 					when 'sine', 'triangle', 'square'
-						@source.append propInput(valFilter('offset'))
-						@source.append propInput(valFilter('amplitude'))
-						@source.append propInput(freqFilter)
+						@source.append propInput(valFilter('offset'), "Center Value", 'inp-value')
+						@source.append propInput(valFilter('amplitude') "Amplitude", 'inp-amplitude')
+						@source.append propInput(freqFilter, "Frequency", 'inp-frequency')
 
 			for inp in @sourceInputs
 				inp.set(m)

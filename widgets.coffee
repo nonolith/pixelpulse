@@ -1,12 +1,12 @@
 
-window.numberWidget = ({valuefn, min, max, step, unit, digits, changedfn}) ->
+window.numberWidget = ({valuefn, min, max, step, unit, digits, changedfn}, title, cssClass) ->
 	d = $('<input type=number>')
 			.attr({min, max, step})
 			.change ->
 				v = parseFloat(d.val())
 				changedfn(v)
 				
-	span = $("<span>").append(d).append(unit)
+	span = $("<span>").append(d).append(unit).attr({title, 'class':cssClass})
 				
 	span.set = (arg) ->	d.val(valuefn(arg).toFixed(digits))
 	
