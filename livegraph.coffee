@@ -656,6 +656,8 @@ class livegraph.TriggerOverlay extends livegraph.Overlay
 			
 	position: (@y)  ->
 		if not @lg.geom then return
+
+		@y = Math.max(@lg.yaxis.visibleMin, Math.min(@lg.yaxis.visibleMax, @y))
 		
 		# Find pixel position
 		[sx, sy, dx, dy] = makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)
