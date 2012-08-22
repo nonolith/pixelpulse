@@ -307,7 +307,7 @@ class TimeseriesGraph extends livegraph.canvas
 class DragDotAction extends livegraph.Action
 	constructor: (@lg, pos, fn) ->
 		super(@lg, pos)
-		@withPos = fn if fn
+		(@withPos = fn) if fn
 		@lg.startDrag(pos)
 		@transform = livegraph.makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)
 		@onDrag(pos)
@@ -318,7 +318,7 @@ class DragDotAction extends livegraph.Action
 		@withPos(@lg, x, y)
 			
 class DragTriggerAction extends DragDotAction
-	withPos: (x, @y) ->
+	withPos: (lg, x, @y) ->
 		pixelpulse.timeseries.dragTrigger(@lg.stream, @y)
 	
 	onRelease: ->
