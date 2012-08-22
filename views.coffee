@@ -298,7 +298,7 @@ class pixelpulse.StreamView
 						@source.append propInput(dutyCycleFilter, "Duty Cycle", 'inp-duty')
 					when 'sine', 'triangle', 'square'
 						@source.append propInput(valFilter('offset'), "Center Value", 'inp-value')
-						@source.append propInput(valFilter('amplitude') "Amplitude", 'inp-amplitude')
+						@source.append propInput(valFilter('amplitude'), "Amplitude", 'inp-amplitude')
 						@source.append propInput(freqFilter, "Frequency", 'inp-frequency')
 
 			for inp in @sourceInputs
