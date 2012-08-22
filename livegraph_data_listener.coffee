@@ -202,13 +202,40 @@ class TimeseriesGraph extends livegraph.canvas
 		[x,y] = pos
 
 		if @dotConfig is 'wave' and @dots.offset.isNear(x, y, 10)
-			new DragOffsetAction(this, pos)
+			new DragDotAction this, pos, (lg, x, y) ->
+				lg.stream.parent.setAdjust {offset:y}
 
 		else if @dotConfig is 'wave' and @dots.period.isNear(x, y, 10)
-			new DragPeriodAmplitudeAction(this, pos)
+			new DragDotAction this, pos, (lg, x, y) ->
+				amplitude = y - lg.stream.parent.source.offset
+				period = Math.max(5, x * 4 / server.device.sampleTime)
+				lg.stream.parent.setAdjust {amplitude, period}
+
+		else if @dotConfig is 'square' and @dots.v1.isNear(x, y, 10)
+			new DragDotAction this, pos, (lg, x, y) ->
+				{highSamples, lowSamples} = lg.stream.parent.source
+				period = highSamples + lowSamples
+				x = Math.max(0, Math.min(period-1, x/server.device.sampleTime)) + 1
+				lg.stream.parent.setAdjust
+					high: y
+					highSamples: Math.round(x)
+					lowSamples: period - Math.round(x)
+					dutyCycleHint: x / period
+
+		else if @dotConfig is 'square' and @dots.v2.isNear(x, y, 10)
+			new DragDotAction this, pos, (lg, x, y) ->
+				{highSamples, lowSamples, dutyCycleHint} = lg.stream.parent.source
+				oldPeriod = highSamples + lowSamples
+				newPeriod = Math.round(Math.max(2, x/server.device.sampleTime + 1))
+				lg.stream.parent.setAdjust
+					highSamples: Math.round(dutyCycleHint * newPeriod) 
+					lowSamples: Math.round((1-dutyCycleHint) * newPeriod)
+					low: y
+					dutyCycleHint: dutyCycleHint
 
 		else if x > @width - 45
-			new DragConstantAction(this, pos)
+			new DragDotAction this, pos, (lg, x, y) ->
+				lg.stream.parent.setConstant(lg.stream.outputMode, y)
 
 		else if x < 45 and @timeseries.trigger
 			if @timeseries.trigger.stream != @stream
@@ -239,7 +266,9 @@ class TimeseriesGraph extends livegraph.canvas
 		isSource = @stream.isSource()
 		s = @stream.parent.source
 
-		if isSource and s.source == 'constant' and not @timeseries.trigger
+		sampleTime = server.device.sampleTime
+
+		if isSource and s.source == 'constant'
 			if @resetDots('constant')
 				@dots.d = new livegraph.Dot(this, @dseries.cssColor(), 5, 'r')
 			@dots.d.position(null, s.value)
@@ -249,7 +278,13 @@ class TimeseriesGraph extends livegraph.canvas
 					@dots.offset = new livegraph.Dot(this, @dseries.cssColor(), 5, '')
 					@dots.period = new livegraph.Dot(this, @dseries.cssColor(), 5, '')
 				@dots.offset.position(0, s.offset)
-				@dots.period.position(s.period*server.device.sampleTime/4, s.offset+s.amplitude)
+				@dots.period.position(s.period*sampleTime/4, s.offset+s.amplitude)
+			else if s.source is 'adv_square'
+				if @resetDots('square')
+					@dots.v1 = new livegraph.Dot(this, @dseries.cssColor(), 5, '')
+					@dots.v2 = new livegraph.Dot(this, @dseries.cssColor(), 5, '')
+				@dots.v1.position((s.highSamples-1)*sampleTime, s.high)
+				@dots.v2.position((s.highSamples+s.lowSamples-1)*sampleTime, s.low)
 			else
 				@resetDots('')
 		else
@@ -269,9 +304,10 @@ class TimeseriesGraph extends livegraph.canvas
 	onResized: ->
 		@timeseries.queueWindowUpdate()
 
-class DragYAction extends livegraph.Action
-	constructor: (@lg, pos) ->
+class DragDotAction extends livegraph.Action
+	constructor: (@lg, pos, fn) ->
 		super(@lg, pos)
+		@withPos = fn if fn
 		@lg.startDrag(pos)
 		@transform = livegraph.makeTransform(@lg.geom, @lg.xaxis, @lg.yaxis)
 		@onDrag(pos)
@@ -279,25 +315,9 @@ class DragYAction extends livegraph.Action
 	onDrag: ([x, y]) ->
 		[x, y] = livegraph.invTransform(x,y,@transform)
 		y = Math.min(Math.max(y, @lg.stream.min), @lg.stream.max)
-		@withPos(x, y)
-		
-	withPos: (x, y) ->
-
-class DragConstantAction extends DragYAction
-	withPos: (x, y) ->
-		@lg.stream.parent.setConstant(@lg.stream.outputMode, y)
-
-class DragOffsetAction extends DragYAction
-	withPos: (x, y) ->
-		@lg.stream.parent.setAdjust {offset:y}
-
-class DragPeriodAmplitudeAction extends DragYAction
-	withPos: (x, y) ->
-		amplitude = y - @lg.stream.parent.source.offset
-		period = x * 4 / server.device.sampleTime
-		@lg.stream.parent.setAdjust {amplitude, period}
+		@withPos(@lg, x, y)
 			
-class DragTriggerAction extends DragYAction
+class DragTriggerAction extends DragDotAction
 	withPos: (x, @y) ->
 		pixelpulse.timeseries.dragTrigger(@lg.stream, @y)
 	

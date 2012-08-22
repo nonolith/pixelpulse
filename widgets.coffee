@@ -1,50 +1,14 @@
 
-window.numberWidget = (value, conv, changed) ->
-	sampleTime = server.device.sampleTime
-	
-	switch conv
-		when 's'
-			min = sampleTime
-			max = 10
-			step = 0.1
-			unit = 's'
-			digits = 4
-		when 'hz'
-			min = 0.1
-			max = 1/sampleTime/5
-			step = 1
-			unit = 'Hz'
-			digits = 1
-		else
-			min = conv.min
-			max = conv.max
-			unit = conv.units
-			step = 0.1
-			digits = conv.digits
-
+window.numberWidget = ({valuefn, min, max, step, unit, digits, changedfn}) ->
 	d = $('<input type=number>')
 			.attr({min, max, step})
 			.change ->
 				v = parseFloat(d.val())
-				
-				if conv is 's'
-					v /= sampleTime
-				else if conv is 'hz'
-					v = (1/v)/sampleTime
-					
-				changed(v)
+				changedfn(v)
 				
 	span = $("<span>").append(d).append(unit)
 				
-	span.set = (v) ->
-		switch conv
-			when 's'
-				v *= sampleTime
-			when 'hz'
-				v = 1/(v * sampleTime)
-		d.val(v.toFixed(digits))
-		
-	span.set(value)
+	span.set = (arg) ->	d.val(valuefn(arg).toFixed(digits))
 	
 	return span
 	

@@ -175,7 +175,9 @@ class pixelpulse.StreamView
 		@sourceModeSel.appendTo(@sourceHead)
 		
 		@sourceTypeSel = selectDropdown ['Constant', 'Square', 'Sine', 'Triangle'], null, false, (o) =>
-			@stream.parent.guessSourceOptions(o.toLowerCase())
+			o = o.toLowerCase()
+			o = 'adv_square' if o is 'square' and server.device.hasAdvSquare
+			@stream.parent.guessSourceOptions(o)
 		@sourceTypeSel.appendTo(@sourceHead)			
 	
 		@source = $("<div class='source'>").appendTo(@aside)
@@ -225,37 +227,84 @@ class pixelpulse.StreamView
 		if isSource
 			if m.source != @sourceType
 				@sourceType = m.source
-				@sourceTypeSel.select(@sourceType)
+				@sourceTypeSel.select(if @sourceType == 'adv_square' then 'square' else @sourceType)
 				
-				@sourceInputs = sourceInputs = {}
+				@sourceInputs = sourceInputs = []
 				@source.empty()
 			
 				stream = @stream
 				channel = stream.parent
 			
-				propInput = (prop, conv) ->
-					if conv == 'val' then conv = stream
-					
-					sourceInputs[prop] = numberWidget m[prop], conv, (v) =>
+				propInput = (filter) ->
+					w = numberWidget filter
+					sourceInputs.push(w)
+					return w
+
+				valFilter = (prop) ->
+					changedfn: (v) =>
+						console.log('set', v)
 						channel.setAdjust(prop, v)
+					valuefn: (m) -> m[prop]
+					min: stream.min
+					max: stream.max
+					step: Math.pow(10, -stream.digits)
+					unit: stream.units
+					digits: stream.digits
+
+				freqFilter = 
+					changedfn: (v) =>
+						channel.setAdjust('period', 1/(v*server.device.sampleTime))
+					valuefn: (m) -> 1/(m.period*server.device.sampleTime) 
+					min: 0.1
+					max: 1/server.device.sampleTime/5
+					step: 1
+					unit: 'Hz'
+					digits: 1
+
+				freqFilterSquare = $.extend {}, freqFilter,
+					changedfn: (v) =>
+						period = 1/(v*server.device.sampleTime)
+						{dutyCycleHint} = stream.parent.source
+						t1 = period * dutyCycleHint
+						channel.setAdjust
+							highSamples: Math.round(t1)
+							lowSamples:  Math.round(period-t1)
+							dutyCycleHint: dutyCycleHint
+
+					valuefn: (m) -> 1/((m.highSamples+m.lowSamples)*server.device.sampleTime)
+
+				dutyCycleFilter = 
+					changedfn: (v) => 
+						v = Math.max(0, Math.min(100, v/100))
+						{highSamples,lowSamples} = stream.parent.source
+						per = highSamples + lowSamples
+						channel.setAdjust
+							highSamples: Math.ceil(v*per)
+							lowSamples: Math.floor((1-v)*per)
+							dutyCycleHint: v
+						return
+					valuefn: (m) -> m.highSamples/(m.highSamples+m.lowSamples) * 100
+					min: 0
+					max: 100
+					step: 1
+					unit: '%'
+					digits: 1
 					
 				switch m.source
 					when 'constant'
-						@source.append propInput('value', 'val')
+						@source.append propInput(valFilter('value'))
 					when 'adv_square'
-						@source.append propInput('low', 'val')
-						@source.append ' for '
-						@source.append propInput('lowSamples', 's')
-						@source.append propInput('high', 'val')
-						@source.append ' for '
-						@source.append propInput('highSamples', 's')
+						@source.append propInput(valFilter('low'))
+						@source.append propInput(valFilter('high'))
+						@source.append propInput(freqFilterSquare)
+						@source.append propInput(dutyCycleFilter)
 					when 'sine', 'triangle', 'square'
-						@source.append propInput('offset', 'val')
-						@source.append propInput('amplitude', 'val')
-						@source.append propInput('period', 'hz')
-			else
-				for prop, inp of @sourceInputs
-					inp.set(m[prop])
+						@source.append propInput(valFilter('offset'))
+						@source.append propInput(valFilter('amplitude'))
+						@source.append propInput(freqFilter)
+
+			for inp in @sourceInputs
+				inp.set(m)
 			
 		else
 			@source.empty()

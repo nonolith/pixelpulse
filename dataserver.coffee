@@ -174,6 +174,7 @@ class CEEDevice
 		@listenersById = {}
 
 		@hasOutTrigger = @parent.version >= '1.2' and @fwVersion >= '1.2'
+		@hasAdvSquare = @parent.version >= '1.2'
 
 		@changed.notify(this)
 
@@ -236,7 +237,12 @@ class Channel
 		@setDirect dict, cb
 
 	setDirect: (dict, cb) ->
-		dict['channel'] = @id
+		dict.channel = @id
+
+		if dict.dutyCycleHint
+			dict.hint = "dutycycle:#{dict.dutyCycleHint}"
+			delete dict.dutyCycleHint
+
 		server.send 'set', dict
 		if cb
 			fn = (s) =>
@@ -251,7 +257,7 @@ class Channel
 		for i in KEEP_ATTRS
 			if @source[i]? then d[i] = @source[i]
 
-		if val
+		if val?
 			d[dict] = val
 		else
 			d[i] = v for i, v of dict
@@ -293,6 +299,13 @@ class Channel
 	
 	onOutputChanged: (m) ->
 		@source = m
+
+		if m.source is 'adv_square'
+			m.dutyCycleHint = if (match = /dutycycle:([\d.]+)/.exec(m.hint))
+				parseFloat(match[1], 10)
+			else
+				m.highSamples / (m.highSamples + m.lowSamples)
+
 		@outputChanged.notify(m)
 
 class Stream
