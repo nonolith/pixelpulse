@@ -54,8 +54,9 @@ exports.grid = grid = (min, max, countHint=10, limitMin=-Infinity, limitMax=Infi
 # Generate a grid for the specified range, with corresponding labels
 # parameters: see grid()
 # unit: the base unit to use
-exports.gridLabels = gridLabels = (min, max, unit='', countHint=10, useScale=true, limitMin, limitMax) ->
-	[unitprefix, scale] = if useScale then unitPrefixScale((max-min)/2) else ['', 1]
+exports.gridLabels = gridLabels = (min, max, unit='', countHint=10, useScale=true, limitMin, limitMax, prescale=1) ->
+	[unitprefix, scale] = if useScale then unitPrefixScale((max-min)/2/prescale) else ['', 1]
+	scale *= prescale
 	g = grid(min, max, countHint, limitMin, limitMax)
 	digits = Math.max(Math.ceil(-Math.log(Math.abs((g[1]-g[0])/scale))/Math.LN10), 0)
 	hasZero = 0 in g
@@ -66,5 +67,5 @@ exports.gridLabels = gridLabels = (min, max, unit='', countHint=10, useScale=tru
 						v == 0
 					else
 						i == 0
-		showunit = if hasunit then "#{unitprefix}#{unit}" else ''
+		showunit = if unit and hasunit then "#{unitprefix}#{unit}" else ''
 		[v, "#{num}#{showunit}"]

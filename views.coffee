@@ -199,14 +199,17 @@ class pixelpulse.StreamView
 	addReadingUI: (tile) ->
 		tile.append($("<span class='reading'>")
 			.append(@value = $("<span class='value'>"))
-			.append($("<span class='unit'>").text(@stream.units)))
+			.append(@unitSpan = $("<span class='unit'>")))
 		
 	onValue: (v) ->
-		@value.text(v.toFixed(@stream.digits))
+		@value.text((v/@valueUnitScale).toFixed(@valueDigits))
 		if (v < 0)
 			@value.addClass('negative')
 		else
 			@value.removeClass('negative')
+
+		# keep the value around if we need to redisplay (e.g. gain change)
+		@lastValue = v
 		
 	sourceChanged: (m) =>
 		isSource = (m.mode == @stream.outputMode)
@@ -311,6 +314,13 @@ class pixelpulse.StreamView
 	gainChanged: (g) =>
 		if @gainOpts then @gainOpts.val(g)
 		@lg.gainChanged(g)
+
+		prescale = @lg.yaxis.prescale
+		[unitPrefix, unitScale] = unitlib.unitPrefixScale(@lg.yaxis.span()/2/prescale)
+		@unitSpan.text(unitPrefix+@stream.units)
+		@valueUnitScale = unitScale*prescale
+		@valueDigits = @stream.digits + Math.floor(Math.log(@valueUnitScale)/Math.LN10)
+		@onValue(@lastValue)
 
 	destroy: ->
 

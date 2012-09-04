@@ -320,12 +320,12 @@ class livegraph.canvas
 		if @showXgrid or @showXbottom
 			xgrid = unitlib.gridLabels(@xaxis.visibleMin, @xaxis.visibleMax,
 				                       @xaxis.unit, @xgridticks, true,
-				                       @xaxis.min, @xaxis.max)
+				                       @xaxis.min, @xaxis.max, @xaxis.prescale)
 
 		if @showYgrid or @showYleft or @showYright
 			ygrid = unitlib.gridLabels(@yaxis.visibleMin, @yaxis.visibleMax,
-				                       @yaxis.unit, @ygridticks, false,
-				                       @yaxis.min, @yaxis.max)
+				                       @yaxis.unit, @ygridticks, true,
+				                       @yaxis.min, @yaxis.max, @yaxis.prescale)
 
 		if @showXgrid or @showXgridZero	then @drawXgrid(xgrid)
 		if @showXbottom then @drawXAxis(xgrid, @geom.ybottom)	
