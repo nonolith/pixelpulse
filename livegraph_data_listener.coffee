@@ -249,6 +249,11 @@ class TimeseriesGraph extends livegraph.canvas
 	onDblClick: (e, pos, btn) =>
 		if not @timeseries.canChangeView() then return
 		zf = if e.shiftKey or btn==2 then 2 else 0.5
+
+		if zf < 1 and @timeseries.xaxis.span() < 40 * @timeseries.device.sampleTime
+			# Prevent zooming in uselessly far
+			return
+
 		opts = {time: 200, zoomFactor:zf } 
 		return new livegraph.ZoomXAction(opts, this, pos,
 			@timeseries.graphs)
