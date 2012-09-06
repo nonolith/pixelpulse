@@ -449,6 +449,7 @@ class server.DataListener extends server.Listener
 
 	onMessage: (m) ->
 		if m.idx == 0
+			@sweepStartSample = m.sampleIndex
 			@subsample = (m.subsample + 2.0)*@device.sampleTime || 0
 			
 			if @needsReset
