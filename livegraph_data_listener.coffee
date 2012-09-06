@@ -39,8 +39,8 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		else
 			# Expand the range so scrolling doesn't immedately request new data
 			# Unnecessary with triggering enabled as it will fetch new data anyway
-			min = Math.max(min - 0.2*span, @xaxis.min)
-			max = Math.min(max + 0.2*span, @xaxis.max)
+			min = Math.max(min - 0.4*span, @xaxis.min)
+			max = Math.min(max + 0.4*span, @xaxis.max)
 
 		pts = lg.width / 2 * (max - min) / span
 

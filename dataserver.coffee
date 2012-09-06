@@ -439,7 +439,8 @@ class server.DataListener extends server.Listener
 		if @trigger
 			super(-time, requestedSampleTime)
 			@trigger.offset = @xmin
-			@count = @len =  Math.ceil(time/@sampleTime)
+			#add a few samples to give range for subsample offset
+			@count = @len =  Math.ceil(time/@sampleTime) + 4
 			@xmin = Math.ceil(@xmin/@sampleTime)*@sampleTime
 			@xmax = @xmin + time
 		else
