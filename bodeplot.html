@@ -4,7 +4,11 @@
 <meta charset='utf-8'>
 
 <title>Bode Plot</title>
+
+<link rel="stylesheet/less" type="text/css" href='ui.less'>
+
 <script src='lib/coffee-script.js'></script>
+<script src='lib/less.js'></script>
 
 <script src='lib/jquery-1.7.1.min.js'></script>
 <script src='lib/dsp.js'></script>
@@ -13,6 +17,7 @@
 <script src='human_units.coffee' type='text/coffeescript'></script>
 <script src='livegraph.coffee' type='text/coffeescript'></script>
 
+<script src='session_common.coffee' type='text/coffeescript'></script>
 <script src='bodeplot.coffee' type='text/coffeescript'></script>
 
 <style>
@@ -64,7 +69,23 @@
 
 <body>
 
-<div id='with_device' style='display:none'>
+<div id='error-overlay'>
+<div id='error-status'>Loading...</div>
+
+<div id='connectError' style='display:none'>
+<h1>Nonolith Connect not found</h1>
+<p class='osspec windows'>
+Click <strong>Start->Programs->Nonolith Labs->Nonolith Connect</strong> to start Nonolith Connect.
+</p>
+<p class='osspec linux'>
+Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start Nonolith Connect.
+</p>
+</div>
+
+<div id='chooseDevices' style='display:none'>
+<h1>Choose a device</h1><ul></ul>
+</div>
+</div>
 
 <section id='response_graphs'>
 	<div id='step_plot' class='livegraph'> </div>
@@ -81,6 +102,5 @@
 <button id='stop'>Stop</button>
 </section>
 
-</div>
 </body>
 </html>

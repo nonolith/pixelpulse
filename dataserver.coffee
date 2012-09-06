@@ -68,8 +68,9 @@ class Dataserver
 					@devicesChanged.notify(@devices)
 				
 				when "deviceDisconnected"
-					@device.removed.notify()
+					d = @device
 					@device = null
+					d.removed.notify()
 					
 				when "return"
 					@runCallback(m.id, m)

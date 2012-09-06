@@ -25,6 +25,7 @@ Pixelpulse
 <script src='livegraph_data_listener.coffee' type='text/coffeescript'></script>
 <script src='widgets.coffee' type='text/coffeescript'></script>
 <script src='human_units.coffee' type='text/coffeescript'></script>
+<script src='session_common.coffee' type='text/coffeescript'></script>
 <script src='app.coffee' type='text/coffeescript'></script>
 <script src='views.coffee' type='text/coffeescript'></script>
 </head>
@@ -80,7 +81,7 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 		<button id='device-config' title="Configure device">Configure</button>
 	</div>
 	<div id='device-info'>
-		<button id='switchDev' onclick='pixelpulse.showDeviceChooser()'>Switch</button>
+		<button id='switchDev' onclick='session.chooseDevice()'>Switch</button>
 	</div>
 </div>
 
