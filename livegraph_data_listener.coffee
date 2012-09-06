@@ -33,10 +33,17 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		
 		span = max-min
 		
-		min = Math.max(min - 0.2*span, @xaxis.min)
-		max = Math.min(max + 0.2*span, @xaxis.max)
+		if @trigger
+			# Adjust the holdoff so a sweep takes a minimum of 0.1s
+			@trigger.holdoff = Math.max(0, 0.1-span)
+		else
+			# Expand the range so scrolling doesn't immedately request new data
+			# Unnecessary with triggering enabled as it will fetch new data anyway
+			min = Math.max(min - 0.2*span, @xaxis.min)
+			max = Math.min(max + 0.2*span, @xaxis.max)
+
 		pts = lg.width / 2 * (max - min) / span
-		
+
 		@configure(min, max, pts)
 		@submit()
 
@@ -147,12 +154,12 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 		@trigger.stream = stream
 		@trigger.level = level
 
-		@trigger.type = if stream.isSource() and @device.hasOutTrigger
+		if stream.isSource() and @device.hasOutTrigger
 			@trigger.force = if stream.parent.source.source is 'constant' then 0.5 else 10
-			'out'
+			@trigger.type = 'out'
 		else
 			@trigger.force = 0.5
-			'in'
+			@trigger.type = 'in'
 
 		@dragTrigger(stream, level)
 
