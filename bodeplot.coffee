@@ -53,7 +53,7 @@ window.nowebgl = true
 initView = ->
 	$('#with_device').show()
 
-	time_axis = new livegraph.Axis(-0.005, 0.015)
+	time_axis = new livegraph.Axis(-0.005, 0.015, 's', true)
 	value_axis = new livegraph.Axis(0, 5)
 	diff_axis = new livegraph.Axis(-0.5, 0.5)
 	freq_axis = new livegraph.Axis()

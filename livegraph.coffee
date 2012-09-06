@@ -8,7 +8,7 @@ PADDING = livegraph.PADDING = 10
 AXIS_SPACING = livegraph.AXIS_SPACING = 25
 			
 class livegraph.Axis
-	constructor: (@min, @max) ->
+	constructor: (@min, @max, @unit='', @scaleUnit=false) ->
 		if @max == 'auto'
 			@autoScroll = min
 			@max = 0
@@ -319,12 +319,12 @@ class livegraph.canvas
 
 		if @showXgrid or @showXbottom
 			xgrid = unitlib.gridLabels(@xaxis.visibleMin, @xaxis.visibleMax,
-				                       @xaxis.unit, @xgridticks, true,
+				                       @xaxis.unit, @xgridticks, @xaxis.scaleUnit,
 				                       @xaxis.min, @xaxis.max, @xaxis.prescale)
 
 		if @showYgrid or @showYleft or @showYright
 			ygrid = unitlib.gridLabels(@yaxis.visibleMin, @yaxis.visibleMax,
-				                       @yaxis.unit, @ygridticks, true,
+				                       @yaxis.unit, @ygridticks, @xaxis.scaleUnit,
 				                       @yaxis.min, @yaxis.max, @yaxis.prescale)
 
 		if @showXgrid or @showXgridZero	then @drawXgrid(xgrid)

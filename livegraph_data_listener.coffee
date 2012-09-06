@@ -5,8 +5,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 	constructor: (@device, @streams, @graphs=[]) ->
 		super(@device, @streams)
 
-		@xaxis = new livegraph.Axis(-10, 0)
-		@xaxis.unit = 's'
+		@xaxis = new livegraph.Axis(-10, 0, 's', true)
 		@xaxis.windowChanged = @checkWindowChange
 
 		@updatePending = no
@@ -189,14 +188,13 @@ class DataSeries extends livegraph.Series
 
 class TimeseriesGraph extends livegraph.canvas
 	constructor: (@timeseries, @stream, elem, color) ->
-		@yaxis = new livegraph.Axis(@stream.min, @stream.max)
+		@yaxis = new livegraph.Axis(@stream.min, @stream.max, @stream.unit, true)
 
 		if @stream.unit is 'mA'
 			@yaxis.prescale = 1000
 			@yaxis.unit = 'A'
 		else
 			@yaxis.prescale = 1
-			@yaxis.unit = @stream.unit
 
 		@dseries = new DataSeries(@timeseries, 'time', @stream)
 		@dseries.color = color
