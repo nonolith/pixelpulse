@@ -201,15 +201,21 @@ class pixelpulse.StreamView
 			.append(@value = $("<span class='value'>"))
 			.append(@unitSpan = $("<span class='unit'>")))
 		
-	onValue: (v) ->
-		@value.text((v/@valueUnitScale).toFixed(@valueDigits))
+	onValue: (val) ->
+		v = val/@valueUnitScale
+
+		if not isNaN v
+			@value.text(v.toFixed(@valueDigits))
+		else
+			@value.text('- - - ')
+
 		if (v < 0)
 			@value.addClass('negative')
 		else
 			@value.removeClass('negative')
 
 		# keep the value around if we need to redisplay (e.g. gain change)
-		@lastValue = v
+		@lastValue = val
 		
 	sourceChanged: (m) =>
 		isSource = (m.mode == @stream.outputMode)
