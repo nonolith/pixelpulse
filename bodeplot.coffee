@@ -68,6 +68,10 @@ class App
 		@sense.stream = @device.channels.b.streams.v
 		@resized()
 
+		if @pendingStart
+			@pendingStart = false
+			@start()
+
 	resized: ->
 		@step_plot.resized()
 		@imp_plot.resized()
@@ -75,6 +79,14 @@ class App
 		@phase_plot.resized()
 
 	start: =>
+		targetSampleTime = 1/80e3
+		if @device.sampleTime != targetSampleTime
+			console.log("Setting sample rate")
+			@device.configure(sampleTime:targetSampleTime)
+			# Wait for the server to reconfigure the device, then start it
+			@pendingStart = true
+			return
+
 		$('#stop').show()
 		$('#start').hide()
 		@device.startCapture()
@@ -156,24 +168,27 @@ class App
 		[data1, data2] = @listener.data
 
 		@sweepCount += 1
+		updateUI = (@sweepCount % 5 == 1)
 
 		processSignal = (s, d) =>
 			vAccumulate(d, s.acc)
 
-			#return if not window.update
-			vMul(s.acc, s.step_series.ydata, 1/@sweepCount)
-			vDiff(s.step_series.ydata, s.imp_series.ydata)
-			s.fft.forward(s.imp_series.ydata)
+			if updateUI
+				vMul(s.acc, s.step_series.ydata, 1/@sweepCount)
+				vDiff(s.step_series.ydata, s.imp_series.ydata)
+				s.fft.forward(s.imp_series.ydata)
 
 		processSignal(@source, data1)
 		processSignal(@sense,  data2)
 
-		fftMagPhase(@sense.fft, @source.fft, @mag_series.ydata, @phase_series.ydata)
+		if updateUI
+			fftMagPhase(@sense.fft, @source.fft, @mag_series.ydata, @phase_series.ydata)
 
-		@step_plot.needsRedraw()
-		@imp_plot.needsRedraw()
-		@mag_plot.needsRedraw()
-		@phase_plot.needsRedraw()
+			@step_plot.needsRedraw()
+			@imp_plot.needsRedraw()
+			@mag_plot.needsRedraw()
+			@phase_plot.needsRedraw()
+
 
 	stop: =>
 		@device.pauseCapture()
