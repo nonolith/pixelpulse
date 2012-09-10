@@ -43,7 +43,19 @@ class livegraph.Axis
 			
 	windowChanged: (min, max, done) ->
 	windowDoneAnimating: (min, max) ->
-		
+
+	gridLabels: (ticks) ->
+		unitlib.gridLabels(@visibleMin, @visibleMax,
+			               @unit, ticks, @scaleUnit,
+			               @min, @max, @prescale)
+
+# Logarithmic axis.
+# Important Note: this only adjusts the axis labels. The corresponding 
+# values in the series, and window/range parameters are expected to
+# be already log-transformed.
+class livegraph.LogAxis extends livegraph.Axis
+	gridLabels: (ticks) ->
+		unitlib.logGridLabels(@visibleMin, @visibleMax, @unit)
 		
 class DigitalAxis
 	min = 0
@@ -318,14 +330,10 @@ class livegraph.canvas
 		@ctxa.clearRect(0,0,@width, @height)
 
 		if @showXgrid or @showXbottom
-			xgrid = unitlib.gridLabels(@xaxis.visibleMin, @xaxis.visibleMax,
-				                       @xaxis.unit, @xgridticks, @xaxis.scaleUnit,
-				                       @xaxis.min, @xaxis.max, @xaxis.prescale)
+			xgrid = @xaxis.gridLabels(@xgridticks)
 
 		if @showYgrid or @showYleft or @showYright
-			ygrid = unitlib.gridLabels(@yaxis.visibleMin, @yaxis.visibleMax,
-				                       @yaxis.unit, @ygridticks, @xaxis.scaleUnit,
-				                       @yaxis.min, @yaxis.max, @yaxis.prescale)
+			ygrid = @yaxis.gridLabels(@ygridticks)
 
 		if @showXgrid or @showXgridZero	then @drawXgrid(xgrid)
 		if @showXbottom then @drawXAxis(xgrid, @geom.ybottom)	

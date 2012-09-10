@@ -13,9 +13,9 @@ class App
 		@time_axis = new livegraph.Axis(-0.005, 0.015, 's', true)
 		@value_axis = new livegraph.Axis(0, 5)
 		@diff_axis = new livegraph.Axis(-0.02, 0.02)
-		@freq_axis = new livegraph.Axis(0, 1)
-		@gain_axis = new livegraph.Axis(0, 1)
-		@phase_axis = new livegraph.Axis(-Math.PI, Math.PI)
+		@freq_axis = new livegraph.LogAxis(0, 4, 'Hz')
+		@gain_axis = new livegraph.Axis(-45, 45, 'dB')
+		@phase_axis = new livegraph.Axis(-180, 180)
 		
 		@source = 
 			stream: null
@@ -94,7 +94,7 @@ class App
 		@fdata = new Float32Array(sampleScale/2) #arange(0, sampleScale/2, 1)
 		for i in [0...sampleScale/2]
 			@fdata[i] = Math.max(0, Math.log(i / sampleTime / sampleScale)) / Math.LN10
-		@freq_axis.visibleMax = @freq_axis.max = @fdata[@fdata.length-1] #sampleScale/2 # 
+		@freq_axis.visibleMax = @freq_axis.max = Math.min(@fdata[@fdata.length-1], 4) 
 
 		initSignal = (s) =>
 			s.step_series.xdata = @tdata
@@ -110,7 +110,7 @@ class App
 		@mag_series.ydata = new Float32Array(sampleScale/2)
 
 		@phase_series.xdata = @fdata
-		@mag_series.ydata = new Float32Array(sampleScale/2)
+		@phase_series.ydata = new Float32Array(sampleScale/2)
 
 		initSignal(@source)
 		initSignal(@sense)
@@ -122,6 +122,7 @@ class App
 		@step_plot.needsRedraw(true)
 		@imp_plot.needsRedraw(true)
 		@mag_plot.needsRedraw(true)
+		@phase_plot.needsRedraw(true)
 
 		@source.stream.parent.set @source.stream.outputMode, 'arb',
 			{values: [
@@ -206,8 +207,11 @@ fftMagPhase = (fft1, fft2, outMag, outPhase) ->
 	r2a = fft2.real
 	i2a = fft2.imag
 
-	sqrt = Math.sqrt
+	log = Math.log
 	atan2 = Math.atan2
+
+	magScale = 10 / Math.LN10 # avoid square root, so an extra power of 2
+	phaseScale = 180 / Math.PI
 
 	for x in [0...fft1.bufferSize/2]
 		[r1, i1, r2, i2] = [r1a[x], i1a[x], r2a[x], i2a[x]]
@@ -215,8 +219,8 @@ fftMagPhase = (fft1, fft2, outMag, outPhase) ->
 		d = r2*r2 + i2*i2
 		r = (r1*r2 + i1*i2)/d
 		i = (r2*i1 - r1*i2)/d
-		outMag[x] = sqrt(r*r + i*i)
-		outPhase[x] = atan2(i, r)
+		outMag[x] = log(r*r + i*i) * magScale
+		outPhase[x] = atan2(i, r) * phaseScale
 		
 $(document).ready ->
 	window.app = app = new App()

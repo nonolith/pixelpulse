@@ -51,6 +51,24 @@ exports.grid = grid = (min, max, countHint=10, limitMin=-Infinity, limitMax=Infi
 
 	return arange(gridMin, gridMax, step)
 
+UNICODE_SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹"
+
+# Generate a logarithmic grid
+exports.logGridLabels = (powMin, powMax, unit) ->
+	out = []
+
+	for i in [powMin..powMax]
+		for j in [1..9]
+			if j == 1
+				out.push([i, "10#{UNICODE_SUPERSCRIPT[i]}"])
+			else
+				out.push([i + Math.log(j)/Math.LN10, ''])
+
+	out[0][1] += " " + unit if unit
+
+	return out
+
+
 # Generate a grid for the specified range, with corresponding labels
 # parameters: see grid()
 # unit: the base unit to use
