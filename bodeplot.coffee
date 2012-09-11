@@ -1,21 +1,18 @@
 
 stepTimeRatio = 0.25
 
-v1 = 0
-v2 = 4
-
-sampleScale = 4096
+sampleScale = 8192
 
 window.nowebgl = true
 		
 class App
 	constructor: ->
 		@time_axis = new livegraph.Axis(-0.005, 0.015, 's', true)
-		@value_axis = new livegraph.Axis(0, 5)
-		@diff_axis = new livegraph.Axis(-0.02, 0.02)
+		@value_axis = new livegraph.Axis(0, 1)
+		@diff_axis = new livegraph.Axis(-0.01, 0.02)
 		@freq_axis = new livegraph.LogAxis(0, 4, 'Hz')
 		@gain_axis = new livegraph.Axis(-45, 45, 'dB')
-		@phase_axis = new livegraph.Axis(-180, 180)
+		@phase_axis = new livegraph.Axis(-180, 180, "\u00B0")
 		
 		@source = 
 			stream: null
@@ -28,6 +25,9 @@ class App
 			acc: null
 			step_series: new livegraph.Series([], [], [255, 0, 0])
 			imp_series:  new livegraph.Series([], [], [255, 0, 0])
+
+		@v1 = 0
+		@v2 = 4
 		
 		@mag_series = new livegraph.Series([], [], [0, 0, 0])
 		@phase_series = new livegraph.Series([], [], [0, 0, 0])
@@ -60,25 +60,67 @@ class App
 			{xbottom:yes, yright:no, xgrid:yes}
 		)
 
-		$('#start').click(@start)
-		$('#stop').click(@stop)
+		@running = false
+		$('#startpause').click =>
+			if not @running then @start() else @stop()
+
+		$(window).on 'resize', @resized
+
+		$('#source_stream, #sense_stream, #v1, #v2').change @updateParams
 
 	initDevice: (@device) ->
-		@source.stream = @device.channels.a.streams.v
-		@sense.stream = @device.channels.b.streams.v
 		@resized()
+
+		@listener = false
+		@afterStop()
+
+		populateStreamSelect = (device, sel, defaultVal) ->
+			beforeVal = sel.get(0).value || defaultVal
+			$(sel).empty()
+			for k, channel of device.channels
+				for k, stream of channel.streams
+					$("<option>").attr(value:"#{channel.id}.#{stream.id}")
+					             .text("#{stream.displayName}")
+					             .appendTo(sel)
+			sel.val(beforeVal)
+
+		populateStreamSelect(@device, $('#source_stream'), 'a.v')
+		populateStreamSelect(@device, $('#sense_stream'), 'b.v')
+
+		if not $('#v1').val() then $('#v1').val(0.5)
+		if not $('#v2').val() then $('#v2').val(4.5)
+
+		@updateParams()
 
 		if @pendingStart
 			@pendingStart = false
 			@start()
 
-	resized: ->
+	updateParams: =>
+		getStream = (device, sel) ->
+			[chId, sId] = sel.val().split('.')
+			return device.channels[chId].streams[sId]
+
+		@source.stream = getStream(@device, $('#source_stream'))
+		@sense.stream  = getStream(@device, $('#sense_stream'))
+
+		$('#v1-unit, #v2-unit').text(@source.stream.units)
+
+		@v1 = parseFloat($('#v1').val(), 10)
+		@v2 = parseFloat($('#v2').val(), 10)
+
+	resized: =>
 		@step_plot.resized()
 		@imp_plot.resized()
 		@mag_plot.resized()
 		@phase_plot.resized()
 
 	start: =>
+		@running = true
+		$(document.body).toggleClass 'capturing', true
+		$("#startpause").attr('title', 'Stop')
+		$('#source_stream, #sense_stream, #v1, #v2').attr('disabled', true)
+
 		targetSampleTime = 1/80e3
 		if @device.sampleTime != targetSampleTime
 			console.log("Setting sample rate")
@@ -87,8 +129,6 @@ class App
 			@pendingStart = true
 			return
 
-		$('#stop').show()
-		$('#start').hide()
 		@device.startCapture()
 
 		@sweepCount = 0
@@ -99,8 +139,8 @@ class App
 		@time_axis.max = sampleScale * (1-stepTimeRatio) * sampleTime
 		@tdata = arange(@time_axis.min, @time_axis.max, @device.sampleTime)
 
-		@time_axis.visibleMin = @time_axis.min * 0.5
-		@time_axis.visibleMax = @time_axis.max * 0.5
+		@time_axis.visibleMin = @time_axis.min * 0.1
+		@time_axis.visibleMax = @time_axis.max * 0.3
 
 		@freq_axis.visibleMin = @freq_axis.min = 0
 		@fdata = new Float32Array(sampleScale/2) #arange(0, sampleScale/2, 1)
@@ -138,18 +178,17 @@ class App
 
 		@source.stream.parent.set @source.stream.outputMode, 'arb',
 			{values: [
-				{t:0, v:v1}
-				{t:stepTimeRatio * sampleScale, v:v1}
-				{t:stepTimeRatio * sampleScale, v:v2}
-				{t:1    * sampleScale, v:v2}
-				{t:1.25 * sampleScale, v:v1}
-				{t:2  * sampleScale, v:v1} # the period > the requested length, so bug isn't triggered
+				{t:0, v:@v1}
+				{t:stepTimeRatio * sampleScale, v:@v1}
+				{t:stepTimeRatio * sampleScale, v:@v2}
+				{t:1    * sampleScale, v:@v2}
+				{t:1.25 * sampleScale, v:@v1}
+				{t:2  * sampleScale, v:@v1} # the period > the requested length, so bug isn't triggered
 			]
 			phase: 0
 			relPhase: 0
 			repeat: -1},
 			(d) =>
-				console.log 'set arb', d
 				@listener = new server.DataListener(app.device, [@source.stream, @sense.stream])
 				#listener.configure()
 				@listener.startSample = d.startSample + 1
@@ -168,10 +207,10 @@ class App
 		[data1, data2] = @listener.data
 
 		@sweepCount += 1
-		updateUI = (@sweepCount % 5 == 1)
+		updateUI = (@sweepCount % 4 == 2)
 
 		processSignal = (s, d) =>
-			vAccumulate(d, s.acc)
+			vAccumulate(d, s.acc, s.stream.min, s.stream.max-s.stream.min)
 
 			if updateUI
 				vMul(s.acc, s.step_series.ydata, 1/@sweepCount)
@@ -189,16 +228,21 @@ class App
 			@mag_plot.needsRedraw()
 			@phase_plot.needsRedraw()
 
+			$('#samplecount').text(@sweepCount)
+
 
 	stop: =>
 		@device.pauseCapture()
 
 	afterStop: =>
+		$(document.body).toggleClass 'capturing', false
+		$("#startpause").attr('title', 'Start')
+		$('#source_stream, #sense_stream, #v1, #v2').removeAttr('disabled')
+		@running = false
+
 		if @listener
 			@listener.cancel()
 			@listener = null
-		$('#start').show()
-		$('#stop').hide()
 
 	
 vDiff = (inArray, outArray) ->
@@ -206,9 +250,9 @@ vDiff = (inArray, outArray) ->
 		outArray[i] = inArray[i+1] - inArray[i]
 	return
 
-vAccumulate = (inArray, outArray) ->
+vAccumulate = (inArray, outArray, min=0, range=1) ->
 	for i in [0...inArray.length]
-		outArray[i] += inArray[i]
+		outArray[i] += (inArray[i] - min) / range
 	return
 	
 vMul = (inArray, outArray, fac) ->

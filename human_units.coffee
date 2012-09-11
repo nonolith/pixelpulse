@@ -51,7 +51,7 @@ exports.grid = grid = (min, max, countHint=10, limitMin=-Infinity, limitMax=Infi
 
 	return arange(gridMin, gridMax, step)
 
-UNICODE_SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹"
+UNICODE_SUPERSCRIPT = String.fromCharCode(8304, 185, 178, 179, 8308, 8309, 8310, 8311, 8312, 8313)
 
 # Generate a logarithmic grid
 exports.logGridLabels = (powMin, powMax, unit) ->

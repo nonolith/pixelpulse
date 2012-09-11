@@ -22,7 +22,17 @@
 
 <style>
 
+#wrap{
+	max-width: 1000px;
+	position: absolute;
+	top: 32px;
+	width: 100%;
+	height: 100%;
+}
+
 .livegraph{
+	width: 100%;
+	height: 100%;
 	position: relative;
 }
 
@@ -38,11 +48,35 @@
 	top: 0;
 	bottom: 0;
 	width: 33%;
+	max-width: 450px;
 }
 
-#response_graphs div{
+#response_graphs > div{
 	width: 100%;
 	height: 300px;
+}
+
+.plot-wrap{
+	padding: 20px 0 0 10px;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	position: relative;
+}
+
+.plot-wrap h2, #sample-status{
+	text-transform: uppercase;
+	font-size: 11px;
+	letter-spacing: 0.15em;
+	margin-left: 36px;
+	position: absolute;
+	top: 10px;
+}
+
+#sample-status{
+	position: absolute;
+	right: 10px;
+	text-align: right;
+	width: 100px;
 }
 
 #bode_graphs{
@@ -53,16 +87,58 @@
 	right: 0;
 }
 
-#bode_graphs div{
+#bode_graphs > div{
 	width: 100%;
 	height: 300px;
 }
 
-#controls{
+#toolbar{
 	position: absolute;
-	bottom: 0;
+	top: 0;
+	width: 100%;
+	display: block;
+	background: linear-gradient(270deg, #555 0%, #585858 25%, #333 100%);
+	background: -webkit-linear-gradient(270deg, #555 0%, #585858 25%, #333 100%);
+	background: -moz-linear-gradient(270deg, #555 0%, #585858 25%, #333 100%);
+	color: white;
+	box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
+	-webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+#toolbar p, #toolbar button{
+	display: inline-block;
+	height: 32px;
+}
+
+#toolbar p{
+	margin: -2px 10px 0 10px;
+}
+
+#toolbar select, #toolbar input{
+	height: 33px;
+	font-size: 16px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: #666;
+	color: white;
+	padding: 0 5px 0 5px;
+	margin: 0 5px 0 5px;
+}
+
+#toolbar input::-webkit-inner-spin-button,
+#toolbar input ::-webkit-outer-spin-button{
+	-webkit-appearance: none;
+}
+
+#toolbar select option{
+	color: black;
+}
+
+#v1, #v2{
+	width: 40px;
+	text-align: right;
+}
 
 
 </style>
@@ -87,20 +163,46 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 </div>
 </div>
 
+<div id='wrap'>
 <section id='response_graphs'>
-	<div id='step_plot' class='livegraph'> </div>
-	<div id='impulse_plot' class='livegraph'></div>
+	<div class='plot-wrap'>
+		<h2>Step response</h2>
+		<div id='step_plot' class='livegraph'> </div>
+	</div>
+	<div class='plot-wrap'>
+		<h2>Impulse response</h2>
+		<div id='impulse_plot' class='livegraph'></div>
+	</div>
 </section>
 
 <section id='bode_graphs'>
-	<div id='bode_magnitude_plot' class='livegraph'> </div>
-	<div id='bode_phase_plot' class='livegraph'> </div>
+	<div class='plot-wrap'>
+		<h2>Gain</h2>
+		<div id='bode_magnitude_plot' class='livegraph'> </div>
+	</div>
+	<div class='plot-wrap'>
+		<h2>Phase</h2>
+		<div id='bode_phase_plot' class='livegraph'> </div>
+	</div>
 </section>
 
-<section id='controls'>
-<button id='start'>Start</button>
-<button id='stop'>Stop</button>
-</section>
+<div id='sample-status'><span id='samplecount'>0</span> Samples</div>
+
+</div>
+
+<div id='toolbar'>
+		
+	<p>
+	Step <select id='source_stream'></select>
+	from <input type='number' id='v1' /><span id='v1-unit'>V</span>
+	to <input type='number' id='v2' /><span id='v2-unit'>V</span>.
+	</p>
+	<p>
+	Measure <select id='sense_stream'></select>
+	</p>
+
+	<button id='startpause' title="Start" class='startbtn'></button>
+</div>
 
 </body>
 </html>
