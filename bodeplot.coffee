@@ -287,6 +287,7 @@ $(document).ready ->
 	session
 		app: "Pixelpulse DSA"
 		model: "com.nonolithlabs.cee"
+		updateMessage: "This app may not work with older versions"
 
 		reset: ->
 

@@ -26,6 +26,7 @@ $(document).ready ->
 	session
 		app: "Pixelpulse"
 		model: "com.nonolithlabs.cee"
+		updateMessage: "You're missing <a href='http://www.nonolithlabs.com/blog/'>new features</a>"
 
 		reset: ->
 			pixelpulse.triggering = false

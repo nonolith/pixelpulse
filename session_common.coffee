@@ -1,4 +1,7 @@
 
+latestFirmware = '1.\u221E'
+latestConnect = '1.\u221E'
+
 # params: object containing
 #	app: name of app
 #	model: device model to target
@@ -79,6 +82,8 @@ session.initDevice = (dev) ->
 
 	d = server.selectDevice(dev)
 
+	session.checkUpdate(server.version, dev.fwVersion)	
+
 	d.changed.listen ->
 		session.params.reset()
 		session.overlay()
@@ -98,4 +103,28 @@ session.overlay = (message) ->
 		$("#error-overlay").children().hide()
 		$("#error-status").show().text(message)
 		$("#error-overlay").fadeIn(300)
+
+session.checkUpdate =  (connectVersion, fwVersion) ->
+	connectUpdate = (latestConnect > connectVersion)
+	fwUpdate = (latestFirmware > fwVersion)
+
+	connectURL = 'http://www.nonolithlabs.com/connect/'
+	fwURL = 'http://www.nonolithlabs.com/cee/firmware'
+
+	if connectUpdate or fwUpdate
+		plural = (connectUpdate and fwUpdate)
+		msg = "<strong>Update#{if plural then 's' else ''} Available!</strong> "
+		msg += "<a href='#{connectURL}'>Nonolith Connect #{latestConnect}</a> " if connectUpdate
+		msg += "and " if plural
+		msg += "<a href='#{fwURL}'>CEE Firmware #{latestFirmware}</a> " if fwUpdate
+		msg += " &mdash; " + session.params.updateMessage if session.params.updateMessage
+		hide = $("<span class='close'>&times</span>").click(->$(this).parent().hide())
+		$('#update-notify').html(msg).append(hide).show()
+		$('#update-notify').find('a').attr('target', 'pp-update')
+	else
+		$('#update-notify').hide()
+
+
+
+
 		
