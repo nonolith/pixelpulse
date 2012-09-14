@@ -28,6 +28,7 @@ Pixelpulse
 <script src='session_common.coffee' type='text/coffeescript'></script>
 <script src='app.coffee' type='text/coffeescript'></script>
 <script src='views.coffee' type='text/coffeescript'></script>
+<script src='export.coffee' type='text/coffeescript'></script>
 </head>
 <body class='layout-0side'>
 
@@ -82,7 +83,7 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 	</div>
 	<div class='spacer'></div>
 	<div id='toolbar-right'>
-		<button id='device-config' title="Configure device">Configure</button>
+		<button id='download-btn' title="Export data">Export</button><button id='device-config' title="Configure device">Configure</button>
 	</div>
 	<div id='device-info'>
 		<button id='switchDev' onclick='session.chooseDevice()'>Switch</button>
@@ -116,13 +117,16 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 	</div>
 </section>
 
+<section id='export-popup' class='popup-dialog'>
+	<label>Export CSV</label>
+	<strong id='export-progress' style='display:block;margin:10px 0;'>Exporting...</strong>
+	<a id='export-link' download='export.csv' style='display:block;margin:10px 0;'>Download</a>
+	<div class='actions'>
+	<button id='export-close'>Close</button>
+	</div>
+</section>
+
 <div id='perfstat'></div>
-
-<div id='info' style='display: none'>
-<h1>What am I looking at?</h1>
-<p>This is <a href='http://nonolithlabs.com/pixelpulse/'>Pixelpulse</a>, a web interface for visualizing and controling signals in real time. This demo simulates a <a href='http://en.wikipedia.org/wiki/Rc_circuit'>resistor-capacitor</a> circuit attached to a <a href='http://nonolithlabs.com/cee/'>CEE</a>.</p>
-</div>
-
 
 <div id='hidden' style='position: absolute; bottom: 0; z-index: -10'></div>
 

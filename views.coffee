@@ -368,21 +368,42 @@ pixelpulse.makeStreamSelect = ->
 	return s
 					
 $(document).ready ->
-	btnPopup('#device-config', '#config-popup')
-	
-	$('#device-config').click ->
+
+	btnPopup '#device-config', '#config-popup', ->
 		$('#config-sample-rate option')
 			.hide()
 			.filter(-> parseFloat($(this).attr('value')) >= server.device.minSampleTime)
 				.show()
 
 		$('#config-sample-rate').val(server.device.sampleTime)
-		
-		
+	
+
 	$('#device-config-apply').click ->
 		pixelpulse.hidePopup()	
 		server.device.configure({sampleTime:parseFloat($('#config-sample-rate').val())})
 		track_feature("config-apply")
+
+	
+	btnPopup '#download-btn', '#export-popup', 
+		->
+			$("#export-link").hide()
+			$("#export-progress").show()
+			server.device.pauseCapture()
+			start = pixelpulse.timeseries.sweepStartSample
+			len = pixelpulse.timeseries.doneSamples
+			maxCount = 40000
+			exportCSV start, len, maxCount, (url)->
+				fname = "export#{+new Date()}.csv"
+				$("#export-progress").hide()
+				$("#export-link").show().attr('href', url).attr('download', fname)
+			track_feature("exportcsv")
+
+		,->
+			window.webkitURL.revokeObjectURL($("#export-link").attr('url'))
+
+	$('#export-close, #export-link').click ->
+		pixelpulse.hidePopup()
+		return
 
 	$(window).resize -> pixelpulse.layoutChanged.notify()
 	

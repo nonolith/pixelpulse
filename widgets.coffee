@@ -56,7 +56,7 @@ window.selectDropdown = (options, selectedOption, showText, changed) ->
 	select(selectedOption) if selectedOption
 	return el
 
-window.btnPopup = (button, popup) ->
+window.btnPopup = (button, popup, opencb, closecb) ->
 	button = $(button)
 	popup = $(popup)
 	state = false
@@ -73,10 +73,16 @@ window.btnPopup = (button, popup) ->
 		popup.fadeOut()
 		button.removeClass('active')
 		state = false
+		closecb() if closecb
+		return
 	
 	$(button).click (e)->
 		if not state
+			opencb()
+			$(document).click() # close others
 			showPopup()
-			return false
+			e.stopPropagation()
+		return
 		
-	$(popup).click (e) -> false #block events
+	$(popup).click (e) ->
+		e.stopPropagation() #block events

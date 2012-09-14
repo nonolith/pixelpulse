@@ -476,11 +476,15 @@ class server.DataListener extends server.Listener
 
 			for j in src
 				dest[idx++] = j
+
+		end_idx = m.data[0].length + m.idx
 				
-		for j in [m.idx...m.idx + m.data[0].length]
+		for j in [m.idx...end_idx]
 			@xdata[j] = @xmin + j*@sampleTime - @subsample
 
-		if idx >= @len
+		@doneSamples = @decimateFactor*end_idx
+
+		if end_idx >= @len
 			@sweepDone.notify()
 		
 		super(m)

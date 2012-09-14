@@ -13,7 +13,7 @@
    height="32"
    id="svg2"
    version="1.1"
-   inkscape:version="0.47 r22583"
+   inkscape:version="0.48.3.1 r9886"
    sodipodi:docname="icons.svg">
   <sodipodi:namedview
      id="base"
@@ -22,18 +22,18 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="16"
-     inkscape:cx="175.96798"
-     inkscape:cy="16.027372"
+     inkscape:zoom="4"
+     inkscape:cx="143.93021"
+     inkscape:cy="15.944557"
      inkscape:document-units="px"
-     inkscape:current-layer="layer3"
+     inkscape:current-layer="layer2"
      showgrid="true"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:snap-global="true"
-     inkscape:window-width="1440"
-     inkscape:window-height="825"
-     inkscape:window-x="0"
+     inkscape:snap-global="false"
+     inkscape:window-width="1391"
+     inkscape:window-height="876"
+     inkscape:window-x="49"
      inkscape:window-y="24"
      inkscape:window-maximized="1">
     <sodipodi:guide
@@ -72,6 +72,10 @@
        id="guide3827"
        position="160,5"
        orientation="1,0" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="192,22"
+       id="guide6889" />
   </sodipodi:namedview>
   <defs
      id="defs4">
@@ -186,16 +190,16 @@
     </rdf:RDF>
   </metadata>
   <g
-     sodipodi:insensitive="true"
-     style="display:inline"
+     style="display:none"
      inkscape:label="Layer"
      id="layer3"
-     inkscape:groupmode="layer">
+     inkscape:groupmode="layer"
+     sodipodi:insensitive="true">
     <rect
        y="-32"
        x="0"
        height="64"
-       width="192"
+       width="224"
        id="rect3694"
        style="fill:#000000;fill-opacity:1;stroke:#ffffb6;stroke-width:0;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
   </g>
@@ -361,6 +365,33 @@
        inkscape:export-filename="/home/km/Projects/nonolith/pixelpulse/img/sine.png"
        inkscape:export-xdpi="90"
        inkscape:export-ydpi="90" />
+    <g
+       style="display:inline"
+       id="layer1-9"
+       transform="matrix(0.5,0,0,0.5,208.73483,1077.3951)">
+      <path
+         d="m -22,-101.875 c 23.049,0 26,3.931288 26,21.875 h 8 L -1,-66.875 -15,-80 h 9 c 0,-10.99525 -2.454,-14 -16,-14 v -7.875 z"
+         style="color:#000000;fill:#ffffff;display:block"
+         id="path1348"
+         inkscape:connector-curvature="0" />
+      <rect
+         x="48"
+         y="0"
+         width="0"
+         height="0"
+         rx="0"
+         style="fill:none"
+         id="rect3091" />
+    </g>
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none;display:inline"
+       id="rect6887"
+       width="13.40901"
+       height="2.6451457"
+       x="201.2955"
+       y="1044.4952"
+       inkscape:transform-center-x="-4.8988277"
+       inkscape:transform-center-y="-1.8704004" />
   </g>
   <g
      style="display:inline"
@@ -443,12 +474,22 @@
     <rect
        inkscape:export-ydpi="90"
        inkscape:export-xdpi="90"
-       inkscape:export-filename="/home/km/Projects/nonolith/pixelpulse/img/gear.png"
+       inkscape:export-filename="/home/km/Projects/nonolith/pixelpulse/img/download.png"
        y="0"
        x="160"
        height="32"
        width="32"
        id="trigger"
        style="fill:#000000;fill-opacity:0;stroke:#ffff4d;stroke-width:0;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    <rect
+       inkscape:export-ydpi="90"
+       inkscape:export-xdpi="90"
+       inkscape:export-filename="/home/km/Projects/nonolith/pixelpulse/img/download.png"
+       style="fill:#000000;fill-opacity:0;stroke:#ffff4d;stroke-width:0;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline"
+       id="rect3612-3"
+       width="32"
+       height="32"
+       x="192"
+       y="0" />
   </g>
 </svg>
