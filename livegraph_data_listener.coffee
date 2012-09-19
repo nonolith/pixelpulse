@@ -102,7 +102,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 			when 'sine', 'triangle', 'square', 'arb'
 				src.period * sampleTime*f
 			else
-				0.125
+				0.5
 				
 		@goToWindow(Math.max(@xaxis.min, -timescale), Math.min(@xaxis.max, timescale), animate)
 

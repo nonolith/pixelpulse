@@ -275,7 +275,7 @@ class Channel
 	guessSourceOptions:  (sourceType) ->
 		m = @source.mode
 		value = 2.5
-		period = Math.round(1/@parent.sampleTime)
+		period = Math.round(0.5/@parent.sampleTime)
 		amplitude = 1
 		switch @source.source
 			when 'constant'
