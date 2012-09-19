@@ -1,6 +1,6 @@
 
-latestFirmware = '1.\u221E'
-latestConnect = '1.\u221E'
+latestFirmware = '1.2'
+latestConnect = '1.3'
 
 # params: object containing
 #	app: name of app
