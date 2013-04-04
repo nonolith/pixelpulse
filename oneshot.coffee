@@ -1,7 +1,6 @@
 window.nowebgl = true
 
 class App
-
 	constructor: ->
 		@divider = 10
 		@targetSampleTime = 1/40e3
@@ -179,16 +178,11 @@ vMul = (inArray, outArray, fac) ->
 sign = (x) ->
     if x > 0 then 1 else -1
 
-		
-
-
-		
-
 $(document).ready ->
 	window.app = app = new App()
 	
 	session
-		app: "Pixelpulse DSA"
+		app: "Pixelpulse Curve Tracer"
 		model: "com.nonolithlabs.cee"
 		updateMessage: "This app may not work with older versions"
 
