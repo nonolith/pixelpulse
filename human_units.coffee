@@ -1,6 +1,6 @@
 # Utility functions for displaying quantities for human consumption
 
-exports ?= (window.unitlib = {})
+exports = exports or (window.unitlib = {})
 
 # Get a SI scale prefix for a value and the corresponding scale factor
 exports.unitPrefixScale = unitPrefixScale = (v) ->

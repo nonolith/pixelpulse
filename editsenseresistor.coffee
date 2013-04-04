@@ -70,7 +70,7 @@ app.update = ->
 		""").appendTo(e)
 		
 		read = ->
-			server.send 'readCalibration'
+			server.send 'readCalibration',
 				id: server.createCallback (e) ->
 					app.device.eeprom = e
 					$("#now_a").text(app.device.eeprom.current_gain_a/45/100000)

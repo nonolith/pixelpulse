@@ -165,7 +165,11 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 
 		@submit() if submit
 
-		@triggerOverlay.showBorder(@trigger.type == 'in')
+		if @trigger.type == 'in'
+			@triggerOverlay.style('#ffaa00', 1)
+		else
+			@triggerOverlay.style('#22aa00', 0)
+
 		@updateDotsAll()
 
 	disableTrigger: ->

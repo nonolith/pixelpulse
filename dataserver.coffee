@@ -327,7 +327,7 @@ class Stream
 		
 	setGain: (g) ->
 		if g != @gain
-			server.send 'setGain'
+			server.send 'setGain',
 				channel: @parent.id
 				stream: @id
 				gain: g
@@ -394,7 +394,7 @@ class server.Listener
 		@trigger = {stream, level, holdoff, offset, force, type}
 	
 	submit: ->
-		@server.send 'listen'
+		@server.send 'listen',
 			id: @id
 			streams: ({channel:s.parent.id, stream:s.id} for s in @streams)
 			decimateFactor: @decimateFactor
@@ -419,7 +419,7 @@ class server.Listener
 			@done.notify()
 	
 	cancel: ->
-		@server.send 'cancelListen'
+		@server.send 'cancelListen',
 			id: @id
 		if @device.listenersById[@id]
 			delete @device.listenersById[@id]
