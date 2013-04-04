@@ -118,7 +118,10 @@ class App
 		updateUI = (@sweepCount % 4 == 2)
 		for i in [0..av.length]
 			@vd.data[i] = av[i] - bv[i]
-			@id.data[i] = sign(ai[i]) * Math.min(Math.abs(ai[i]), Math.abs(bi[i]))
+			if av[i] > bv[i]
+				@id.data[i] = sign(ai[i]) * Math.abs(bi[i])
+			if bv[i] > av[i]
+				@id.data[i] = sign(ai[i]) * Math.abs(ai[i])
 
 		vAccumulate(@id.data, @id.acc)
 		vAccumulate(@vd.data, @vd.acc)
