@@ -384,26 +384,39 @@ $(document).ready ->
 		track_feature("config-apply")
 
 	
-	btnPopup '#download-btn', '#export-popup', 
-		->
-			$("#export-link").hide()
-			$("#export-progress").show()
-			server.device.pauseCapture()
-			start = pixelpulse.timeseries.sweepStartSample
-			len = pixelpulse.timeseries.doneSamples
-			maxCount = 40000
-			exportCSV start, len, maxCount, (url)->
-				fname = "export#{+new Date()}.csv"
-				$("#export-progress").hide()
-				$("#export-link").show().attr('href', url).attr('download', fname)
-			track_feature("exportcsv")
+	$('#download-btn').click ->
+		server.device.pauseCapture()
+		start = pixelpulse.timeseries.sweepStartSample
+		len = pixelpulse.timeseries.doneSamples
+		maxCount = 40000
 
-		,->
-			window.webkitURL.revokeObjectURL($("#export-link").attr('url'))
+		streams = []
+		for _x, channel of server.device.channels
+			streams.push(stream) for _y, stream of channel.streams
 
-	$('#export-close, #export-link').click ->
-		pixelpulse.hidePopup()
-		return
+		df = Math.max(Math.round(len / maxCount), 1)
+		listener = new server.DataListener(server.device, streams)
+		listener.len = listener.count = Math.floor(len / df)
+		listener.startSample = start
+		listener.decimateFactor = df
+		listener.submit()
+
+		listener.done.listen ->
+			cols = for stream, i in streams
+				name: stream.displayName
+				units: stream.units
+				precision:4
+				data: listener.data[i]
+
+			cols.unshift
+				name: "Time"
+				units: "s"
+				precision: 7
+				data: (i*server.device.sampleTime*df) for i in [0...listener.xdata.length]
+
+			downloadCSV cols
+
+		track_feature("exportcsv")
 
 	$(window).resize -> pixelpulse.layoutChanged.notify()
 	

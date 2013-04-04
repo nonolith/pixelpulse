@@ -1,35 +1,22 @@
 
-window.exportCSV = (start, length, maxCount, cb) ->
-	streams = []
-	for _, channel of server.device.channels
-		streams.push(stream) for _, stream of channel.streams
+window.downloadCSV = (columns) -> # [{name, units, precision, data}]
+	rows = for i in [0...columns[0].data.length]
+		(data[i].toFixed(precision) for {data, precision} in columns).join(",") + "\n"
 
-	df = Math.max(Math.round(length / maxCount), 1)
-	listener = new server.DataListener(server.device, streams)
-	listener.len = listener.count = Math.floor(length / df)
-	listener.startSample = start
-	listener.decimateFactor = df
+	header = ("\"#{name} (#{units})\"" for {name, units} in columns).join(",") + "\n"
+	rows.unshift header
 
-	#console.log('export', start, length, df, listener.len, listener)
+	downloadFile(rows, "text/csv", "export#{+new Date()}.csv" )		
 
-	listener.submit()
-
-	listener.done.listen ->
-		#console.log('export complete', listener)
-		rows = for i in [0...listener.xdata.length]
-			d = [(i*server.device.sampleTime*df).toFixed(7)]
-			for dataArr in listener.data
-				d.push(dataArr[i].toFixed(4))
-			d.join(',') + '\n'
-
-		header = ("\"#{i.displayName} (#{i.units})\"" for i in streams).join(",")
-		header = "\"Time (s)\",#{header}\n"
-		rows.unshift(header)
-
-		blob = new Blob(rows, {"type":"text/csv"})
-		objectURL = window.webkitURL.createObjectURL(blob)
-		cb(objectURL)
-		
-
+window.downloadFile = (data, type, filename) ->
+	url = window.URL.createObjectURL new Blob(data, {type})
+	a = document.createElement('a')
+	a.href =  url
+	a.download = filename
+	a.style.display = 'none';
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a)
+	setTimeout((->window.URL.revokeObjectURL(url)), 10)
 
 		

@@ -25,11 +25,8 @@ class App
 		@running = false
 		$('#startpause').click =>
 			if not @running then @start() else @stop()
-		$('#download-btn-a').click =>
-			if @running
-				url = @exportCSV()
-				fname = "export#{+new Date()}.csv" 
-				$('#download-btn-a').attr('href', url).attr('download', fname) 
+		
+		$('#download-btn').click @exportCSV
 			
 		$(window).on 'resize', @resized
 
@@ -132,15 +129,13 @@ class App
 			$('#samplecount').text(@sweepCount)
 
 	exportCSV: =>
-		rows = for i in [0...@sampleCt]
-			d = []
-			for dataArr in [@curve_trace_data.xdata, @curve_trace_data.ydata]
-				d.push(dataArr[i].toFixed(4))
-			d.join(',') + '\n'
-		header = "'V', 'mA'"
-		blob = new Blob(rows, {"type":"text/csv"})
-		objectURL = window.webkitURL.createObjectURL(blob)
-		return objectURL
+		unless @sweepCount
+			return alert 'No data to export'
+
+		window.downloadCSV [
+			{name:"Voltage", units:"V",  precision:4, data:@curve_trace_data.xdata}
+			{name:"Current", units:"mA", precision:4, data:@curve_trace_data.ydata}
+		]
 
 	stop: =>
 		@device.pauseCapture()

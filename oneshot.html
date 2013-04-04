@@ -11,11 +11,11 @@
 <script src='lib/less.js'></script>
 
 <script src='lib/jquery-1.7.1.min.js'></script>
-<script src='lib/dsp.js'></script>
 <script src='dataserver.coffee' type='text/coffeescript'></script>
 
 <script src='human_units.coffee' type='text/coffeescript'></script>
 <script src='livegraph.coffee' type='text/coffeescript'></script>
+<script src='export.coffee' type='text/coffeescript'></script>
 
 <script src='session_common.coffee' type='text/coffeescript'></script>
 <script src='oneshot.coffee' type='text/coffeescript'></script> 
@@ -94,36 +94,7 @@
 #toolbar p, #toolbar button{
 	display: inline-block;
 	height: 32px;
-}
-
-#toolbar p{
-	margin: -2px 10px 0 10px;
-}
-
-#toolbar select, #toolbar input{
-	height: 33px;
-	font-size: 16px;
-	margin: 0;
-	padding: 0;
-	border: 0;
-	background: #666;
-	color: white;
-	padding: 0 5px 0 5px;
-	margin: 0 5px 0 5px;
-}
-
-#toolbar input::-webkit-inner-spin-button,
-#toolbar input ::-webkit-outer-spin-button{
-	-webkit-appearance: none;
-}
-
-#toolbar select option{
-	color: black;
-}
-
-#v1, #v2{
-	width: 40px;
-	text-align: right;
+	vertical-align: top;
 }
 
 #update-notify{
@@ -132,8 +103,6 @@
 	left: 0;
 	right: 0;
 }
-
-
 </style>
 
 <body>
@@ -170,7 +139,7 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 
 <div id='toolbar'>
 	<button id='startpause' title="Start" class='startbtn'></button>
-	<a id="download-btn-a"><button id="download-btn" title="Export dat">Export</button></a>
+	<button id="download-btn" title="Export data"></button>
 </div>
 
 <div id='update-notify'></div>
