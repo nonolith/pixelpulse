@@ -1,19 +1,20 @@
 window.nowebgl = true
-divider = 100
-targetSampleTime = 1/40e3
-sampleCt = (1/targetSampleTime)/divider
 
 class App
 
 	constructor: ->
-		@current_axis = new livegraph.Axis(-200, 200, 'i')
-		@voltage_axis = new livegraph.Axis(-5, 5, 'v')
+		@divider = 100
+		@targetSampleTime = 1/40e3
+		@sweepDuration = 0.1
+		@sampleCt = @sweepDuration*4*(1/@targetSampleTime)/@divider
+		@current_axis = new livegraph.Axis(-200, 200, 'mA')
+		@voltage_axis = new livegraph.Axis(-5, 5, 'V')
 		@current_axis.visibleMin = @current_axis.min = -200
 		@current_axis.visibleMax = @current_axis.max = 200
 		@curve_trace_data = new livegraph.Series([], [], [0, 0, 255])
 		
-		@vd = new Float32Array(sampleCt)
-		@id = new Float32Array(sampleCt)
+		@vd = new Float32Array(@sampleCt)
+		@id = new Float32Array(@sampleCt)
 			
 		@curve_trace = new livegraph.canvas(
 			$('#curve_trace').get(0),
@@ -42,14 +43,13 @@ class App
 		@curve_trace.resized()
 
 	start: =>
-		#@device.pauseCapture()
 		@running = true
 		$(document.body).toggleClass 'capturing', true
 		$("#startpause").attr('title', 'Stop')
 
-		if @device.sampleTime != targetSampleTime
+		if @device.sampleTime != @targetSampleTime
 			console.log("Setting sample rate")
-			@device.configure(sampleTime:targetSampleTime)
+			@device.configure(sampleTime:@targetSampleTime)
 			@pendingStart = true
 			return
 
@@ -57,11 +57,12 @@ class App
 
 		sampleTime = @device.sampleTime
 
-		@curve_trace_data.xdata = new Float32Array(sampleCt)
-		@curve_trace_data.ydata = new Float32Array(sampleCt)
+		@curve_trace_data.xdata = new Float32Array(@sampleCt)
+		@curve_trace_data.ydata = new Float32Array(@sampleCt)
 
 		initSignal = (s) =>
-			s.acc = new Float32Array(sampleCt)
+			s.acc = new Float32Array(@sampleCt)
+			s.data = new Float32Array(@sampleCt)
 
 		initSignal(@vd)
 		initSignal(@id)
@@ -71,9 +72,9 @@ class App
 		@device.channels.b.set 1, 'arb',
 			{values: [
 				{t:0, v:0}
-				{t:2 * 1/sampleTime, v:0}
-				{t:3 * 1/sampleTime, v:5}
-				{t:4 * 1/sampleTime, v:0} # the period > the requested length, so bug isn't triggered
+				{t:2*@sweepDuration * 1/sampleTime, v:0}
+				{t:3*@sweepDuration * 1/sampleTime, v:5}
+				{t:4*@sweepDuration * 1/sampleTime, v:0}
 			]
 			phase: 0
 			relPhase: 0
@@ -83,9 +84,9 @@ class App
 		@device.channels.a.set 1, 'arb',
 			{values: [
 				{t:0, v:0}
-				{t:1 * 1/sampleTime, v:5}
-				{t:2 * 1/sampleTime, v:0}
-				{t:4 * 1/sampleTime, v:0} # the period > the requested length, so bug isn't triggered
+				{t:1*@sweepDuration * 1/sampleTime, v:5}
+				{t:2*@sweepDuration * 1/sampleTime, v:0}
+				{t:4*@sweepDuration * 1/sampleTime, v:0}
 			]
 			phase: 0
 			relPhase: 0
@@ -93,8 +94,8 @@ class App
 			(d) =>
 				@listener = new server.DataListener(@device, [@device.channels.a.streams.v, @device.channels.a.streams.i, @device.channels.b.streams.v, @device.channels.b.streams.i])
 				@listener.startSample = d.startSample + 1
-				@listener.len = @listener.count = sampleCt
-				@listener.decimateFactor = divider
+				@listener.len = @listener.count = @sampleCt
+				@listener.decimateFactor = @divider
 				@listener.trigger =
 					type: 'out'
 					stream: @device.channels.a.streams.v
@@ -110,22 +111,16 @@ class App
 		[av, ai, bv, bi] = @listener.data
 		@sweepCount += 1
 		updateUI = (@sweepCount % 4 == 2)
-
-		processSignal = (s, d) =>
-			vAccumulate(d, s.acc, s.stream.min, s.stream.max-s.stream.min)
-			if updateUI
-				vMul(s.acc, s.curve_trace.ydata, 1/@sweepCount)
-
 		for i in [0..av.length]
-			@vd[i] = av[i] - bv[i]
-			@id[i] = (ai[i] + bi[i])/2
+			@vd.data[i] = av[i] - bv[i]
+			@id.data[i] = sign(ai[i]) * Math.min(Math.abs(ai[i]), Math.abs(bi[i]))
 
-		@curve_trace_data.ydata = @id
-		@curve_trace_data.xdata = @vd
-		#processSignal(@vd, av)
-		#processSignal(@id, bi)
+		vAccumulate(@id.data, @id.acc)
+		vAccumulate(@vd.data, @vd.acc)
 
 		if updateUI
+			vMul(@id.acc, @curve_trace_data.ydata, 1/@sweepCount)
+			vMul(@vd.acc, @curve_trace_data.xdata, 1/@sweepCount)
 			@curve_trace.needsRedraw()
 			$('#samplecount').text(@sweepCount)
 
@@ -153,15 +148,18 @@ vSub = (inArray, outArray) ->
 		outArray[i] -= inArray[i]
 	return
 
-vAccumulate = (inArray, outArray, min=0, range=1) ->
+vAccumulate = (inArray, outArray) ->
 	for i in [0...inArray.length]
-		outArray[i] += (inArray[i] - min) / range
+		outArray[i] += inArray[i]
 	return
 	
 vMul = (inArray, outArray, fac) ->
 	for i in [0...inArray.length]
 		outArray[i] = inArray[i] * fac
 	return
+
+sign = (x) ->
+    if x > 0 then 1 else -1
 
 $(document).ready ->
 	window.app = app = new App()
@@ -177,6 +175,7 @@ $(document).ready ->
 			$('#switchDev').toggle(l.length>1)
 
 		initDevice:	(dev) ->
+			dev.pauseCapture()
 			dev.captureStateChanged.listen (s) ->
 				if not s then app.afterStop()
 
