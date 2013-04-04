@@ -3,7 +3,7 @@ window.nowebgl = true
 class App
 
 	constructor: ->
-		@divider = 100
+		@divider = 10
 		@targetSampleTime = 1/40e3
 		@sweepDuration = 0.1
 		@sampleCt = @sweepDuration*4*(1/@targetSampleTime)/@divider
@@ -26,7 +26,12 @@ class App
 		@running = false
 		$('#startpause').click =>
 			if not @running then @start() else @stop()
-
+		$('#download-btn-a').click =>
+			if @running
+				url = @exportCSV()
+				fname = "export#{+new Date()}.csv" 
+				$('#download-btn-a').attr('href', url).attr('download', fname) 
+			
 		$(window).on 'resize', @resized
 
 	initDevice: (@device) ->
@@ -124,6 +129,16 @@ class App
 			@curve_trace.needsRedraw()
 			$('#samplecount').text(@sweepCount)
 
+	exportCSV: =>
+		rows = for i in [0...@sampleCt]
+			d = []
+			for dataArr in [@curve_trace_data.xdata, @curve_trace_data.ydata]
+				d.push(dataArr[i].toFixed(4))
+			d.join(',') + '\n'
+		header = "'V', 'mA'"
+		blob = new Blob(rows, {"type":"text/csv"})
+		objectURL = window.webkitURL.createObjectURL(blob)
+		return objectURL
 
 	stop: =>
 		@device.pauseCapture()
@@ -160,6 +175,11 @@ vMul = (inArray, outArray, fac) ->
 
 sign = (x) ->
     if x > 0 then 1 else -1
+
+		
+
+
+		
 
 $(document).ready ->
 	window.app = app = new App()
