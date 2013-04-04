@@ -23,17 +23,18 @@
 <style>
 
 #wrap{
-	max-width: 1000px;
 	position: absolute;
 	top: 32px;
 	width: 100%;
-	height: 100%;
+	bottom: 0;
 }
 
-.livegraph{
-	width: 090%;
-	height: 090%;
-	position: relative;
+#curve_trace{
+	position:absolute;
+	top:32px;
+	left:32px;
+	right:32px;
+	bottom:32px;
 }
 
 .livegraph canvas{
@@ -42,41 +43,46 @@
 	left: 0px;
 }
 
-.plot-wrap{
-	padding: 20px 0 0 10px;
-	-webkit-box-sizing: border-box;
-	box-sizing: border-box;
-	position: relative;
-}
-
-.plot-wrap h2, #sample-status{
+#wrap h2, #sample-status{
 	text-transform: uppercase;
 	font-size: 11px;
 	letter-spacing: 0.15em;
-	margin-left: 36px;
-	position: absolute;
-	top: 10px;
 }
 
 #sample-status{
 	position: absolute;
-	right: 10px;
 	text-align: right;
 	width: 100px;
+	top:10px;
+	right: 42px; /* 32+10 */
 }
 
-#curve_trace{
+#title{
 	position: absolute;
-	left: 0;
-	top: 0;
-	bottom: 20%;
-	right: 0;
+	top:10px;
+	left:67px; /* 32 + 10 + 25 */
 }
 
-#curve_trace > div{
-	width: 80%;
-	height: 80%;
+#label-below{
+	position:absolute;
+	bottom: 20px;
+	width:100%;
+	text-align:center;
+	padding-left:12px; /* align with 0V */
 }
+
+#label-side{
+	position: absolute;
+	left: 25px;
+	top: 50%;
+	-webkit-transform-origin: 0 0;
+	transform-origin: 0 0;
+	-webkit-transform: rotate(90deg);
+	transform: rotate(90deg);
+	text-align: center;
+	text-indent: -3.5em;
+}
+
 
 #toolbar{
 	position: absolute;
@@ -125,15 +131,16 @@ Run <code>sudo /etc/init.d/nonolith-connect start</code> in a terminal to start 
 </div>
 </div>
 
-<div id='wrap'>
-<section id='curve_trace'>
-	<div class='plot-wrap'>
-		<h2>FullScale Curve Trace</h2>
-		<div id='curve_trace' class='livegraph'> </div>
-	</div>
+<section id='wrap'>
+	<div id='curve_trace' class='livegraph'> </div>
+
+	<h2 id='title'>FullScale Curve Trace</h2>
+	<div id='sample-status'><span id='samplecount'>0</span> Samples</div>
+	<h2 id='label-below'>Voltage</h2>
+	<h2 id='label-side'>Current</h2>
 </section>
 
-<div id='sample-status'><span id='samplecount'>0</span> Samples</div>
+
 
 </div>
 
