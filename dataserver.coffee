@@ -21,8 +21,6 @@ class window.Event
 		func(args...) for func in @listeners
 		return
 
-window.WebSocket ?= window.MozWebSocket
-
 removeNull = (val) -> val.replace(/\0/g, '') if val?
 
 class Dataserver
@@ -35,20 +33,15 @@ class Dataserver
 		@callbacks = {}
 
 	connect: ->
-		@ws = new WebSocket("ws://" + @host + "/ws/v0")
-		@ws.onopen = => 
-			console.log('connected')
-			@connected.notify()
-		@ws.onclose = =>
-			console.log('disconnected')
-			@disconnected.notify()
-
-		@ws.onmessage = (evt) =>
-			#console.log 'm', evt.data
+		if not window.nonolith_connect
+			throw new Error("Not running in app shell");
+	
+		window.nonolith_connect.onMessage.connect (data) =>
+			console.log 'm', data, @device?
 			try
-				m = JSON.parse(evt.data)
+				m = JSON.parse(data)
 			catch e
-				console.log("Invalid JSON frame:", evt.data)
+				console.log("Invalid JSON frame:", data)
 			
 			switch m._action
 				when "serverHello"
@@ -77,17 +70,20 @@ class Dataserver
 					
 				else
 					@device.onMessage(m)
+
+		window.nonolith_connect.connect()
+		@connected.notify()
 	
 	send: (cmd, m={})->
 		m._cmd = cmd
-		@ws.send(JSON.stringify m)
+		window.nonolith_connect.send(JSON.stringify m)
 
 	selectDevice: (device) ->
-		@send 'selectDevice',
-			id: device.id
 		if @device
 			@device.onRemoved()
 		@device = device.makeActiveObj(this)
+		@send 'selectDevice',
+			id: device.id
 		return @device
 	
 	createCallback: (fn) ->
