@@ -69,7 +69,7 @@ class pixelpulse.TimeseriesGraphListener extends server.DataListener
 	# Set the timeseries view to the specified window
 	goToWindow: (min, max, animate=true) ->
 		if animate
-			opts = {time: 200} 
+			opts = {time: 200}
 			return new livegraph.AnimateXAction(opts, @graphs[0], min, max, @graphs)
 		else
 			@xaxis.window(min, max, true)
@@ -245,7 +245,7 @@ class TimeseriesGraph extends livegraph.canvas
 				oldPeriod = highSamples + lowSamples
 				newPeriod = Math.round(Math.max(2, x/server.device.sampleTime + 1))
 				lg.stream.parent.setAdjust
-					highSamples: Math.round(dutyCycleHint * newPeriod) 
+					highSamples: Math.round(dutyCycleHint * newPeriod)
 					lowSamples: Math.round((1-dutyCycleHint) * newPeriod)
 					low: y
 					dutyCycleHint: dutyCycleHint
@@ -271,7 +271,7 @@ class TimeseriesGraph extends livegraph.canvas
 			# Prevent zooming in uselessly far
 			return
 
-		opts = {time: 200, zoomFactor:zf } 
+		opts = {time: 200, zoomFactor:zf }
 		return new livegraph.ZoomXAction(opts, this, pos,
 			@timeseries.graphs)
 
@@ -358,7 +358,7 @@ class pixelpulse.XYGraphView
 		
 		@color = [255, 0, 0]
 		
-		@lg = new livegraph.canvas(@graphdiv.get(0), false, false, [false], 
+		@lg = new livegraph.canvas(@graphdiv.get(0), false, false, [false],
 			{xbottom:true, yright:false, xgrid:true})
 		
 	axisSelectChanged: =>

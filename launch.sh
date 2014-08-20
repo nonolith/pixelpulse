@@ -4,7 +4,7 @@ case "$1" in
 	local)
 	   	APPURL="http://localhost:8000/pixelpulse.html"
 		;;
-	 
+	
 	edge)
 		APPURL="http://apps.nonolithlabs.com/edge/pixelpulse"
 		;;

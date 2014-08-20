@@ -81,7 +81,7 @@ class App
 			relPhase: 0
 			repeat: -1},
 			(d) =>
- 
+
 		@device.channels.a.set 1, 'arb',
 			{values: [
 				{t:0, v:0}

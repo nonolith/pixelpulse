@@ -14,13 +14,13 @@ class App
 		@gain_axis = new livegraph.Axis(-45, 45, 'dB')
 		@phase_axis = new livegraph.Axis(-180, 180, "\u00B0")
 		
-		@source = 
+		@source =
 			stream: null
 			acc: null
 			step_series: new livegraph.Series([], [], [0, 0, 255])
 			imp_series:  new livegraph.Series([], [], [0, 0, 255])
 			
-		@sense = 
+		@sense =
 			stream: null
 			acc: null
 			step_series: new livegraph.Series([], [], [255, 0, 0])
@@ -33,28 +33,28 @@ class App
 		@phase_series = new livegraph.Series([], [], [0, 0, 0])
 		
 		@step_plot = new livegraph.canvas(
-			$('#step_plot').get(0), 
+			$('#step_plot').get(0),
 			@time_axis, @value_axis,
 			[@source.step_series, @sense.step_series]
 			{xbottom:yes, yright:no, xgrid:yes}
 		)
 		
 		@imp_plot = new livegraph.canvas(
-			$('#impulse_plot').get(0), 
+			$('#impulse_plot').get(0),
 			@time_axis, @diff_axis,
 			[@source.imp_series, @sense.imp_series]
 			{xbottom:yes, yright:no, xgrid:yes}
 		)
 
 		@mag_plot = new livegraph.canvas(
-			$('#bode_magnitude_plot').get(0), 
+			$('#bode_magnitude_plot').get(0),
 			@freq_axis, @gain_axis,
 			[@mag_series]
 			{xbottom:yes, yright:no, xgrid:yes}
 		)
 
 		@phase_plot = new livegraph.canvas(
-			$('#bode_phase_plot').get(0), 
+			$('#bode_phase_plot').get(0),
 			@freq_axis, @phase_axis,
 			[@phase_series]
 			{xbottom:yes, yright:no, xgrid:yes}
@@ -146,7 +146,7 @@ class App
 		@fdata = new Float32Array(sampleScale/2) #arange(0, sampleScale/2, 1)
 		for i in [0...sampleScale/2]
 			@fdata[i] = Math.max(0, Math.log(i / sampleTime / sampleScale)) / Math.LN10
-		@freq_axis.visibleMax = @freq_axis.max = Math.min(@fdata[@fdata.length-1], 4) 
+		@freq_axis.visibleMax = @freq_axis.max = Math.min(@fdata[@fdata.length-1], 4)
 
 		initSignal = (s) =>
 			s.step_series.xdata = @tdata
@@ -194,7 +194,7 @@ class App
 				@listener.startSample = d.startSample + 1
 				@listener.len = @listener.count = sampleScale
 				@listener.decimateFactor = 1
-				@listener.trigger = 
+				@listener.trigger =
 					type: 'out'
 					stream: @source.stream
 					holdoff: 0

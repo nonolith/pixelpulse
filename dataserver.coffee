@@ -36,7 +36,7 @@ class Dataserver
 
 	connect: ->
 		@ws = new WebSocket("ws://" + @host + "/ws/v0")
-		@ws.onopen = => 
+		@ws.onopen = =>
 			console.log('connected')
 			@connected.notify()
 		@ws.onclose = =>

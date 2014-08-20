@@ -66,7 +66,7 @@ class FirmwareUpdateApp
 		window.v2 = @firmware.hwVersion
 		console.log(dev)
 
-		if dev.model == @firmware.device_match \ 
+		if dev.model == @firmware.device_match \
 		and dev.hwVersion == @firmware.hwVersion
 			console.log('match')
 			true
@@ -75,7 +75,7 @@ class FirmwareUpdateApp
 		#and dev.hw_version == @firmware.hwVersion
 			true
 		else
-			false 
+			false
 
 		
 	updateDevices: =>

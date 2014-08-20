@@ -1,5 +1,5 @@
 # (C) 2012 Nonolith Labs
-# Author: Ian Daniher <ian@nonolithlabs.com> 
+# Author: Ian Daniher <ian@nonolithlabs.com>
 # Author: Kevin Mehall <km@kevinmehall.net>
 # Distributed under the terms of the GNU GPLv3
 

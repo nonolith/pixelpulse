@@ -37,7 +37,7 @@ startWithDevice = (dev) ->
 		testing_serial = dev.serial
 		log($("<h1>").text(dev.serial))
 
-# Bootloader: flash code 
+# Bootloader: flash code
 
 onBootloaderDevice = (dev) ->
 	erase = (cb) ->
@@ -147,7 +147,7 @@ onCEE = (dev) ->
 	measureCSAError = ->
 		async.series [
 			(cb) -> changeRaw(false, cb)
-			(cb) -> 
+			(cb) ->
 				dev.channels.a.streams.i.setGain(32)
 				dev.channels.b.streams.i.setGain(32)
 				dev.channels.b.setConstant(3, 0)

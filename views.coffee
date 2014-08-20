@@ -258,10 +258,10 @@ class pixelpulse.StreamView
 					unit: stream.units
 					digits: stream.digits
 
-				freqFilter = 
+				freqFilter =
 					changedfn: (v) =>
 						channel.setAdjust('period', 1/(v*server.device.sampleTime))
-					valuefn: (m) -> 1/(m.period*server.device.sampleTime) 
+					valuefn: (m) -> 1/(m.period*server.device.sampleTime)
 					min: 0.1
 					max: 1/server.device.sampleTime/5
 					step: 1
@@ -280,8 +280,8 @@ class pixelpulse.StreamView
 
 					valuefn: (m) -> 1/((m.highSamples+m.lowSamples)*server.device.sampleTime)
 
-				dutyCycleFilter = 
-					changedfn: (v) => 
+				dutyCycleFilter =
+					changedfn: (v) =>
 						v = Math.max(0, Math.min(100, v/100))
 						{highSamples,lowSamples} = stream.parent.source
 						per = highSamples + lowSamples
